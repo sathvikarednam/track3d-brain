@@ -167,10 +167,16 @@
           "title": "Direct code reads during USER migration (2026-10-29)",
           "at": "getCompanyProjectStats window",
           "code": "constructn-api:src/controllersv2/enterprise-overview.controller.ts#L314@06132d2a6f1f"
+        },
+        {
+          "type": "review",
+          "ref": "REVIEW-2026-11-04",
+          "title": "Brain Review page answer",
+          "at": "eng.check.ENT-REQ-002.0 by u_lJAIPSXK8njlgjwC7v5n4Q",
+          "code": null
         }
       ],
       "open_checks": [
-        "User counts cover all of the company's projects",
         "Restricted check, handled with engineering separately."
       ],
       "acceptance_criteria": [
