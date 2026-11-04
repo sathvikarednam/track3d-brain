@@ -1,0 +1,20 @@
+{
+  "id": "DEC-001",
+  "title": "Historical percentages after a genuine scope change",
+  "status": "on-hold",
+  "question": "When planned scope genuinely changes (not an error correction), what happens to historical denominators and completion percentages?",
+  "context": "Takeoff corrections must recalculate history (PROG-REQ-005), but the user explicitly deferred the policy for genuine scope changes. Neither code nor the correction policy answers it.",
+  "options": [
+    "Recalculate history with the new scope",
+    "Keep history against the scope at the time",
+    "Show both"
+  ],
+  "decision": null,
+  "capabilities": [
+    "PROG",
+    "RPT"
+  ],
+  "requirements": [
+    "PROG-REQ-005"
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "id": "PROC-FEAT-06",
+  "name": "Pipeline access control",
+  "summary": "Who and what may drive the processing pipeline: the platform routes Antman uses to change jobs and realities, job status updates from the web, and Antman's own internal views. Today several of these are wider than their purpose needs.",
+  "components": [
+    "svc.constructn-api",
+    "worker.antman",
+    "svc.api-gateway-service",
+    "svc.capture-api"
+  ],
+  "decisions": [
+    "DEC-059"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "These grants describe today's code, not intent. Service callers (Antman, capture-api) use shared secrets or a forwarded sign-in token. Intended access is DEC-059.",
+    "actions": [
+      {
+        "action": "Change any job's or reality's status through the Antman platform routes",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "support-user": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      },
+      {
+        "action": "Update a job's status and processing outcome",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      },
+      {
+        "action": "Watch Antman's live run events",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "support-user": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROC-NFR-008",
+      "kind": "availability",
+      "statement": "Pipeline callbacks and internal routes are reachable only by the services and staff that need them.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Which callers are allowed for each pipeline route, and how are shared secrets rotated (DEC-059)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROC-REQ-029",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "PROC-REQ-030",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "PROC-REQ-031",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

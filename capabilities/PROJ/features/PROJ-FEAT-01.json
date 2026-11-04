@@ -1,0 +1,328 @@
+{
+  "id": "PROJ-FEAT-01",
+  "name": "Project creation and onboarding",
+  "summary": "How projects come into being: deal-led first projects created by Track3D, sales order forms, customer-created projects, and the company details collected at onboarding.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-018",
+    "DEC-023",
+    "DEC-024"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Order-form upload is limited to Track3D sales users, which is a separate flag rather than a project role.",
+    "actions": [
+      {
+        "action": "Create a project",
+        "permission": "create-project",
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "unknown",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Upload and extract a sales order form",
+        "permission": null,
+        "grants": {
+          "support-user": "conditional",
+          "company-super-admin": "deny"
+        },
+        "note": "Sales role only"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROJ-NFR-001",
+      "kind": "latency",
+      "statement": "Time from Track3D creating a deal-led project to the customer receiving their invitation.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is same-day onboarding a commitment? Who is told if it slips?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROJ-REQ-001",
+      "type": "business-rule",
+      "title": "Track3D creates the first project for a deal",
+      "statement": "Enterprise and non-enterprise deals usually concern a project. Track3D creates that first project and invites the customer as project admin or as company-wide super-admin.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-021",
+        "T3D-BR-005"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-021, T3D-BR-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-001-AC1",
+          "given": "A signed deal for a customer's site",
+          "when": "Track3D sets up the customer",
+          "then": "Track3D creates the project and invites the customer's contact as project admin or company super-admin",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-002",
+      "type": "business-rule",
+      "title": "The customer can set up a Track3D-created first project immediately",
+      "statement": "For the usual first project that Track3D creates, the invited customer can start project setup straight away. This does not change the rule that customer-submitted projects show details only while pending (PROJ-REQ-008).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-023"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-BR-028"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-028",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-002-AC1",
+          "given": "A first project created by Track3D for a deal",
+          "when": "The invited customer joins",
+          "then": "They can begin setup at once (users, designs, configuration)",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-003",
+      "type": "business-rule",
+      "title": "A first project starting more than 30 days out can't be set up yet",
+      "statement": "Today an approved or initiated project is in Pre-Setup while its start date is more than 30 days away, and setup actions are blocked until then, including for a Track3D-created first project.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "PROJ-REQ-002 says the customer can set up a Track3D-created first project immediately. The access-stage rule (PROJ-REQ-014) only opens setup 30 days before the start date, whatever the status. Product to decide in DEC-023."
+      },
+      "decisions": [
+        "DEC-023"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getProjectAccessStage",
+          "code": "constructn-api:src/utils/project-utils.ts#L14@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-005",
+          "code": "constructn-api:src/controllersv2/project.controller.ts#L4545@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-003-AC1",
+          "given": "A Track3D-created first project, approved, with a start date 60 days from today",
+          "when": "The invited customer tries to add a design",
+          "then": "(Current behaviour) The action is refused because the project is in Pre-Setup",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-004",
+      "type": "business-rule",
+      "title": "How a new project's first status is chosen",
+      "statement": "A placeholder project created by sales starts as Initiated. A complete sales-created project starts Approved, in construction. Other projects start Pending approval, unless company, regional or allowlist rules approve them automatically.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-018",
+        "DEC-024"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-005"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-005",
+          "code": "constructn-api:src/controllersv2/project.controller.ts#L4545@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "The exact roles and allowlist values for auto-approval depend on environment and data"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-004-AC1",
+          "given": "A customer with no auto-approval rule creates a project",
+          "when": "It is saved",
+          "then": "Its status is Pending approval",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROJ-REQ-004-AC2",
+          "given": "A sales user creates a complete project for a deal",
+          "when": "It is saved",
+          "then": "Its status is Approved and its construction phase is In-construction",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-005",
+      "type": "business-rule",
+      "title": "Sales order forms are read to prefill the company",
+      "statement": "Only Track3D sales users can upload a signed order form. It must be a PDF of at most 10 MB. Its fields are extracted unless extraction is turned off, and the company is matched by email domain, or reported as \"no company\". A match is not membership approval or proof of a signed agreement.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-101",
+        "T3D-RULE-102"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-101",
+          "code": "constructn-api:src/controllersv2/order-form.controller.ts#L54@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-102",
+          "code": "constructn-api:src/controllersv2/order-form.controller.ts#L20@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "The MIME check is not content validation"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-005-AC1",
+          "given": "A sales user uploads a 12 MB PDF order form",
+          "when": "The upload is processed",
+          "then": "It is rejected for size",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROJ-REQ-005-AC2",
+          "given": "An order form whose contact email domain matches no company",
+          "when": "It is extracted",
+          "then": "The result reports \"no company\" rather than guessing one",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-006",
+      "type": "requirement",
+      "title": "Company name and logo at project onboarding",
+      "statement": "The project onboarding form has company name and logo fields. If the company already exists they are filled in automatically; otherwise the user enters them.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-012",
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-013",
+        "T3D-CAND-SIGNUP-FLOW-FR-007"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-013",
+          "title": "Prior PRD - Project management (t3d-prd-agent prd-organised)",
+          "at": "FR-012, FR-013",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-009",
+          "title": "Prior PRD - Signup flow (t3d-prd-agent prd-organised)",
+          "at": "FR-007",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-006-AC1",
+          "given": "A user starting project onboarding",
+          "when": "They view the form",
+          "then": "Company name and logo fields are shown and work",
+          "status": "draft"
+        },
+        {
+          "id": "PROJ-REQ-006-AC2",
+          "given": "The user's company already exists, with a logo",
+          "when": "They start project onboarding",
+          "then": "The company name and logo are filled in",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,344 @@
+{
+  "id": "USER-FEAT-02",
+  "name": "Sign-in, sessions and credentials",
+  "summary": "How people and machines prove who they are: sign-in methods, access and refresh tokens, session limits, logout, and API keys for integrations.",
+  "components": [
+    "svc.constructn-api",
+    "svc.api-gateway-service",
+    "svc.auth-service",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-011"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Sign-in applies to every verified user regardless of role. API keys are a separate machine credential, mapped to a project.",
+    "actions": [
+      {
+        "action": "Sign in and refresh a session",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "support-user": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Use an API key on external-capture routes",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Keys are mapped to projects"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "USER-NFR-002",
+      "kind": "freshness",
+      "statement": "How quickly a logout, removal or revoked session stops working across every API (caches included).",
+      "target": null,
+      "status": "draft",
+      "open_question": "What maximum revocation delay is acceptable? Today it depends on Redis and downstream caches (T3D-IMPL-123)."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "USER-REQ-007",
+      "type": "requirement",
+      "title": "Several sign-in methods and password recovery",
+      "statement": "Users can sign in with email and password or through one of several external sign-in providers, and can recover a forgotten password. Which providers are offered to which customers is not decided (DEC-011).",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-011"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-125",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-007-AC1",
+          "given": "A verified user who forgot their password",
+          "when": "They request a password reset and follow the link",
+          "then": "They can set a new password and sign in with it",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-008",
+      "type": "business-rule",
+      "title": "Only verified users with a live session reach protected APIs",
+      "statement": "Every non-public request needs a valid token belonging to a verified user. If the token is bound to a session, that session must belong to the user and not be revoked.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-024"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-024",
+          "code": "api-gateway-service:src/modules/proxy/proxy.authz.ts#L28@26221f6c7bb3"
+        },
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-005",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "No production branch was resolved for auth-service and service-kit"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-008-AC1",
+          "given": "A signed-in user whose email is not verified",
+          "when": "They call a protected API through the gateway",
+          "then": "The request is rejected",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "USER-REQ-008-AC2",
+          "given": "A token whose session was revoked by logout",
+          "when": "It is used on a protected API",
+          "then": "The request is rejected",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-009",
+      "type": "business-rule",
+      "title": "Access tokens last 15 minutes on web and 24 hours on mobile",
+      "statement": "By default an access token lasts 15 minutes for web clients and 24 hours for mobile clients, and environment settings can override both. A client counts as mobile from its user agent (native HTTP clients); browsers and unknown clients count as web.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-011"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-018",
+        "T3D-RULE-017"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-018",
+          "code": "constructn-api:src/services/token-rotation.service.ts#L59@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-017",
+          "code": "constructn-api:src/utils/utils.ts#L254@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-009-AC1",
+          "given": "Default settings and a sign-in from a browser",
+          "when": "The access token is issued",
+          "then": "It expires after 15 minutes",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "USER-REQ-009-AC2",
+          "given": "Default settings and a sign-in from the native mobile app",
+          "when": "The access token is issued",
+          "then": "It expires after 24 hours",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-010",
+      "type": "business-rule",
+      "title": "Refreshing never extends a session past its absolute end",
+      "statement": "Each session has an absolute end: the earlier of its stored end and its creation time plus the user's allowed session lifetime. A refresh after that point fails, so refreshing can't keep a session alive forever.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-011"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-019"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-019",
+          "code": "constructn-api:src/services/token-rotation.service.ts#L113@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-010-AC1",
+          "given": "A session whose absolute end has passed",
+          "when": "The client presents its refresh token",
+          "then": "The refresh fails as expired, and the user must sign in again",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-011",
+      "type": "business-rule",
+      "title": "Refresh tokens rotate, and reuse outside the grace window revokes the session",
+      "statement": "Each refresh replaces the refresh token. During a short grace window (30 seconds by default), concurrent refreshes with the previous token get the same new token. Presenting a stale token after the window revokes the whole session.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-020"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-020",
+          "code": "constructn-api:src/services/token-rotation.service.ts#L181@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "Behaviour on Redis loss and under refresh races is unverified"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-011-AC1",
+          "given": "Two tabs refresh with the same token within 30 seconds",
+          "when": "Both requests complete",
+          "then": "Both receive the same new refresh token, and the session stays valid",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "USER-REQ-011-AC2",
+          "given": "A refresh token that was replaced more than 30 seconds ago",
+          "when": "It is presented again",
+          "then": "The session is revoked",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-012",
+      "type": "business-rule",
+      "title": "Logout ends only the current session",
+      "statement": "Logging out revokes the session it was made from. The user's other sessions stay signed in.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-123",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-012-AC1",
+          "given": "A user signed in on web and on mobile",
+          "when": "They log out on web",
+          "then": "The web session stops working, and the mobile session keeps working",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-013",
+      "type": "business-rule",
+      "title": "API keys work only on their mapped project's external-capture routes",
+      "statement": "An API key is accepted only on the selected external-capture and folder routes, and only for the project it is mapped to. An API key sent alongside a normal user token on any other route is dropped before the request is forwarded.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-025"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-025",
+          "code": "api-gateway-service:src/modules/proxy/proxy.authz.ts#L96@26221f6c7bb3"
+        }
+      ],
+      "open_checks": [
+        "Routes are matched by substring"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-013-AC1",
+          "given": "An API key mapped to project A",
+          "when": "It is used on an external-capture route for project B",
+          "then": "The request is rejected",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

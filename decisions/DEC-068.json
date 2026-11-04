@@ -1,0 +1,22 @@
+{
+  "id": "DEC-068",
+  "title": "Which actions the assistant may take, and how they are confirmed",
+  "status": "open",
+  "question": "Which changes may the assistant make for a user (report schedules and recipients, issues and comments, asset stage changes, app navigation), from which surfaces (web chat, mobile, outside AI clients), and must each one be confirmed by a server-checked step rather than by the model's instructions?",
+  "context": "Web chat creates and changes emailed report schedules with only a prompt-level confirmation for deletes (AI-REQ-018). The unreleased field tools require a server-checked confirmation in a later turn and can move up to 500 assets at once (AI-REQ-019). MCP is read-only by default (AI-REQ-016). App actions only change the screen (AI-REQ-020). The GiNEE roadmap lists human approval gates as future work.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "AI",
+    "RPT",
+    "COLB",
+    "PROG"
+  ],
+  "requirements": [
+    "AI-REQ-016",
+    "AI-REQ-018",
+    "AI-REQ-019",
+    "AI-REQ-020",
+    "AI-REQ-021"
+  ]
+}

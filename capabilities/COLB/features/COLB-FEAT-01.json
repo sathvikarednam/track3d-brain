@@ -1,0 +1,271 @@
+{
+  "id": "COLB-FEAT-01",
+  "name": "Notes, issues and tasks",
+  "summary": "Location-pinned notes (including issues, tasks and discrepancies) on the site and on the 2D progress view, with assignees and deletion.",
+  "components": [
+    "svc.collab-service",
+    "web.track3d-web"
+  ],
+  "decisions": [],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Create a note",
+        "permission": "create-note",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Update a note",
+        "permission": "update-note",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a note",
+        "permission": "delete-note",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "View all notes",
+        "permission": "all-note",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "View own notes only",
+        "permission": "my-note",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "COLB-NFR-001",
+      "kind": "volume",
+      "statement": "Largest number of notes per project and per sheet that lists and the 2D view must handle.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How many open notes do the busiest projects carry?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "COLB-REQ-001",
+      "type": "requirement",
+      "title": "Create, view and manage notes, including on the 2D progress view",
+      "statement": "Users can create, view and manage field notes. On the 2D progress view they can add a note at a location, see notes at their locations, and show or hide notes.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-009",
+        "T3D-CAND-PROGRESS-TRACKING-FR-021",
+        "T3D-CAND-PROGRESS-TRACKING-FR-022",
+        "T3D-CAND-PROGRESS-TRACKING-FR-023"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-009, FR-021..FR-023",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-001-AC1",
+          "given": "A user on the 2D progress view",
+          "when": "They select a location and add a note",
+          "then": "The note is created at that location",
+          "status": "draft"
+        },
+        {
+          "id": "COLB-REQ-001-AC2",
+          "given": "A user on the 2D progress view",
+          "when": "They show notes, then hide them",
+          "then": "All notes appear at their locations, then disappear",
+          "status": "draft"
+        },
+        {
+          "id": "COLB-REQ-001-AC3",
+          "given": "Field notes exist",
+          "when": "A user opens the notes section",
+          "then": "They can find and manage them",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "COLB-REQ-002",
+      "type": "requirement",
+      "title": "Report a discrepancy for follow-up",
+      "statement": "Users can report a discrepancy between plan and site, which triggers a notification so someone follows it up.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-010"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-010",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-002-AC1",
+          "given": "A user reports a discrepancy",
+          "when": "It is submitted",
+          "then": "A notification is sent so it can be followed up",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "COLB-REQ-003",
+      "type": "requirement",
+      "title": "Merge issues and tasks into notes",
+      "statement": "Users can merge existing issues and tasks into a single note.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-024"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-024",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-003-AC1",
+          "given": "A user has an issue and a task about the same wall",
+          "when": "They merge them into a note",
+          "then": "One note holds both, and the originals are consolidated",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "COLB-REQ-004",
+      "type": "business-rule",
+      "title": "Updating a note requires its assignees",
+      "statement": "Every note update must include a non-empty assignee list, even if only other fields change.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-083"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-083",
+          "code": "collab-service:src/application/service/notev4.service.ts#L1545@971b0c462986"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-004-AC1",
+          "given": "An existing note with two assignees",
+          "when": "A client changes only its due date and omits assignees",
+          "then": "(Current behaviour) The update is rejected",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "COLB-REQ-005",
+      "type": "business-rule",
+      "title": "Deleting a note hides it rather than erasing it",
+      "statement": "Deleting a note marks it deleted and records the audit and notification context. The note itself is kept.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-084"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-084",
+          "code": "collab-service:src/application/service/notev4.service.ts#L1203@971b0c462986"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-005-AC1",
+          "given": "A note is deleted",
+          "when": "The project's notes are listed",
+          "then": "It no longer appears, but its record still exists with isDeleted set",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

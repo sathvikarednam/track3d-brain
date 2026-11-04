@@ -1,0 +1,17 @@
+{
+  "id": "CAPT",
+  "name": "Capture management",
+  "summary": "Observing a site at a location and time, and what makes processed results LIVE for customers.",
+  "related": [
+    "UPLD",
+    "PROJ",
+    "PROG"
+  ],
+  "owner": null,
+  "feature_order": [
+    "CAPT-FEAT-01",
+    "CAPT-FEAT-02",
+    "CAPT-FEAT-03",
+    "CAPT-FEAT-04"
+  ]
+}

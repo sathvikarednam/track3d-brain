@@ -1,0 +1,17 @@
+{
+  "id": "COLB",
+  "name": "Collaboration",
+  "summary": "Notes, issues and tasks on the site, comments and replies, daily notes, and their attachments.",
+  "related": [
+    "PROG",
+    "RPT",
+    "NOTIF",
+    "USER"
+  ],
+  "owner": null,
+  "feature_order": [
+    "COLB-FEAT-01",
+    "COLB-FEAT-02",
+    "COLB-FEAT-03"
+  ]
+}

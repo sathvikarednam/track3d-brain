@@ -1,0 +1,302 @@
+{
+  "id": "USER-FEAT-01",
+  "name": "Registration and verification",
+  "summary": "Open sign-up, email verification, and the first-login prompts that complete a profile and company details.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-011",
+    "DEC-012"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Registration and verification run before sign-in, so no project or company role applies.",
+    "actions": [
+      {
+        "action": "Register an account",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Open to anyone"
+      },
+      {
+        "action": "Verify email",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "USER-NFR-001",
+      "kind": "latency",
+      "statement": "Time from submitting sign-up to receiving the verification email.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What delivery time is acceptable, and is it measured (provider webhooks)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "USER-REQ-001",
+      "type": "business-rule",
+      "title": "Anyone can register",
+      "statement": "Track3D is B2B, and registration is open to everyone. No invitation is needed to create an account.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-001"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-125",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-001-AC1",
+          "given": "A person with no Track3D account and no invitation",
+          "when": "They register with their work email and a password",
+          "then": "An account is created and a verification email is sent",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-002",
+      "type": "business-rule",
+      "title": "Accounts never wait for approval",
+      "statement": "Pending approval applies only to projects. A user account is usable once its email is verified, with no approval step.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-BR-006"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-006",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-002-AC1",
+          "given": "A newly registered user who has verified their email",
+          "when": "They sign in",
+          "then": "They are signed in without waiting for any account approval",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-003",
+      "type": "business-rule",
+      "title": "Verifying email activates the account and applies pending invitations",
+      "statement": "A verification link works only if it is correctly signed, unexpired and not already used or revoked. On success the account is marked verified, all its verification links are revoked, and any pending project invitations for that email are applied.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-016"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-016",
+          "code": "constructn-api:src/controllersv2/user.controller.ts#L3197@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-122",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Applying invitations and sending emails can fail after the account is already marked verified"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-003-AC1",
+          "given": "A user with a pending invitation to project P and an unused verification link",
+          "when": "They open the link",
+          "then": "Their account is verified, the link stops working, and they are a member of project P",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "USER-REQ-003-AC2",
+          "given": "A verification link that has expired",
+          "when": "The user opens it",
+          "then": "Verification fails with an expired result, and the account stays unverified",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-004",
+      "type": "requirement",
+      "title": "Sign-up asks only for email and password",
+      "statement": "The sign-up form requires only an email and a password. Other details are collected after the first sign-in.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-SIGNUP-FLOW-FR-001"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-009",
+          "title": "Prior PRD - Signup flow (t3d-prd-agent prd-organised)",
+          "at": "FR-001",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-004-AC1",
+          "given": "A new user",
+          "when": "They open the sign-up page",
+          "then": "Only email and password fields are shown",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-005",
+      "type": "requirement",
+      "title": "First sign-in completes the profile, including job title",
+      "statement": "On first sign-in, users are prompted to complete their profile. Existing users without a job title must give one before continuing.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-SIGNUP-FLOW-FR-002",
+        "T3D-CAND-SIGNUP-FLOW-FR-006"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-009",
+          "title": "Prior PRD - Signup flow (t3d-prd-agent prd-organised)",
+          "at": "FR-002, FR-006",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-005-AC1",
+          "given": "A user signing in for the first time",
+          "when": "Sign-in completes",
+          "then": "They are prompted to complete their profile",
+          "status": "draft"
+        },
+        {
+          "id": "USER-REQ-005-AC2",
+          "given": "An existing user with no job title",
+          "when": "They sign in",
+          "then": "A job-title prompt is shown, and they can't continue until they answer it",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-006",
+      "type": "requirement",
+      "title": "Company details on first sign-in",
+      "statement": "A user from a new domain is asked for company type, company name and an optional mobile number. A user from a domain that already has a company sees that company's details filled in.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-SIGNUP-FLOW-FR-004",
+        "T3D-CAND-SIGNUP-FLOW-FR-005"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-009",
+          "title": "Prior PRD - Signup flow (t3d-prd-agent prd-organised)",
+          "at": "FR-004, FR-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-006-AC1",
+          "given": "The first user from a domain with no company",
+          "when": "They complete sign-up",
+          "then": "They are asked for company type, company name and an optional mobile number",
+          "status": "draft"
+        },
+        {
+          "id": "USER-REQ-006-AC2",
+          "given": "A user from a domain that already has a company",
+          "when": "They complete sign-up",
+          "then": "The company details are filled in for them",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

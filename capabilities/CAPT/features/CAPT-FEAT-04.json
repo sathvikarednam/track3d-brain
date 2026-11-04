@@ -1,0 +1,177 @@
+{
+  "id": "CAPT-FEAT-04",
+  "name": "Measurements on captures",
+  "summary": "Measuring points, distances, areas and drone surfaces in the viewer, sharing measurements, and turning them into progress assets.",
+  "components": [
+    "svc.constructn-api",
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "View measurements",
+        "permission": "view-measurements",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Create a measurement",
+        "permission": "create-measurements",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Update a measurement",
+        "permission": "update-measurements",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a measurement",
+        "permission": "delete-measurements",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "CAPT-NFR-004",
+      "kind": "latency",
+      "statement": "Time to return a drone height profile or cut/fill result, which may be calculated on first view.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is a wait acceptable on first view, or must results be precomputed?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "CAPT-REQ-013",
+      "type": "business-rule",
+      "title": "Measurements belong to a dated snapshot, and are private unless shared",
+      "statement": "A measurement is tied to the snapshot for its date in the project's time zone; giving either the date or the snapshot fills in the other. A measurement is private unless shared, and unsharing removes its assignees.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-091"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-091",
+          "code": "constructn-api:src/controllersv2/measurementv2.controller.ts#L187@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-013-AC1",
+          "given": "A shared measurement with two assignees",
+          "when": "Its owner unshares it",
+          "then": "It has no assignees, and other users no longer see it",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-014",
+      "type": "business-rule",
+      "title": "A categorised measurement also creates a progress asset",
+      "statement": "A measurement saved with a progress category also creates a linked progress asset in that category's first stage: a point becomes a circle, a distance a polyline, an area a polygon. If creating the asset fails, the measurement is still saved.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-092"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-092",
+          "code": "constructn-api:src/controllersv2/measurementv2.controller.ts#L331@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "A successful measurement doesn't prove the asset exists; assuming the first stage, failed links and repeated syncs need reconciliation"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-014-AC1",
+          "given": "A user draws an area measurement with category Drywall",
+          "when": "It is saved",
+          "then": "A polygon progress asset appears in Drywall's first stage",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-015",
+      "type": "business-rule",
+      "title": "Drone surface measurements are calculated on first view",
+      "statement": "Viewing a drone height profile or cut/fill measurement calculates it from the surface model if it isn't stored yet (100 points for profiles), and saves the result for next time.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-093"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-093",
+          "code": "constructn-api:src/controllersv2/measurementv2.controller.ts#L102@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-015-AC1",
+          "given": "A height-profile measurement viewed for the first time on a date",
+          "when": "It loads",
+          "then": "The profile is calculated and stored, and a second view uses the stored result",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

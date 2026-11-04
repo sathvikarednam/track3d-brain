@@ -1,0 +1,18 @@
+{
+  "id": "DEC-077",
+  "title": "Scope and safeguards for site intelligence (safety, segmentation, drywall readiness)",
+  "status": "open",
+  "question": "Which of safety monitoring, asset segmentation and drywall readiness are on the roadmap? For safety, which protective equipment is detected, how simultaneous hazards are prioritised, what false-positive rate is acceptable, and is facial recognition acceptable given privacy? For drywall, what criteria make an area ready?",
+  "context": "All four requirements in PROG-FEAT-13 are PRD only. Safety assumes live video feeds that Track3D doesn't ingest today, and the drywall PRD does not define readiness.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG"
+  ],
+  "requirements": [
+    "PROG-REQ-076",
+    "PROG-REQ-077",
+    "PROG-REQ-078",
+    "PROG-REQ-079"
+  ]
+}

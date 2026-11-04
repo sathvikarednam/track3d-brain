@@ -1,0 +1,225 @@
+{
+  "id": "PROJ-FEAT-04",
+  "name": "Project names and clones",
+  "summary": "How project names must be unique, and how a project shared between companies becomes independent clones.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api"
+  ],
+  "decisions": [
+    "DEC-020",
+    "DEC-021"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "No clone-specific permission string exists. Who may start a cross-company clone is unknown.",
+    "actions": [
+      {
+        "action": "Rename a project",
+        "permission": "update-project-details",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Clone a project to another company",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "company-super-admin": "unknown",
+          "support-user": "unknown"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROJ-NFR-004",
+      "kind": "latency",
+      "statement": "Time for a cross-company clone to finish and become usable.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How long may cloning take for a large project, and how is progress shown?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROJ-REQ-019",
+      "type": "business-rule",
+      "title": "Project names are unique within a company only",
+      "statement": "Two projects in the same company may not share a name. Projects in different companies may, including the independent clones of a shared project. Case, spacing, renames and archived or deleted projects are open (DEC-020).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-020"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-BR-034",
+        "T3D-BR-033"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-033, T3D-BR-034",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-019-AC1",
+          "given": "Company A already has a project named Tower A",
+          "when": "Someone in A creates another project named Tower A",
+          "then": "It is rejected as a duplicate",
+          "status": "draft"
+        },
+        {
+          "id": "PROJ-REQ-019-AC2",
+          "given": "Company A has a project named Tower A",
+          "when": "Company B creates a project named Tower A",
+          "then": "It is allowed",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-020",
+      "type": "business-rule",
+      "title": "Project names are unique across all companies today",
+      "statement": "The projects collection has a unique index on name alone. Today no two projects in any company can share a name, so company B can't create a Tower A once company A has one.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "PROJ-REQ-019 allows the same name in different companies. The shared models declare name as globally unique, and the index registry records that index from live $indexStats as matching constructn-api. Engineering to plan a company-scoped index (with a data check) once DEC-020 fixes the normalisation rules."
+      },
+      "decisions": [
+        "DEC-020"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "projectIndexes",
+          "code": "db-models-owner:src/definitions/project.indexes.ts#L8@7f6af955b901"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "projectDefinition name field",
+          "code": "db-models:src/definitions/project.ts#L127@1cabc8a1de8d"
+        }
+      ],
+      "open_checks": [
+        "Confirm on the live database with getIndexes, and check whether clone and suffix naming (PROJ-REQ-017) exists to avoid this index"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-020-AC1",
+          "given": "Company A has a project named Tower A",
+          "when": "Company B creates a project named Tower A",
+          "then": "(Current behaviour) The insert fails on the unique name index",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-021",
+      "type": "business-rule",
+      "title": "Shared projects become independent clones per company",
+      "statement": "If two companies share a project, each gets its own clone. After creation, changes to one clone never affect the other. What a clone copies is open (DEC-021).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-021"
+      ],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-BR-020",
+        "T3D-BR-022"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-020, T3D-BR-022",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The external duplication worker is not traced. Establish what is copied and prove nothing syncs later"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-021-AC1",
+          "given": "Companies A and B each have a clone of a shared project",
+          "when": "A edits its clone's hierarchy",
+          "then": "B's clone is unchanged",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-022",
+      "type": "business-rule",
+      "title": "Cloning runs in an external worker",
+      "statement": "Cloning checks the source project, then asks an external duplication service to do the copy. When it calls back, the new project's status is set to the original's.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-021"
+      ],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-009"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-009",
+          "code": "project-api:src/application/services/project.service.ts#L2548@6bc5d334eaae"
+        }
+      ],
+      "open_checks": [
+        "Restricted check, handled with engineering separately."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-022-AC1",
+          "given": "An Approved source project",
+          "when": "Its clone finishes and the worker calls back",
+          "then": "The clone's status is Approved",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

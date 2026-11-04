@@ -1,0 +1,227 @@
+{
+  "id": "DSGN-FEAT-05",
+  "name": "Drawing sets and automated intake",
+  "summary": "Taking in multi-page PDF drawing sets (page selection, crop, rotate, assigning pages to levels), automated splitting and hierarchy creation, and prototype tools for high-resolution tiling and BIM data extraction.",
+  "components": [
+    "web.track3d-web",
+    "svc.constructn-api",
+    "worker.pdf-tiler",
+    "worker.forge-bim-extractor"
+  ],
+  "decisions": [
+    "DEC-042"
+  ],
+  "roles": {
+    "status": "draft",
+    "note": "The PRD gives page assignment to project admins and cropping and tagging to collaborators. Uploading the resulting sheets uses the ordinary design permissions, which collaborators don't have (DSGN-REQ-004).",
+    "actions": [
+      {
+        "action": "Upload a drawing set and assign pages to levels",
+        "permission": "create-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Crop and tag pages",
+        "permission": "create-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "conditional",
+          "viewer": "deny"
+        },
+        "note": "Allowed for collaborators in the PRD"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "DSGN-NFR-007",
+      "kind": "volume",
+      "statement": "Largest drawing set (pages and file size) that can be previewed and split without the browser failing.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What page count and file size must a drawing set support?"
+    },
+    {
+      "id": "DSGN-NFR-008",
+      "kind": "availability",
+      "statement": "Failed PDF splits and uploads are retried, and persistent failures are logged and reported to the user.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How many retries, and how should failures be shown to the user (an open question in the PRD)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "DSGN-REQ-033",
+      "type": "requirement",
+      "title": "Upload a multi-page drawing set and assign pages to levels",
+      "statement": "Users can upload a multi-page PDF, page through it, pick pages and assign each to a level, crop and rotate pages, tag them, and duplicate a design across several levels without overwriting existing designs. A corrupt or unsupported PDF is refused with a message.",
+      "rationale": "The web upload has a page preview with thumbnails, crop, rotate and zoom tools. Assigning several pages to several levels in one go, tagging and duplication across levels were not traced.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-040"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-026",
+          "title": "Prior PRD - Document management (multi-page PDF floor plans) (t3d-prd-agent prd-organised)",
+          "at": "FR-001, FR-002, FR-003, FR-004, FR-005, AC-001..AC-004, EC-001, EC-003, EC-004, EC-005",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "track3d-web:src/features/hierarchy-designs/components/PDFToolbarRotation.tsx#L40@2fd5bdd22190"
+        }
+      ],
+      "open_checks": [
+        "Trace whether pages can be assigned to several levels in one upload and whether designs can be duplicated across levels"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-033-AC1",
+          "given": "A 20-page PDF drawing set",
+          "when": "An admin uploads it",
+          "then": "All 20 pages can be viewed and navigated",
+          "status": "draft"
+        },
+        {
+          "id": "DSGN-REQ-033-AC2",
+          "given": "An uploaded drawing set",
+          "when": "The admin assigns page 4 to Level 1 and page 5 to Level 2",
+          "then": "Each level gets its page as a sheet",
+          "status": "draft"
+        },
+        {
+          "id": "DSGN-REQ-033-AC3",
+          "given": "A tagged design on Level 1",
+          "when": "The admin duplicates it to Levels 2 and 3",
+          "then": "Levels 2 and 3 get the design and their existing designs are unchanged",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-034",
+      "type": "requirement",
+      "title": "Automatic splitting and hierarchy creation from a drawing set",
+      "statement": "A multi-page PDF sent for processing is split into single pages, stored in a folder for its project, and read by an agent that creates the project hierarchy and assigns each page as a design. The endpoints must be authenticated.",
+      "rationale": "Not found in constructn-api or track3d-web. Whether this is in scope is DEC-042.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-042"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-027",
+          "title": "Prior PRD - PDF processing (\"Tech discussion\", automated split and agent intake) (t3d-prd-agent prd-organised)",
+          "at": "FR-001..FR-006, AC-001, AC-002, NFR-001",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-034-AC1",
+          "given": "A 12-page PDF for project P",
+          "when": "It is sent for processing",
+          "then": "Twelve single-page PDFs are stored in P's folder and the agent creates or reuses levels and assigns one page to each",
+          "status": "draft"
+        },
+        {
+          "id": "DSGN-REQ-034-AC2",
+          "given": "A corrupt PDF",
+          "when": "It is sent for processing",
+          "then": "The error is logged and the user is told the file is corrupt",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-035",
+      "type": "business-rule",
+      "title": "High-resolution tiling picks its resolution from the drawing",
+      "statement": "A tiling prototype rasterises a PDF at a resolution chosen from the page size and how dense its vector linework is (300 to 900 DPI), then cuts 256-pixel map tiles for every zoom level up to full resolution.",
+      "rationale": "Unversioned prototype (SRC-030). The production tiles job is an ECS task started by constructn-api (DSGN-REQ-014); whether it uses this logic is not established.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "worker.pdf-tiler"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-030",
+          "title": "Local, unversioned prototypes forge-bim-extractor and pdf-tiler",
+          "at": "pdf-tiler/src/utils/deriveDpi.js lines 28-45; pdf-tiler/src/steps/tileTiff.js lines 23-33",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Confirm whether the ECS tiles task is built from pdf-tiler and which commit is deployed"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-035-AC1",
+          "given": "An A0-size CAD PDF with dense linework",
+          "when": "The prototype tiles it",
+          "then": "It is rasterised at 900 DPI and tiled from zoom 0 to the zoom that shows full resolution",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-036",
+      "type": "business-rule",
+      "title": "BIM element data extraction is a prototype only",
+      "statement": "A prototype reads a translated BIM model's geometry and element properties from Autodesk, for example to list walls, floors and doors for takeoff. It is run by hand and is not part of the product's design processing.",
+      "rationale": "Unversioned prototype (SRC-030). It reads Autodesk credentials from local environment variables; no credentials are in its source files.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "worker.forge-bim-extractor"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-030",
+          "title": "Local, unversioned prototypes forge-bim-extractor and pdf-tiler",
+          "at": "forge-bim-extractor/src/index.js lines 25-75; src/take-off.js",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-036-AC1",
+          "given": "A BIM model already translated by Autodesk",
+          "when": "The prototype is run against its model reference",
+          "then": "It lists the model's views, geometry counts and element properties",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

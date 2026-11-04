@@ -1,0 +1,18 @@
+{
+  "id": "DEC-078",
+  "title": "Who marks and edits progress outside support marking",
+  "status": "open",
+  "question": "In ML-method projects, may users edit progress or only report discrepancies? Who sets a project's method? For clients marking progress on an iPad, how are offline marks queued and synced, how are simultaneous edits resolved, and what device data protection is required?",
+  "context": "The web app switches behaviour on a per-project ML-method flag (PROG-REQ-058) and limits predictions to those projects (PROG-REQ-071). The progress monitoring PRD leaves editing in the ML method to leadership, and the iPad PRD leaves offline handling and security open.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG"
+  ],
+  "requirements": [
+    "PROG-REQ-058",
+    "PROG-REQ-059",
+    "PROG-REQ-060",
+    "PROG-REQ-071"
+  ]
+}

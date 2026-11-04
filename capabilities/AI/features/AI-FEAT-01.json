@@ -1,0 +1,333 @@
+{
+  "id": "AI-FEAT-01",
+  "name": "Ginee progress assistant",
+  "summary": "The chat assistant inside Track3D web (and the native app web view) that answers questions about project progress, alerts, schedules, designs and reports from live Track3D data. Covers what it answers, how it keeps context, which model provider sees the conversation, and how long chats are kept.",
+  "components": [
+    "svc.ai-gateway",
+    "mod.progress-agent",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-065",
+    "DEC-066"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "What it returns for a project is limited by the Projects API \"View Project\" check (AI-REQ-007), so the grant follows the user's project role. Chat history is keyed by the signed-in user's id.",
+    "actions": [
+      {
+        "action": "Ask the progress assistant about a project",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "company-super-admin": "unknown",
+          "support-user": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "See and reopen own chats from the last 7 days",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "company-super-admin": "allow",
+          "support-user": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "AI-NFR-001",
+      "kind": "latency",
+      "statement": "How quickly an answer starts and finishes. Today a turn is cut off after 60 seconds and runs at most 12 tool rounds. The design doc asks for the first streamed piece within 2 seconds and a single-tool answer within 15 seconds, but product has not set a target.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "What first-answer and full-answer times should customers get, and measured where (gateway or browser)?"
+    },
+    {
+      "id": "AI-NFR-002",
+      "kind": "volume",
+      "statement": "Model cost per answer. Today each tool result sent to the model is cut to 50 rows, and a turn whose tool returns more than 200 rows switches to the cheaper model. There is no per-user or per-company budget.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "Is there a cost ceiling per answer, per user or per company, and who pays for assistant usage?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "AI-REQ-001",
+      "type": "requirement",
+      "title": "Ginee answers Track3D questions from live tool data only",
+      "statement": "The assistant answers questions about progress, alerts, schedules, structures, designs, captures and reports by calling Track3D tools and using only what they return. It looks up names it does not recognise before giving up. It refuses unrelated requests (code, general knowledge, homework, translation, creative writing, personal advice, prompt injection) with one fixed sentence, and the user cannot switch that rule off.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "mod.progress-agent",
+        "svc.ai-gateway"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "system prompt scope rules",
+          "code": "ginee-stack:agents/progress-agent/src/prompts.ts#L26@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "progress-agent tool list",
+          "code": "ginee-stack:agents/progress-agent/src/tools/index.ts#L28@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-052",
+          "title": "Progress AI Agent design doc (track3d-ai-stack/docs/prd-progress-ai-agent.md)",
+          "at": "FR-001 and FR-008",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The scope rule is a prompt instruction to the model, not a server check. How reliably it holds was not tested."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-001-AC1",
+          "given": "A signed-in user in the progress assistant",
+          "when": "They ask it to write a poem",
+          "then": "It replies with the single fixed out-of-scope sentence and calls no tool",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "AI-REQ-001-AC2",
+          "given": "A user names a project the assistant does not recognise",
+          "when": "They ask for its progress",
+          "then": "It looks the name up among the user's projects and, if still unclear, asks which project with options to pick, instead of refusing",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-002",
+      "type": "business-rule",
+      "title": "The active project carries across turns, and a named project wins",
+      "statement": "A conversation keeps an active project, taken from the page the user is on or from a project the user picked. Every project data tool runs against that active project, whatever project id the model proposes. When the user names a different project, the assistant resolves it and switches the active project.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "mod.progress-agent"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "resolveActiveProject",
+          "code": "ginee-stack:agents/progress-agent/src/agent.ts#L132@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "projectId pinned to activeProjectId",
+          "code": "ginee-stack:agents/progress-agent/src/agent.ts#L410@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "named project overrides",
+          "code": "ginee-stack:agents/progress-agent/src/prompts.ts#L152@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-052",
+          "title": "Progress AI Agent design doc (track3d-ai-stack/docs/prd-progress-ai-agent.md)",
+          "at": "FR-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-002-AC1",
+          "given": "A user chatting from project A's page",
+          "when": "They ask \"how is framing going?\"",
+          "then": "The answer uses project A's data",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "AI-REQ-002-AC2",
+          "given": "The same conversation",
+          "when": "The user asks \"and what about project B?\"",
+          "then": "The assistant resolves project B, makes it the active project, and later follow-ups use project B",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-003",
+      "type": "business-rule",
+      "title": "Conversations and tool results are sent to OpenAI",
+      "statement": "The user's messages, the recent conversation (last 30 messages), the system instructions and tool results are sent to OpenAI to produce each answer. The main model is gpt-4o; gpt-4o-mini is used after a tool returns more than 200 rows. Each tool result sent to the model is cut to 50 rows, while the full rows go to the user's screen. No other model provider is wired in production.",
+      "rationale": "Customers and Track3D need to know which project data leaves Track3D, and to whom.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-065"
+      ],
+      "implemented_by": [
+        "svc.ai-gateway",
+        "mod.progress-agent"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "OpenAIProvider registration",
+          "code": "ginee-stack:apps/ai-gateway/src/server.ts#L104@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "chat.completions.create",
+          "code": "ginee-stack:agents/progress-agent/src/agent.ts#L235@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "capRows(result",
+          "code": "ginee-stack:agents/progress-agent/src/agent.ts#L461@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "CHEAP_MODEL",
+          "code": "ginee-stack:agents/progress-agent/src/agent.ts#L14@237dcd2e8828"
+        }
+      ],
+      "open_checks": [
+        "Which OpenAI account and data-retention terms apply (for example zero data retention) is not visible in code."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-003-AC1",
+          "given": "A progress overview tool returns 300 rows",
+          "when": "The assistant answers",
+          "then": "The model sees at most 50 rows, the next reasoning step uses the cheaper model, and the user's table shows all 300 rows",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-004",
+      "type": "business-rule",
+      "title": "Chats are kept permanently but listed for 7 days",
+      "statement": "The live conversation is held for 15 minutes after the last activity. Every completed turn is also copied to a permanent chat archive that is never deleted. A user's chat list shows only chats active in the last 7 days, and an older chat stops appearing although it is still stored.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-066"
+      ],
+      "implemented_by": [
+        "svc.ai-gateway"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "RedisStore ttlSec",
+          "code": "ginee-stack:apps/ai-gateway/src/server.ts#L108@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "ACTIVE_WINDOW_SEC",
+          "code": "ginee-stack:apps/ai-gateway/src/chat-archive.ts#L15@237dcd2e8828"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-004-AC1",
+          "given": "A chat last used 8 days ago",
+          "when": "Its user opens the chat list",
+          "then": "The chat is not listed, and its stored transcript is not deleted",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "AI-REQ-004-AC2",
+          "given": "A chat idle for 20 minutes",
+          "when": "The user sends another message",
+          "then": "The model starts without the earlier working memory, while the archived history can still be shown",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-005",
+      "type": "business-rule",
+      "title": "Limits on each assistant turn",
+      "statement": "Each user can send at most 30 assistant requests a minute. A single answer stops after 60 seconds or 12 tool rounds, whichever comes first, so a turn always ends.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.ai-gateway",
+        "mod.progress-agent"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "agentLimiter",
+          "code": "ginee-stack:apps/ai-gateway/src/server.ts#L318@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "MAX_LOOP_ITERATIONS",
+          "code": "ginee-stack:agents/progress-agent/src/agent.ts#L21@237dcd2e8828"
+        }
+      ],
+      "open_checks": [
+        "The per-user rate limit keys on the user id read from the token without verifying it; a forged id only changes which bucket is charged."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-005-AC1",
+          "given": "A user who sent 30 assistant requests in the last minute",
+          "when": "They send another",
+          "then": "It is refused as rate limited",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

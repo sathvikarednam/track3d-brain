@@ -1,0 +1,14 @@
+{
+  "id": "DEC-010",
+  "title": "Who may edit quantities and configuration, and what recalculates",
+  "status": "open",
+  "question": "Which roles may edit planned quantities, measured progress, categories and stages? What must recalculate after each kind of change?",
+  "context": "The role matrices in each PROG feature come from code and seed data whose deployed assignments are unverified. There is no takeoff-specific permission string in the seed catalog.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG",
+    "USER"
+  ],
+  "requirements": []
+}

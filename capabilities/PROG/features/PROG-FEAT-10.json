@@ -1,0 +1,371 @@
+{
+  "id": "PROG-FEAT-10",
+  "name": "Asset scope and progress marking methods",
+  "summary": "Marking assets out of scope and who sees them, the two ways progress is marked (support marking by hand and the ML method), and clients marking progress on site from an iPad.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-078"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The out-of-scope switch is disabled with \"Access Restricted. Contact admin\" when the caller lacks the asset permission; the switch stores the asset's \"do not track\" flag, so the same update-asset grant is assumed.",
+    "actions": [
+      {
+        "action": "Mark an asset out of scope or back in scope",
+        "permission": "update-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "See out-of-scope assets on the floor plan",
+        "permission": "view-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "support-user": "allow"
+        },
+        "note": "Hidden by default for customers"
+      },
+      {
+        "action": "Mark progress on site from an iPad",
+        "permission": "create-asset",
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-014",
+      "kind": "freshness",
+      "statement": "Time for progress marked on an iPad without connectivity to reach the server once it reconnects.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Must offline marks be queued on the device, and how long may they wait before sync?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-056",
+      "type": "requirement",
+      "title": "Marking an asset out of scope",
+      "statement": "A user toggles one asset as out of scope after confirming that it will no longer be tracked. Doing so also turns off its uncertainty approval and partial-height flags, and the asset can't otherwise be modified while it stays out of scope. Turning the switch off brings the asset back into tracking without confirmation.",
+      "rationale": "Extends PROG-REQ-015, which excludes \"do not track\" assets from progress; this covers how the flag is set. The PRD's persistence across past and future captures fits the flag being stored on the asset but was not tested. The PRD's reserved grey for out-of-scope assets (FR-004, stages may not use it) was not found in progress configuration code. Bulk marking is out of scope in the PRD, yet the multi-asset panel offers \"Mark selected assets as Out of Scope\".",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-062",
+          "title": "Prior PRDs - Takeoff management, electrical progress tracking and out-of-scope assets (t3d-prd-agent prd-organised)",
+          "at": "asset-management.md FR-001..FR-004, AC-001..AC-003, EC-001, EC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "OutOfScopeToggle",
+          "code": "track3d-web:src/components/rahman/core/asset-details-components.tsx#L72@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "locked message",
+          "code": "track3d-web:src/components/rahman/core/asset-details-components.tsx#L148@0e9dabc75e2f"
+        }
+      ],
+      "open_checks": [
+        "Confirm the backend rejects edits to out-of-scope assets; the lock was seen only in the web app"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-056-AC1",
+          "given": "A tracked asset with partial height on",
+          "when": "A user switches it out of scope and confirms",
+          "then": "The asset is marked do-not-track, partial height is off, and its fields can't be edited",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-056-AC2",
+          "given": "A user switches an asset out of scope",
+          "when": "They cancel the confirmation",
+          "then": "The asset stays tracked",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-057",
+      "type": "business-rule",
+      "title": "Out-of-scope assets are shown to support and hidden from customers by default",
+      "statement": "On the floor plan, out-of-scope assets are shown by default to support users and hidden by default for customers. Either can change this with the \"Out of scope assets\" filter, and a link that turns them off keeps them off. They are drawn in a neutral dark grey.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-062",
+          "title": "Prior PRDs - Takeoff management, electrical progress tracking and out-of-scope assets (t3d-prd-agent prd-organised)",
+          "at": "asset-management.md FR-001, FR-005",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "default visibility",
+          "code": "track3d-web:src/adapter/store/progress.store.ts#L1462@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "filter toggle",
+          "code": "track3d-web:src/components/rahman/core/filter-progress.tsx#L1346@0e9dabc75e2f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-057-AC1",
+          "given": "A structure with one out-of-scope asset",
+          "when": "A customer opens the floor plan with default filters",
+          "then": "The asset is not drawn",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-057-AC2",
+          "given": "The same structure",
+          "when": "A support user opens it",
+          "then": "The asset is drawn in dark grey",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-058",
+      "type": "business-rule",
+      "title": "Projects use either the support-marking method or the ML method",
+      "statement": "A project flagged for the ML method treats each progress asset as being at a single stage, and its filters drop \"Only show not started assets\". Both methods use the same progress landing page. In the ML method the viewer asks before discarding unsaved new assets.",
+      "rationale": "The progress monitoring plan PRD asks for one landing page for both methods and no not-started assets in the ML view. The web reads the flag from the project's settings; who sets it was not traced. Predictions are also limited to ML-method projects (PROG-REQ-071).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-078"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "progress-monitoring.md FR-001..FR-003, AC-001, AC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "mlOps flag",
+          "code": "track3d-web:src/adapter/store/project.store.ts#L399@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "not-started filter hidden",
+          "code": "track3d-web:src/components/rahman/core/filter-progress.tsx#L1357@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "single-stage assets",
+          "code": "track3d-web:src/adapter/utils/progress-report.utils.ts#L295@0e9dabc75e2f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-058-AC1",
+          "given": "A project flagged for the ML method",
+          "when": "A user opens the progress filters",
+          "then": "There is no \"Only show not started assets\" option",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-058-AC2",
+          "given": "A project without the flag",
+          "when": "A user opens the progress filters",
+          "then": "The not-started option is offered",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-059",
+      "type": "requirement",
+      "title": "Users can report a discrepancy in ML-marked progress",
+      "statement": "In the ML method a prominent \"Report Discrepancy\" button lets a user flag progress they believe is wrong; the report is logged and the relevant people are told. Where editing is not allowed in the ML method, an attempted edit is blocked with a message.",
+      "rationale": "PRD only; no discrepancy reporting was found in track3d-web or api-2d-progress. Whether users may edit progress in the ML method is an open leadership decision in the PRD (DEC-078).",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-078"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "progress-monitoring.md FR-004, EC-001, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-059-AC1",
+          "given": "A user viewing ML-marked progress",
+          "when": "They report a discrepancy",
+          "then": "The report is logged and the responsible team is notified",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-060",
+      "type": "requirement",
+      "title": "Clients mark progress on site from an iPad",
+      "statement": "A signed-in client sees an overview of progress on an iPad, marks progress on a drawing with drawing tools, edits or deletes what they marked, and zooms and pans. Marks made without connectivity are queued and synced later, and simultaneous edits to the same progress raise a conflict the user resolves.",
+      "rationale": "PRD only for the iPad scope; the iOS app was not read. Offline handling and data protection on the device are open in the PRD (DEC-078). The server records whether a mark came from iOS (PROG-REQ-061).",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-078"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "progress-scope-ipad.md FR-001..FR-004, AC-001..AC-003, EC-001, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-060-AC1",
+          "given": "A client on an iPad viewing a drawing",
+          "when": "They mark an area with the drawing tools",
+          "then": "The progress is saved and can later be edited or deleted",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-060-AC2",
+          "given": "A client marks progress while offline",
+          "when": "Connectivity returns",
+          "then": "The queued marks are sent to the server",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-061",
+      "type": "business-rule",
+      "title": "Where an asset was created is guessed from the device header",
+      "statement": "New progress and takeoff assets record their origin from the request's user-agent: \"ios\" if it contains \"Darwin\" (or if there is none), otherwise \"android\". Assets created from the web app are therefore recorded as android, and the web origin value is not used.",
+      "rationale": "Current behaviour, likely unintended; it matters for measuring iPad adoption (progress-scope-ipad.md success metrics). Single takeoff creation also overwrites any origin the caller sends: it keeps ios only when the caller looks like iOS and sent none, and otherwise records android.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "takeoff user-agent check",
+          "code": "api-2d-progress:src/adapters/controllers/take-off.controller.ts#L44@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "takeoff origin",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L223@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "progress user-agent check",
+          "code": "api-2d-progress:src/adapters/controllers/assetv3.controller.ts#L153@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "progress origin",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L1527@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Decide whether origin should record web; existing analytics built on origin may be skewed"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-061-AC1",
+          "given": "A desktop browser user-agent without \"Darwin\"",
+          "when": "A takeoff asset is created",
+          "then": "Its origin is recorded as android",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-061-AC2",
+          "given": "A request with no user-agent header",
+          "when": "A takeoff asset is created",
+          "then": "Its origin is recorded as ios",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

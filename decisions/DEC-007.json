@@ -1,0 +1,17 @@
+{
+  "id": "DEC-007",
+  "title": "When progress becomes visible to customers",
+  "status": "open",
+  "question": "Which progress outputs are LIVE for customers, and when? Does support-entered progress need approval before customers see it?",
+  "context": "Today support-entered measurements start inactive and customer-entered ones start active, so customer and support totals can differ for the same project (PROG-REQ-016, PROG-REQ-024).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG",
+    "CAPT"
+  ],
+  "requirements": [
+    "PROG-REQ-016",
+    "PROG-REQ-024"
+  ]
+}

@@ -1,0 +1,408 @@
+{
+  "id": "PROG-FEAT-02",
+  "name": "Takeoff",
+  "summary": "Planned quantities per stage and location: the denominator that measured work is compared against. Takeoff can be keyed in by hand, imported (Arth parser, Togal, upload), or absent in a non-takeoff project.",
+  "components": [
+    "svc.api-2d-progress",
+    "svc.arth-takeoff-parser",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-001",
+    "DEC-002",
+    "DEC-003",
+    "DEC-008",
+    "DEC-010"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The seed catalog has no takeoff-specific permission string. The docs list \"Update takeoff\" for admin and collaborator without naming the permission that enforces it (DEC-010).",
+    "actions": [
+      {
+        "action": "View planned quantities",
+        "permission": "view-category",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Edit planned quantities",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": "Enforcing permission unknown"
+      },
+      {
+        "action": "Import takeoff",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-002",
+      "kind": "volume",
+      "statement": "Largest takeoff import (elements per sheet, sheets per project) that must succeed.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What import sizes do customers send today, and what is the commitment?"
+    },
+    {
+      "id": "PROG-NFR-003",
+      "kind": "latency",
+      "statement": "Time from a takeoff correction to recalculated historical percentages appearing in overview, trends and reports.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is recalculation expected within seconds, or is a background job with a visible \"recalculating\" state acceptable?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-005",
+      "type": "business-rule",
+      "title": "Correcting a takeoff error recalculates past percentages",
+      "statement": "When a takeoff change corrects an error, past completion percentages must be recalculated against the corrected quantity. Measured quantities on past dates stay as recorded. This does not set the policy for genuine scope changes (DEC-001) or for already-issued report files (DEC-004).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-001",
+        "DEC-004"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-037"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-037",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-051",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L1301@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "No end-to-end test shows recalculated history propagating consistently to overview"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-005-AC1",
+          "given": "On a past date, 40 units were measured against an erroneous takeoff of 100",
+          "when": "The takeoff is corrected to 80",
+          "then": "That date's percentage becomes 50% wherever measured/takeoff is shown, and the measured quantity stays 40",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-006",
+      "type": "business-rule",
+      "title": "Takeoff and progress carry forward to a revised design",
+      "statement": "Today, when a revised design is activated, existing takeoff and progress carry forward to it. Whether this should remain the intended behaviour is an open question (DEC-003).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-003"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-BR-025"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-025",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-006-AC1",
+          "given": "A sheet with takeoff and recorded progress",
+          "when": "A revised design for that location is activated",
+          "then": "The existing takeoff and progress remain and apply to the revised design",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-007",
+      "type": "business-rule",
+      "title": "Location takeoff is the sum of its active takeoff elements",
+      "statement": "The planned quantity for a location, category and stage is the sum of that stage's quantity across the active takeoff elements. If none remain, it is zero.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-051"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-051",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L1301@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "takeoff.md (Business Rules)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-007-AC1",
+          "given": "Two active takeoff elements on a floor with 30 and 50 units of Drywall-Framing, and one doNotTrack element with 20",
+          "when": "Takeoff totals are calculated",
+          "then": "The floor's Drywall-Framing takeoff is 80",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-008",
+      "type": "business-rule",
+      "title": "Denominator precedence, falling back to the measured value",
+      "statement": "A percentage uses the takeoff keyed in by hand for the stage and location first, then imported takeoff. If neither exists, it uses the measured quantity itself, so the item shows as 100% complete.",
+      "rationale": "The fallback is a defensive default in code, not a product decision. It conflicts with PROG-REQ-009.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-002",
+        "DEC-008"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/progress-calculation.md §5",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-057",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L1997@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-008-AC1",
+          "given": "A stage and location with 25 units measured and no takeoff keyed in or imported",
+          "when": "Its completion percentage is calculated",
+          "then": "The denominator is 25 and the item shows 100%",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-009",
+      "type": "requirement",
+      "title": "Missing takeoff is surfaced and can be filled in",
+      "statement": "In a takeoff project, when any stage in a location or category has no takeoff, users see a notice saying the value is missing and can enter the missing values from an update form.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The PRD expects missing takeoff to be flagged. The code's fallback makes such items look 100% complete. Product must choose the intended behaviour (DEC-008)."
+      },
+      "decisions": [
+        "DEC-008"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-005",
+        "T3D-CAND-PROGRESS-TRACKING-FR-006"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-005, FR-006",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/progress-calculation.md §5",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-009-AC1",
+          "given": "A takeoff value is missing for a stage in a level or category",
+          "when": "The user views the progress details or overview page",
+          "then": "A notice tells the user the value is missing",
+          "status": "disputed"
+        },
+        {
+          "id": "PROG-REQ-009-AC2",
+          "given": "The missing-takeoff notice is showing",
+          "when": "The user enters the missing value",
+          "then": "The notice disappears",
+          "status": "disputed"
+        },
+        {
+          "id": "PROG-REQ-009-AC3",
+          "given": "Missing takeoff values exist",
+          "when": "The user selects Update",
+          "then": "A form opens listing every missing value. Submitting it saves the values and confirms success.",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-010",
+      "type": "requirement",
+      "title": "Projects can be tracked without takeoff",
+      "statement": "A progress project can run without takeoff. It is then tracked in absolute measured quantities, and percentage indicators are hidden. Users can switch a project between takeoff and non-takeoff views without losing data.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-001",
+        "T3D-CAND-PROGRESS-TRACKING-FR-002",
+        "T3D-CAND-PROGRESS-TRACKING-FR-003"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-001..FR-003",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-064",
+          "code": "api-2d-progress:src/application/service/progress-alerts.service.ts#L176@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-010-AC1",
+          "given": "A user is on a project page",
+          "when": "They switch between takeoff and non-takeoff mode",
+          "then": "The page reflects the selected mode and no data is lost",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-010-AC2",
+          "given": "A non-takeoff project",
+          "when": "Its project page loads",
+          "then": "No percentage indicators are shown",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-010-AC3",
+          "given": "Progress data in non-takeoff mode",
+          "when": "The user views it",
+          "then": "Values are shown as absolute quantities",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-011",
+      "type": "business-rule",
+      "title": "Takeoff quantities are split across zones by coverage",
+      "statement": "Each takeoff element's quantity is allocated to the zones of its structure in proportion to the share of the element each zone covers. If the geometry for one zone fails, that zone is skipped and the others are still saved.",
+      "rationale": "This allocation does not itself enforce that zones never overlap. That rule (T3D-BR-036, gap T3D-GAP-011) moves with PROJ.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-052"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-052",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L1363@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/progress-calculation.md §4",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-011-AC1",
+          "given": "A 100-unit takeoff element, 60% inside zone A and 40% inside zone B",
+          "when": "Zone contributions are calculated",
+          "then": "Zone A receives 60 units and zone B receives 40",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,357 @@
+{
+  "id": "PROC-FEAT-04",
+  "name": "Failure handling, retry and rework",
+  "summary": "What happens when processing fails or a result is rejected: final failure states, ML escalation, cancelling, automatic retries, splitting a run for rework, and how customers are told about capture problems.",
+  "components": [
+    "worker.antman",
+    "job.airflow-dags",
+    "svc.constructn-api"
+  ],
+  "decisions": [
+    "DEC-054",
+    "DEC-055",
+    "DEC-058"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Recovery actions are taken by Track3D staff in Antman or by Antman itself. Customers don't start retries in the traced code.",
+    "actions": [
+      {
+        "action": "Cancel a running stitching or processing run",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Create a rework split of a run",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Send a customer an email about capture issues",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "PRD only (PROC-REQ-025)"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROC-NFR-006",
+      "kind": "availability",
+      "statement": "Airflow retries download and upload steps three times and stitching twice; a virtual machine that fails to start is requeued for scheduled jobs. There is no retry limit for the whole job in the traced code.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "What share of captures may fail processing, and how fast must a failed capture be retried or the customer told (DEC-054, DEC-055)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROC-REQ-020",
+      "type": "business-rule",
+      "title": "The pipeline's last step reports success or failure, and failures are final for that run",
+      "statement": "A run finishes when its last step (the emailer or person-blur step) reports a final event. The outcome is the pipeline status it reports; (Current behaviour) if none is reported, it counts as passed. A failed stitching or processing run, a failed verification and a rejected sign-off are final: that run can't change status again, and any rework needs a new run.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-054"
+      ],
+      "implemented_by": [
+        "worker.antman",
+        "job.airflow-dags"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E131",
+          "code": "ant-man:app/services/task_run_service.py#L63@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E132",
+          "code": "ant-man:app/services/task_run_service.py#L152@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-041",
+          "title": "Processing review, publication and recovery trace - Antman lifecycle, sessions, recovery (2026-10-27)",
+          "at": "E147",
+          "code": "ant-man:app/utils/capture_run_fsm.py#L85@6ac4185b7031"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-020-AC1",
+          "given": "A processing run whose last step reports a final event with no pipeline status",
+          "when": "Antman records the callback",
+          "then": "(Current behaviour) The run is treated as successful",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-020-AC2",
+          "given": "A processing run whose last step reports pipeline status failed",
+          "when": "Antman records the callback",
+          "then": "The run is processing failed (pipeline) and no further status change is accepted",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-021",
+      "type": "business-rule",
+      "title": "Operators can escalate a run to the ML team",
+      "statement": "An operator can escalate a run that is in stitching, processing or a review step to the ML team with notes and failure reasons. The run becomes inactive, the escalation is logged, and the configured ML recipients are emailed when the email settings exist.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-054"
+      ],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "ml_escalate",
+          "code": "ant-man:app/services/capture_lifecycle_service.py#L166@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "ML team email",
+          "code": "ant-man:app/services/capture_lifecycle_service.py#L218@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "What the ML team does with an escalated run, and how its output returns to the pipeline, wasn't traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-021-AC1",
+          "given": "A run in point-cloud verification and configured ML recipients",
+          "when": "The reviewer escalates it with the reason \"Noisy data\"",
+          "then": "The run is inactive, an ml_escalated event is logged, and the ML recipients get an email",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-022",
+      "type": "business-rule",
+      "title": "(Current behaviour) Cancelling a run only changes Antman's record",
+      "statement": "A run can be cancelled only while it is in stitching or in processing. Cancelling marks it inactive and logs who did it. It doesn't stop the Airflow run or the virtual machine, so compute may keep running.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-054"
+      ],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-041",
+          "title": "Processing review, publication and recovery trace - Antman lifecycle, sessions, recovery (2026-10-27)",
+          "at": "E159",
+          "code": "ant-man:app/services/capture_lifecycle_service.py#L157@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Check whether any other path stops compute for an inactive run (verification case PROC-09)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-022-AC1",
+          "given": "A run in processing",
+          "when": "An operator cancels it",
+          "then": "The run is inactive and the Airflow run is not stopped",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-022-AC2",
+          "given": "A run that is ready for sign-off",
+          "when": "An operator tries to cancel it",
+          "then": "The cancel is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-023",
+      "type": "business-rule",
+      "title": "A scheduled job whose machine fails to start is retried; a manual job is not",
+      "statement": "If the virtual machine for a run can't be created, the run is marked failed. For jobs that came through the scheduled queues, Antman adds a new pending queue row and a replacement run. Jobs started manually are only marked failed. When the cloud zone is out of resources it is avoided for a while.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-054"
+      ],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-041",
+          "title": "Processing review, publication and recovery trace - Antman lifecycle, sessions, recovery (2026-10-27)",
+          "at": "E152",
+          "code": "ant-man:app/tasks/execution_task.py#L411@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-041",
+          "title": "Processing review, publication and recovery trace - Antman lifecycle, sessions, recovery (2026-10-27)",
+          "at": "E153",
+          "code": "ant-man:app/repositories/job_queue_repository.py#L403@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "No limit on repeated requeues was found; confirm whether one exists"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-023-AC1",
+          "given": "A scheduled stitching job and a VM creation that fails",
+          "when": "The failure is handled",
+          "then": "The run is marked failed, and a new pending queue row and replacement run exist for the job",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-023-AC2",
+          "given": "A manually started job and a VM creation that fails",
+          "when": "The failure is handled",
+          "then": "The job is marked failed and nothing is requeued",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-024",
+      "type": "business-rule",
+      "title": "An operator can split a run into a new run for review",
+      "statement": "An operator can create a split from a run, including an inactive one. The split is a new run for the same job, linked to its parent, numbered in order and waiting for point-cloud verification. It keeps the parent's automatic-registration setting.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-054"
+      ],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-041",
+          "title": "Processing review, publication and recovery trace - Antman lifecycle, sessions, recovery (2026-10-27)",
+          "at": "E160",
+          "code": "ant-man:app/services/capture_lifecycle_service.py#L251@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Which run's output becomes the customer's reality after a split is undefined (verification case PROC-10)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-024-AC1",
+          "given": "A run with base run ID R1 and no earlier splits",
+          "when": "An operator creates a split",
+          "then": "A new run R1_split_0 exists for the same job, linked to the parent and ready for point-cloud verification",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-025",
+      "type": "requirement",
+      "title": "Categorised issue emails tell customers about capture problems",
+      "statement": "Internal teams can select categorised issues with uploaded sheets, BIM or captures and send one email from Track3D support listing them, with help articles. Customer support can see a summary of every email sent.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-055"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-043",
+          "title": "Prior PRDs - TechOps dashboard, 360 image automation and issue emails (t3d-prd-agent prd-organised)",
+          "at": "error-handling.md FR-001..FR-003, AC-001..AC-003, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Whether the job error tags (PROC-REQ-008) are the issue categories wasn't confirmed; no sending code was traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-025-AC1",
+          "given": "A team member selects two issues for a capture",
+          "when": "They send the email",
+          "then": "One email from support@track3d.ai lists both issues with their details",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-025-AC2",
+          "given": "An issue is selected",
+          "when": "The email is sent",
+          "then": "It includes help articles for troubleshooting",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-025-AC3",
+          "given": "Emails have been sent",
+          "when": "Customer support opens the summary table",
+          "then": "They can see every sent email and its delivery",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-025-AC4",
+          "given": "The same issue is selected twice",
+          "when": "The email list is built",
+          "then": "The issue appears only once",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

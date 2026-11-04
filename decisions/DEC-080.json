@@ -1,0 +1,19 @@
+{
+  "id": "DEC-080",
+  "title": "Alert assignment rights and what the alerts list shows",
+  "status": "open",
+  "question": "Which roles may assign alerts, and must assignees be members of the project? Should ahead-of-schedule alerts be shown to customers at all? What happens to alerts left unresolved for a long time?",
+  "context": "Access details for this item are handled with engineering separately.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG",
+    "USER"
+  ],
+  "requirements": [
+    "PROG-REQ-062",
+    "PROG-REQ-063",
+    "PROG-REQ-065",
+    "PROG-REQ-066"
+  ]
+}

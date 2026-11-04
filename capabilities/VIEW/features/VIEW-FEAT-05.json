@@ -1,0 +1,189 @@
+{
+  "id": "VIEW-FEAT-05",
+  "name": "Viewer exports and offline viewing",
+  "summary": "Taking viewer content out of the app: the offline viewer package, server-made progress screenshots, the retired before/after hotspot comparison, and the design reminder emails sent from the visual-project flow.",
+  "components": [
+    "svc.constructn-api",
+    "svc.api-2d-progress",
+    "svc.api-gateway-service",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-038"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The grants below describe that current behaviour, not intent.",
+    "actions": [
+      {
+        "action": "Request or download the offline viewer package",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Anyone who knows the project ID"
+      },
+      {
+        "action": "Generate a progress screenshot",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "VIEW-NFR-006",
+      "kind": "retention",
+      "statement": "How long an offline viewer download link stays valid.",
+      "target": {
+        "link_valid_days": 7
+      },
+      "status": "inferred-from-code",
+      "open_question": null
+    }
+  ],
+  "requirements": [
+    {
+      "id": "VIEW-REQ-025",
+      "type": "business-rule",
+      "title": "One offline viewer package per project",
+      "statement": "A project can be exported once as an offline viewer package for browsing its 360° imagery and progress without a connection. A second request while one is pending, or after one is completed, is not started again and gets a message instead. When the package is ready, the download link is emailed to the requested addresses plus a fixed list of Track3D staff. A download link lasts 7 days and is renewed on request after it expires.",
+      "rationale": "Whether a completed package can ever be rebuilt (for example after new captures) is not handled; the second request only says to download the existing one. Who may request it and to whom it may be sent is DEC-038.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-038"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "exportProject one per project",
+          "code": "constructn-api:src/services/offline-viewer-service.ts#L25@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "link renewed for 7 days",
+          "code": "constructn-api:src/services/offline-viewer-service.ts#L61@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "requested addresses added to staff recipients",
+          "code": "constructn-api:src/services/offline-viewer-service.ts#L1103@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/visualisations.md (ZIP - Offline Viewer Package)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-025-AC1",
+          "given": "A project whose offline export is still pending",
+          "when": "Another export is requested",
+          "then": "No new export starts and the reply says \"Export is  already in progress. Please wait for it to finish\"",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-025-AC2",
+          "given": "A completed export whose link expired 2 days ago",
+          "when": "The download link is requested",
+          "then": "A new link valid for 7 days is returned",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-026",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "VIEW-REQ-027",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "VIEW-REQ-028",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "VIEW-REQ-029",
+      "type": "business-rule",
+      "title": "Before/after progress hotspots are retired in the API",
+      "statement": "The progress hotspot routes (saved before and after screenshots at a named place) are no longer mounted, so the comparison is not available through the API, although the generated docs still describe it.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "project.routes hotspot mount commented out",
+          "code": "constructn-api:src/routes/v1/project.routes.ts#L165@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/visualisations.md (Before / After Hotspot Comparison)",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Confirm with product whether hotspots are retired for good, and whether stored hotspot screenshots need keeping"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-029-AC1",
+          "given": "A signed-in project admin",
+          "when": "They request the project's progress hotspot list",
+          "then": "(Current behaviour) The route is not found",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,316 @@
+{
+  "id": "INTG-FEAT-04",
+  "name": "External API and API keys",
+  "summary": "The API that partners and autonomous capture systems call without a normal sign-in: the external capture API, the partner progress API, the external asset and category API, and the API keys that unlock them.",
+  "components": [
+    "svc.api-gateway-service",
+    "svc.api-2d-progress",
+    "svc.capture-api"
+  ],
+  "decisions": [
+    "DEC-051"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "API keys are not project roles. A partner key and an open API key are configured in the environment, not issued in the product, so no product role can create, see or revoke one (DEC-051). The open-API-key identity carries every permission.",
+    "actions": [
+      {
+        "action": "Issue, rotate or revoke an API key",
+        "permission": null,
+        "grants": {
+          "admin": "deny",
+          "company-super-admin": "deny",
+          "support-user": "unknown"
+        },
+        "note": "Environment configuration only"
+      },
+      {
+        "action": "Read partner progress data with the partner key",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Key holder, any project"
+      },
+      {
+        "action": "Read or write external assets and categories with an open API key",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Key holder, mapped project only"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "INTG-NFR-004",
+      "kind": "throughput",
+      "statement": "The partner progress API accepts at most 100 requests per minute per rate-limit window.",
+      "target": {
+        "max_requests_per_minute": 100
+      },
+      "status": "inferred-from-code",
+      "open_question": null
+    },
+    {
+      "id": "INTG-NFR-005",
+      "kind": "scalability",
+      "statement": "Large external capture uploads, including resumable uploads and simultaneous uploads from several sources.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What file sizes, upload frequency and concurrency must the external capture API support?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "INTG-REQ-019",
+      "type": "requirement",
+      "title": "External capture systems can send captures through an API",
+      "statement": "An external capture system can create a capture session with metadata, get upload URLs, upload files that are then checked and processed automatically, receive status updates or webhook notifications, and see the result in the Track3D viewer like any other capture. Incomplete or corrupt uploads are detected and over-limit callers get a clear error.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-051"
+      ],
+      "implemented_by": [
+        "svc.capture-api",
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-035",
+          "title": "Prior PRD - External capture ingestion API (t3d-prd-agent prd-organised)",
+          "at": "FR-001..FR-005, AC-001..AC-005, EC-001, EC-003",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "No outbound status webhook to the external system was found in the capture-api routes read here"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-019-AC1",
+          "given": "An authorised external capture system",
+          "when": "It creates a capture session with metadata",
+          "then": "The session is created with that metadata",
+          "status": "draft"
+        },
+        {
+          "id": "INTG-REQ-019-AC2",
+          "given": "A processed external capture",
+          "when": "A project user opens it in Track3D",
+          "then": "It looks and behaves like a native capture",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-020",
+      "type": "business-rule",
+      "title": "External capture API sign-in (OAuth or API key)",
+      "statement": "The PRD asks for OAuth on the external capture API. Today a caller needs a user sign-in token plus an API key mapped to one project, sent with that project's ID (USER-REQ-013).",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "SRC-035 NFR-001 says OAuth with expiring URLs. The gateway instead requires a JWT and a static, environment- configured API key bound to one project. Product and the Tech Architect to choose the partner auth model (DEC-051)."
+      },
+      "decisions": [
+        "DEC-051"
+      ],
+      "implemented_by": [
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-035",
+          "title": "Prior PRD - External capture ingestion API (t3d-prd-agent prd-organised)",
+          "at": "NFR-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "apiKeyGuardedSegments",
+          "code": "api-gateway-service:src/modules/proxy/proxy.authz.ts#L96@26221f6c7bb3"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-020-AC1",
+          "given": "A signed-in caller with no API key",
+          "when": "It calls an external-capture route",
+          "then": "(Current behaviour) The request is refused as not accessible",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-021",
+      "type": "business-rule",
+      "title": "External capture routes exist only in allowed environments",
+      "statement": "The external capture routes (register captures, create external captures with metadata only, register a batch of frames, read upload status) are switched on only in environments named in the service configuration. They reuse the normal capture logic.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-051"
+      ],
+      "implemented_by": [
+        "svc.capture-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "EXTERNAL_ALLOWED_ENVIRONMENTS",
+          "code": "capture-api:src/frameworks/routes/index.ts#L53@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "external routes",
+          "code": "capture-api:src/frameworks/routes/external.routes.ts#L30@ac5726e820f2"
+        }
+      ],
+      "open_checks": [
+        "Which environments list the external capture API today is configuration, not code; confirm before promising it to a partner"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-021-AC1",
+          "given": "An environment not in the allowed list",
+          "when": "A caller uses an external-capture route",
+          "then": "The route does not exist there",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-022",
+      "type": "requirement",
+      "title": "A progress API authenticated by API key",
+      "statement": "Developers can read progress entries for a project, optionally by date, read one entry by ID, and upload new progress entries, authenticating every call with an API key. A missing or invalid key gets 401, an unknown entry 404, malformed data 400, and a query with no data an empty list. API keys are managed and rotated regularly.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-051"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-036",
+          "title": "Prior PRDs - API management and API documentation (Progress API) (t3d-prd-agent prd-organised)",
+          "at": "api-management FR-001..FR-004, EC-001..EC-003; api-documentation FR-001..FR-003, EC-002, NFR-001",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Restricted check, handled with engineering separately."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-022-AC1",
+          "given": "A request with no API key",
+          "when": "It calls the progress API",
+          "then": "It gets 401 Unauthorized",
+          "status": "draft"
+        },
+        {
+          "id": "INTG-REQ-022-AC2",
+          "given": "A valid key and a project with no progress for the date asked",
+          "when": "Progress is requested",
+          "then": "An empty list is returned with 200",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-023",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "INTG-REQ-024",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "INTG-REQ-025",
+      "type": "business-rule",
+      "title": "External callers see masked IDs",
+      "statement": "On the external asset and category routes, Track3D IDs in requests are decoded from masked values, and the category routes mask the IDs they return. The same ID always masks to the same value. A value that can't be decoded is passed on unchanged.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-051"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "decodeFieldsMiddleware",
+          "code": "api-2d-progress:src/frameworks/middlewares/external-id-mask.ts#L54@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "apis/route-inventory.md §34 (decodeFieldsMiddleware)",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Masking uses a deterministic block cipher mode, which hides IDs but lets callers see when two IDs are equal; confirm that is the intent",
+        "Whether external asset responses are masked too was not traced (masking was seen in exterenal-asset-category.controller.ts#L87@406190aa76b6)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-025-AC1",
+          "given": "A category requested twice through the external API",
+          "when": "Both responses are compared",
+          "then": "Its masked ID is the same both times and differs from the internal ID",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,222 @@
+{
+  "id": "USER-FEAT-04",
+  "name": "Company membership",
+  "summary": "How a user's home company is decided from their work-email domain, and how linked companies relate.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-012"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "View company details",
+        "permission": "view-company",
+        "grants": {
+          "company-super-admin": "allow",
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Update company details",
+        "permission": "update-company",
+        "grants": {
+          "company-super-admin": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Assign a user to the company",
+        "permission": "assign-company-user",
+        "grants": {
+          "company-super-admin": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Remove a user from the company",
+        "permission": "deassign-company-user",
+        "grants": {
+          "company-super-admin": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "USER-NFR-004",
+      "kind": "volume",
+      "statement": "Largest companies (users, linked companies, domains) membership and lists must support.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How many users do the largest enterprise customers have today, and what is the growth target?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "USER-REQ-016",
+      "type": "business-rule",
+      "title": "The work-email domain decides the home company",
+      "statement": "A user's home company is the company matching their work-email domain. If one exists, the user joins it automatically, with no invitation or approval. If none exists, a company is created.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-012"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-BR-004"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-016-AC1",
+          "given": "Company A owns the domain acme.com",
+          "when": "A person registers and verifies jo@acme.com",
+          "then": "Their home company is A, with no company invitation or approval",
+          "status": "draft"
+        },
+        {
+          "id": "USER-REQ-016-AC2",
+          "given": "No company owns the domain newco.com",
+          "when": "A person registers and verifies sam@newco.com",
+          "then": "A company is created for newco.com and becomes their home company",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-017",
+      "type": "business-rule",
+      "title": "Linking companies never changes a user's home company",
+      "statement": "Companies can be linked to each other. A user always belongs to the company matching their domain; links give access across companies without moving the user.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-012"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-BR-017"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-017",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-116",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-017-AC1",
+          "given": "Companies A and B are linked, and a user's email is on B's domain",
+          "when": "They are added to a project owned by A",
+          "then": "Their home company is still B",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-018",
+      "type": "business-rule",
+      "title": "Who Track3D's customers and users are",
+      "statement": "Customers are general contractors, trade partners and owners. Users hold construction-company roles, including field engineers and superintendents.",
+      "rationale": "Context for product decisions rather than a testable behaviour.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [
+        "T3D-BR-002"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": []
+    },
+    {
+      "id": "USER-REQ-019",
+      "type": "requirement",
+      "title": "Domain and non-domain users see different features",
+      "statement": "Permission visibility differs between users from the project company's domain and users from other domains. Non-domain users don't see features they can't use.",
+      "rationale": "The PRD row doesn't say which features differ. Product needs to define the difference.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-ROLES-PERMISSIONS-FR-005"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-008",
+          "title": "Prior PRD - Roles and permissions (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-019-AC1",
+          "given": "A user from a domain other than the project company's",
+          "when": "They sign in and open the project",
+          "then": "Features they have no access to are hidden",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

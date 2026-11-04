@@ -1,0 +1,220 @@
+{
+  "id": "RPT-FEAT-01",
+  "name": "Report generation",
+  "summary": "Turning a report request into a rendered file: queuing, rendering, completion callbacks back to the owning service, and failure handling.",
+  "components": [
+    "svc.t3d-report-service",
+    "worker.t3d-report-worker",
+    "svc.api-2d-progress",
+    "svc.reports-service",
+    "svc.collab-service"
+  ],
+  "decisions": [
+    "DEC-032",
+    "DEC-033"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Generate or download progress reports",
+        "permission": "download-progress-reports",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "RPT-NFR-001",
+      "kind": "latency",
+      "statement": "Time from requesting a report to the file being ready, per report type and project size.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What generation time do customers expect, and when should the UI say \"we'll email you\" instead?"
+    },
+    {
+      "id": "RPT-NFR-002",
+      "kind": "availability",
+      "statement": "Today a completion callback is attempted 4 times (immediately, then after 5 seconds, 30 seconds and 5 minutes), each with a 10-second timeout, before giving up.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "Is giving up after about 5½ minutes acceptable, and who is alerted when a callback is finally lost?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "RPT-REQ-001",
+      "type": "business-rule",
+      "title": "Reports are queued, rendered, stored, then reported back",
+      "statement": "A report request is saved as a job, then queued by priority. The worker checks for cancellation, marks the job processing, renders the requested mode, stores the PDF, screenshot and metadata, and marks it completed before calling the owning service back. On an error it marks the job failed and attempts a failure callback.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-033"
+      ],
+      "implemented_by": [
+        "svc.t3d-report-service",
+        "worker.t3d-report-worker"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-075",
+        "T3D-RULE-076"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-075",
+          "code": "t3d-report-service:apps/api/src/reports/reports.service.ts#L16@71b98a2b7685"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-076",
+          "code": "t3d-report-service:apps/worker/src/processor/report-job.handler.ts#L30@71b98a2b7685"
+        }
+      ],
+      "open_checks": [
+        "No production branch for t3d-report-service, and the external construction-reports implementation isn't mapped; runtime flag and queue routing are unverified",
+        "The collab-service report callback mount order contradicts its comment; verify sender authentication and reachability",
+        "Global auth is commented out in the cached legacy report service index; establish which paths are reachable and who may act"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-001-AC1",
+          "given": "A report job is cancelled before the worker picks it up",
+          "when": "The worker processes it",
+          "then": "Nothing is rendered, and the job stays cancelled",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "RPT-REQ-001-AC2",
+          "given": "Rendering fails",
+          "when": "The worker handles the error",
+          "then": "The job is marked failed and a failure callback is attempted",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "RPT-REQ-002",
+      "type": "business-rule",
+      "title": "The newer renderer is behind an environment flag",
+      "statement": "The newer report path is used only when an environment setting equals \"true\"; otherwise the legacy renderer runs. Which projects and environments use which renderer isn't known.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-074"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-074",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L102@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-002-AC1",
+          "given": "The renderer flag is \"True\" (capitalised)",
+          "when": "A report is requested",
+          "then": "(Current behaviour) The legacy renderer is used, because only \"true\" turns the new one on",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "RPT-REQ-003",
+      "type": "business-rule",
+      "title": "Completion callbacks are tried four times",
+      "statement": "The report service calls the owner back up to 4 times (immediately, then after 5 seconds, 30 seconds and 5 minutes), each with a 10-second timeout. It then reports the callback as undelivered with the last error.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-032"
+      ],
+      "implemented_by": [
+        "svc.t3d-report-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-078"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-078",
+          "code": "t3d-report-service:libs/webhook/drivers/http/http-webhook.service.ts#L5@71b98a2b7685"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-003-AC1",
+          "given": "The owner's callback endpoint is down",
+          "when": "A report completes",
+          "then": "The callback is tried 4 times over about 5½ minutes, then marked undelivered",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "RPT-REQ-004",
+      "type": "business-rule",
+      "title": "The owner acknowledges and claims \"notified\" before emailing",
+      "statement": "The owning service acknowledges a callback before finishing its own work, and claims the job as notified before the email is sent. If the email then fails, nothing resends it. A completed result can follow a failed one, but a failed result after completion is ignored.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-032"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-077"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-077",
+          "code": "api-2d-progress:src/adapters/controllers/assetv1.controller.ts#L609@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Prove reconciliation after the owner's own handling or email delivery fails following acknowledgment"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-004-AC1",
+          "given": "A completed-report callback is acknowledged and the job is claimed as notified",
+          "when": "Sending the email fails",
+          "then": "(Current behaviour) The requester isn't emailed, and no retry happens",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

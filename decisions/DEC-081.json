@@ -1,0 +1,18 @@
+{
+  "id": "DEC-081",
+  "title": "When predictions are shown and for what scope",
+  "status": "open",
+  "question": "Should predictions be on by default, and only in ML-method projects? Should they cover zones or ignore them? How is the productivity effect of changed working conditions expressed?",
+  "context": "The PRD wants predictions on by default with zones ignored; the code defaults them off, restricts them to ML-method projects with one stage, and computes zone predictions when asked (PROG-REQ-071, PROG-REQ-072, both disputed).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG"
+  ],
+  "requirements": [
+    "PROG-REQ-070",
+    "PROG-REQ-071",
+    "PROG-REQ-072",
+    "PROG-REQ-074"
+  ]
+}

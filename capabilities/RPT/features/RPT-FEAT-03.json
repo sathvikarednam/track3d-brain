@@ -1,0 +1,172 @@
+{
+  "id": "RPT-FEAT-03",
+  "name": "Scheduled report delivery",
+  "summary": "Recurring report emails (once, daily, weekly, monthly) and daily-note report settings with recipients and send times.",
+  "components": [
+    "svc.api-2d-progress",
+    "svc.collab-service",
+    "svc.messaging-service",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-032"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "No delivery-schedule permission strings exist in the seed catalog. Custom daily-note recipient lists must include a project admin.",
+    "actions": [
+      {
+        "action": "Create or edit a report delivery schedule",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Change daily-note report settings",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "RPT-NFR-004",
+      "kind": "freshness",
+      "statement": "How close to the configured time a scheduled report must arrive.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is \"within 15 minutes of the configured local time\" acceptable, and how are delays detected?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "RPT-REQ-007",
+      "type": "business-rule",
+      "title": "When the next scheduled report is due",
+      "statement": "A delivery schedule is once, daily, weekly or monthly. Daily adds a day. Weekly picks the next chosen weekday, a week ahead if that's today. Monthly adds a month and then sets the day. The requester is always added as a recipient. Creating a schedule queues its reports; editing a schedule saves the new date but doesn't re-queue.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-032"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-080"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-080",
+          "code": "api-2d-progress:src/application/service/scheduler.service.ts#L11@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Check edits and deletions against already-queued or repeating work; the edit path doesn't call the create-time queue step"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-007-AC1",
+          "given": "A weekly schedule for Monday, created on a Monday",
+          "when": "The next date is worked out",
+          "then": "It is the following Monday, and the requester is a recipient",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "RPT-REQ-008",
+      "type": "business-rule",
+      "title": "Daily-note report recipients and send times",
+      "statement": "Daily-note reports go to project admins, to all users, or to a custom list. A custom list is de-duplicated and must include at least one project admin (direct or through a group). Send times are on the hour or half hour, in the project's time zone, or UTC if it has none.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-032"
+      ],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-081"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-081",
+          "code": "collab-service:src/application/service/daily-note-report-settings.service.ts#L160@971b0c462986"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-008-AC1",
+          "given": "A custom recipient list with two collaborators and no admin",
+          "when": "It is saved",
+          "then": "It is rejected",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "RPT-REQ-008-AC2",
+          "given": "A send time of 17:15",
+          "when": "It is saved",
+          "then": "It is rejected, because only :00 and :30 are allowed",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "RPT-REQ-010",
+      "type": "business-rule",
+      "title": "Changing the send time keeps an earlier pending send",
+      "statement": "When the daily-note send time changes, the next send is the first occurrence after now, unless an existing pending send is sooner, in which case that one is kept. Only time changes reschedule; changing recipients doesn't. Two reports can therefore go out on the same day.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-032"
+      ],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-082"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-082",
+          "code": "collab-service:src/application/service/daily-note-report-settings.service.ts#L74@971b0c462986"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-010-AC1",
+          "given": "A daily send at 18:00 is pending for today, and at 10:00 the time is changed to 08:00",
+          "when": "The change is saved",
+          "then": "(Current behaviour) Today's 18:00 send is kept, and tomorrow's goes at 08:00",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

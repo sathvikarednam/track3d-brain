@@ -1,0 +1,300 @@
+{
+  "id": "INTG-FEAT-02",
+  "name": "Procore and Autodesk data exchange",
+  "summary": "What moves between Track3D and Procore or Autodesk Construction Cloud once a project is linked: RFIs, observations, submittals, issues, photos and designs, plus the inbound notifications that keep imported designs current.",
+  "components": [
+    "svc.constructn-api",
+    "svc.api-gateway-service",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-049",
+    "DEC-050",
+    "DEC-052"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The Procore and Autodesk pass-through routes need only a signed-in user and use that user's own connection. The seed catalog has import-design and export-note in its Integration group, but no route read here was seen checking export-note.",
+    "actions": [
+      {
+        "action": "Import a design from Procore or Autodesk",
+        "permission": "import-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "Grants from SRC-004 features/user-management.md §5 (Import design)"
+      },
+      {
+        "action": "Send a note to Procore or Autodesk as an RFI, observation or issue",
+        "permission": "export-note",
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Enforcement not traced"
+      },
+      {
+        "action": "Browse Procore or Autodesk data through Track3D",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "INTG-NFR-002",
+      "kind": "freshness",
+      "statement": "Delay between a new design version in Procore or Autodesk and the updated design in Track3D.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How soon must a new Procore or Autodesk design version appear in Track3D (PRD open question on sync frequency)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "INTG-REQ-007",
+      "type": "requirement",
+      "title": "RFIs, observations and submittals show in both Track3D and Procore",
+      "statement": "In a project linked to Procore, users can create and edit RFIs, observations and submittals in Track3D, and each item is linked to Procore and visible in both. If the project isn't linked, the user is asked to link it first.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-049",
+        "DEC-050"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-031",
+          "title": "Prior PRD - Integration (merged Procore and SMS assistant) (t3d-prd-agent prd-organised)",
+          "at": "FR-011, AC-011, EC-006",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-032",
+          "title": "Prior PRD - Procore integration (t3d-prd-agent prd-organised)",
+          "at": "FR-003, FR-004, AC-003, AC-004, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Which fields sync and how permission differences between the two platforms are handled are open PRD questions"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-007-AC1",
+          "given": "A project linked to Procore",
+          "when": "A user creates an RFI in Track3D",
+          "then": "The RFI is visible in both Track3D and Procore",
+          "status": "draft"
+        },
+        {
+          "id": "INTG-REQ-007-AC2",
+          "given": "A project not linked to Procore",
+          "when": "A user tries to create a Procore RFI",
+          "then": "They are asked to link the project to Procore first",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-008",
+      "type": "requirement",
+      "title": "Observations flow both ways and photos sync to Procore",
+      "statement": "Task observations can be sent from Track3D to Procore and received back. Photos sync from Track3D to Procore without loss or duplicates; on a network failure the sync retries or tells the user. Differences in observation data between the platforms are shown for the user to resolve.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-049",
+        "DEC-050"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-032",
+          "title": "Prior PRD - Procore integration (t3d-prd-agent prd-organised)",
+          "at": "FR-005, FR-006, AC-005, AC-006, EC-003, EC-005",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "No photo sync to Procore was found in the code read for this migration"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-008-AC1",
+          "given": "Photos in a Procore-linked project",
+          "when": "The user syncs them to Procore",
+          "then": "Every photo arrives once, with none lost or duplicated",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-009",
+      "type": "requirement",
+      "title": "Track3D inside Procore, and Procore models and drawings in Track3D",
+      "statement": "Track3D can be opened and fully used inside the Procore interface, and can pull models and drawings from Procore.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-049"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-032",
+          "title": "Prior PRD - Procore integration (t3d-prd-agent prd-organised)",
+          "at": "FR-007, FR-008, AC-007",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The gateway sends X-Frame-Options DENY and frame-ancestors 'none' on API responses (proxy.authz.ts#L39@26221f6c7bb3); check how embedding in Procore works today"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-009-AC1",
+          "given": "A user working in Procore",
+          "when": "They open Track3D from Procore",
+          "then": "Track3D works fully inside the Procore interface",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-010",
+      "type": "requirement",
+      "title": "Link Track3D notes to Autodesk issues and RFIs",
+      "statement": "Users can link a Track3D note to an Autodesk Construction Cloud issue or RFI, carrying ID, title, description, status, start and due dates, assignee, watchers, location, type and attachments. Incomplete data is handled without failing.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-049",
+        "DEC-050"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-033",
+          "title": "Prior PRD - Autodesk Construction Cloud (ACC) integration (t3d-prd-agent prd-organised)",
+          "at": "FR-001, AC-001, EC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "ACC issue routes",
+          "code": "constructn-api:src/routes/v1/acc.routes.ts#L18@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Whether attachments are supported and what happens when the ACC issue is deleted after linking are open in the PRD. The code has create, update and create-with-attachments issue routes"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-010-AC1",
+          "given": "A note in a project linked to Autodesk",
+          "when": "The user links it to an ACC issue",
+          "then": "The issue carries the note's title, description, status, dates, assignee, watchers, location and type",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-011",
+      "type": "business-rule",
+      "title": "Designs imported from Procore or Autodesk follow new versions automatically",
+      "statement": "When Procore reports a changed drawing or file, or Autodesk reports a new version, Track3D imports the new version as the next revision of each active design imported from that source. A design already at that revision is skipped.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-050"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "procoreWebhookTrigger",
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L903@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "designVersioningWebhookTrigger",
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L704@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Takeoff and progress after a design revision are open in DEC-003. The Fieldwire PRD asks for the opposite (notify, don't update; INTG-REQ-014)",
+        "The Procore handler reads resource_type but logs resource_name when skipping; confirm which field Procore sends"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-011-AC1",
+          "given": "An active design imported from a Procore drawing",
+          "when": "Procore reports a new revision of that drawing",
+          "then": "A new revision of the design is imported from the current Procore revision",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "INTG-REQ-011-AC2",
+          "given": "A design already at the revision Procore reports",
+          "when": "The notification arrives",
+          "then": "Nothing is imported",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-012",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

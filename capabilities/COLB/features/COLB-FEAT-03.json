@@ -1,0 +1,192 @@
+{
+  "id": "COLB-FEAT-03",
+  "name": "Daily notes and attachments",
+  "summary": "Daily site notes per structure with photos, audio and positions, and the attachments on notes.",
+  "components": [
+    "svc.collab-service",
+    "web.track3d-web"
+  ],
+  "decisions": [],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The seed catalog has no daily-note permission strings.",
+    "actions": [
+      {
+        "action": "Create a daily note",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete an attachment",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "COLB-NFR-003",
+      "kind": "retention",
+      "statement": "How long daily-note media and deleted attachments are kept in storage.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Deleting an attachment removes its record. Must the stored file also go, and on what schedule?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "COLB-REQ-008",
+      "type": "business-rule",
+      "title": "One daily note per exact date and structure",
+      "statement": "Submitting a daily note returns the existing one if a note with the exact same date value and structure exists; otherwise a new one is created. An empty batch is rejected.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-087"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-087",
+          "code": "collab-service:src/application/service/daily-note-v5.service.ts#L118@971b0c462986"
+        }
+      ],
+      "open_checks": [
+        "The match uses the exact timestamp, not the day, and ignores deleted notes; no guarantee against concurrent duplicates is shown"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-008-AC1",
+          "given": "A daily note for structure S at 2026-03-04T00:00Z",
+          "when": "Another is submitted for S with the same timestamp",
+          "then": "The existing note is returned",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "COLB-REQ-009",
+      "type": "business-rule",
+      "title": "Daily-note positions are worked out after creation",
+      "statement": "A daily note's sheet position is its normalised position times the sheet size (1 if unknown). A global position is added when the design has a transform. Both are written after the note is created, so they may appear a moment later.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-088"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-088",
+          "code": "collab-service:src/application/service/daily-note-v5.service.ts#L202@971b0c462986"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-009-AC1",
+          "given": "A daily note at normalised (0.5, 0.5) on a 1000 × 800 sheet",
+          "when": "Its position is worked out",
+          "then": "Its sheet position is (500, 400)",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "COLB-REQ-010",
+      "type": "business-rule",
+      "title": "Daily-note attachments are created once",
+      "statement": "When a daily note's upload completes, a claim flag makes sure only one request creates its attachments. If any attachment already exists, none are created. Audio is translated in the background.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-089"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-089",
+          "code": "collab-service:src/application/service/daily-note-v5.service.ts#L581@971b0c462986"
+        }
+      ],
+      "open_checks": [
+        "Claiming first prevents duplicates but skips recovery if attachment creation fails halfway"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-010-AC1",
+          "given": "Two completion calls arrive for the same daily note",
+          "when": "Both are processed",
+          "then": "Attachments are created once",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "COLB-REQ-011",
+      "type": "business-rule",
+      "title": "Deleting an attachment removes its record",
+      "statement": "Deleting an attachment permanently removes its record, unlike notes, which are only marked deleted.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-090"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-090",
+          "code": "collab-service:src/application/service/attachment.service.ts#L102@971b0c462986"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-011-AC1",
+          "given": "A note with an attachment",
+          "when": "The attachment is deleted",
+          "then": "Its record is gone; the response reports how many were deleted",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

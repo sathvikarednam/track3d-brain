@@ -1,0 +1,18 @@
+{
+  "id": "DEC-036",
+  "title": "Zone heat map rules",
+  "status": "open",
+  "question": "Is the zone heat map limited to Delta mode? Is it disabled, or shown with a notice, when a selected stage has no takeoff? How are \"Stalled\" zones defined and shown? What counts as high and low activity, and is the colour scale relative to the zones shown or absolute?",
+  "context": "The heat-maps PRD gates the heat map on Delta mode, zones and complete takeoff, and tags stalled zones. The code checks none of these, scores missing takeoff as 0%, and colours relative to the zones shown (VIEW-REQ-014, VIEW-REQ-015, VIEW-REQ-016). Missing takeoff in general is DEC-008.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "VIEW",
+    "PROG"
+  ],
+  "requirements": [
+    "VIEW-REQ-014",
+    "VIEW-REQ-015",
+    "VIEW-REQ-016"
+  ]
+}

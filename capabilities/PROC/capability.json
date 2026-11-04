@@ -1,0 +1,19 @@
+{
+  "id": "PROC",
+  "name": "Capture processing pipeline",
+  "summary": "What happens between upload complete and results being available: triggering processing jobs, pipeline routing and orchestration, processing statuses, Track3D operations review and sign-off, failure handling, retry and rework, turnaround (SLA) monitoring, and quality and coverage checks on processed output.",
+  "related": [
+    "CAPT",
+    "UPLD",
+    "PROG"
+  ],
+  "owner": null,
+  "feature_order": [
+    "PROC-FEAT-01",
+    "PROC-FEAT-02",
+    "PROC-FEAT-03",
+    "PROC-FEAT-04",
+    "PROC-FEAT-05",
+    "PROC-FEAT-06"
+  ]
+}

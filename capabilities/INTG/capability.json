@@ -1,0 +1,22 @@
+{
+  "id": "INTG",
+  "name": "Integrations and API",
+  "summary": "Connections to other construction tools (Procore, Autodesk Construction Cloud, Fieldwire, Togal), outbound feeds (Slack, Power BI), wearables, and the external API that partners and capture systems call with API keys.",
+  "related": [
+    "USER",
+    "PROJ",
+    "PROG",
+    "CAPT",
+    "COLB",
+    "NOTIF",
+    "SHARE"
+  ],
+  "owner": null,
+  "feature_order": [
+    "INTG-FEAT-01",
+    "INTG-FEAT-02",
+    "INTG-FEAT-03",
+    "INTG-FEAT-04",
+    "INTG-FEAT-05"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "DEC-071",
+  "title": "Who edits organisation settings, Track3D or the customer",
+  "status": "open",
+  "question": "Should organisation and regional admins edit their own organisation profile, integrations, project-creation rules and data-export settings, or do these stay with Track3D support? Which fields stay locked (for example the contact email)?",
+  "context": "The org-settings PRD gives these sections to organisation and regional admins and leaves per-section roles open. Today company updates and the enterprise flag are support-only, and the update accepts any field (ENT-REQ-005, ENT-REQ-008).",
+  "options": [
+    "Customer organisation admins manage all sections; Track3D keeps the enterprise flag",
+    "Customer admins manage the profile only; Track3D manages the rest",
+    "Track3D support manages everything (today)"
+  ],
+  "decision": null,
+  "capabilities": [
+    "ENT"
+  ],
+  "requirements": [
+    "ENT-REQ-005",
+    "ENT-REQ-008",
+    "ENT-REQ-009",
+    "ENT-REQ-010",
+    "ENT-REQ-011"
+  ]
+}

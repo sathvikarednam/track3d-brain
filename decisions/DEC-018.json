@@ -1,0 +1,17 @@
+{
+  "id": "DEC-018",
+  "title": "Project approval and lifecycle states",
+  "status": "open",
+  "question": "What are the allowed project states and moves between them? Is \"returned for corrections\" the same as Draft? What does Initiated mean, which fields may change on resubmission, and which projects skip manual approval?",
+  "context": "Product confirmed approve, return-for-corrections and reject, with resubmission allowed (PROJ-REQ-009). Code stores status (including NeedRevision, Rejected and Initiated) separately from construction phase and access stage, has no single transition validator, and auto-approves some company, regional and allowlist cases (PROJ-REQ-004, PROJ-REQ-010).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROJ"
+  ],
+  "requirements": [
+    "PROJ-REQ-004",
+    "PROJ-REQ-009",
+    "PROJ-REQ-010"
+  ]
+}

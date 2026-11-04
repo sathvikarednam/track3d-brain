@@ -1,0 +1,24 @@
+{
+  "id": "DEC-049",
+  "title": "Which integrations Track3D supports, and how deep",
+  "status": "open",
+  "question": "Which third-party integrations are part of the product (Procore, Autodesk Construction Cloud, Fieldwire, Togal, Power BI, Slack, wearables, Keystone), for which customers, and which data does each carry?",
+  "context": "The prior PRDs describe broad Procore sync (RFIs, observations, submittals, photos, embedding) and several others. The code shows project linking, design import and pass-through calls for Procore and Autodesk, Fieldwire task import, a Togal endpoint that stores nothing, and no Power BI, wearable or Keystone code in the repositories read.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "INTG"
+  ],
+  "requirements": [
+    "INTG-REQ-001",
+    "INTG-REQ-002",
+    "INTG-REQ-003",
+    "INTG-REQ-007",
+    "INTG-REQ-008",
+    "INTG-REQ-009",
+    "INTG-REQ-010",
+    "INTG-REQ-028",
+    "INTG-REQ-029",
+    "INTG-REQ-030"
+  ]
+}

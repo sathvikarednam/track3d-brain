@@ -1,0 +1,23 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate
+        run: python3 scripts/validate.py
+      - name: Build bundle
+        run: python3 scripts/build.py --out dist/brain.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brain
+          path: dist/brain.json

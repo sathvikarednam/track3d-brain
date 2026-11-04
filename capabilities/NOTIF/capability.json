@@ -1,0 +1,15 @@
+{
+  "id": "NOTIF",
+  "name": "Notifications and messaging",
+  "summary": "Email and SMS sent by the platform, who receives them, notification preferences, and delivery records.",
+  "related": [
+    "USER",
+    "RPT",
+    "COLB"
+  ],
+  "owner": null,
+  "feature_order": [
+    "NOTIF-FEAT-01",
+    "NOTIF-FEAT-02"
+  ]
+}

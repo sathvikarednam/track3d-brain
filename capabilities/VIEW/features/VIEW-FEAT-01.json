@@ -1,0 +1,361 @@
+{
+  "id": "VIEW-FEAT-01",
+  "name": "View modes, compare and sync",
+  "summary": "Opening a structure in the viewer, choosing between sheet, drone map, BIM and reality views, comparing two views or two dates side by side, and keeping the two sides in sync. Includes which realities each audience sees on the timeline.",
+  "components": [
+    "web.track3d-web",
+    "svc.capture-api"
+  ],
+  "decisions": [
+    "DEC-034"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The timeline and layer endpoints check view-project only. The web app gates BIM compare on view-bim-type; the seeded bim-compare permission is not checked anywhere found.",
+    "actions": [
+      {
+        "action": "Open the viewer timeline and layers",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Compare reality with BIM",
+        "permission": "view-bim-type",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "See in-review realities on the timeline",
+        "permission": null,
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "VIEW-NFR-001",
+      "kind": "latency",
+      "statement": "Time from opening a structure to the first view (sheet, map, BIM or reality) being usable.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What p95 time-to-first-view is acceptable, and for what size of structure and timeline?"
+    },
+    {
+      "id": "VIEW-NFR-002",
+      "kind": "latency",
+      "statement": "Switching between synced and unsynced (locked and unlocked) compare should feel immediate.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What delay counts as \"no noticeable delay\" when toggling sync?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "VIEW-REQ-001",
+      "type": "business-rule",
+      "title": "Which view opens first",
+      "statement": "When a structure is opened without a chosen view, the viewer opens a default view. The PRD order is sheet, then BIM, then 360 video. The code opens the sheet if one exists, then the drone map if a drone capture exists, then BIM, then reality. Which order is intended is open (DEC-034).",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The PRD asks for sheet, BIM, 360 video. The code puts the drone map (orthomap) second, ahead of BIM, when the structure has a drone capture. The PRD also asks for a message when no view is available; none was found."
+      },
+      "decisions": [
+        "DEC-034"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-024",
+          "title": "Prior PRD - Viewer enhancements (t3d-prd-agent prd-organised)",
+          "at": "FR-008, AC-007, EC-005",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer-container updateViewMode",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-container.tsx#L1012@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-001-AC1",
+          "given": "A structure with a sheet, a BIM model and a 360 video capture, opened with no view chosen",
+          "when": "The viewer finishes loading designs and captures",
+          "then": "The sheet view opens",
+          "status": "disputed"
+        },
+        {
+          "id": "VIEW-REQ-001-AC2",
+          "given": "A structure with a BIM model and a drone capture but no sheet",
+          "when": "It is opened with no view chosen",
+          "then": "(Current behaviour) The drone map opens, not BIM",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-002",
+      "type": "requirement",
+      "title": "Compare two views side by side, including the same design on both sides",
+      "statement": "Users can split the viewer into two sides and compare two views or two dates, including the same design on both sides (for example sheet against sheet) to compare dates.",
+      "rationale": "The code supports paired view modes such as sheet-sheet, reality-reality, bim-reality and orthomap-orthomap. It was not checked whether every pair the PRD intends is offered.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-034"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-024",
+          "title": "Prior PRD - Viewer enhancements (t3d-prd-agent prd-organised)",
+          "at": "FR-009, AC-008",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer.store sheet-sheet mode",
+          "code": "track3d-web:src/adapter/store/viewer.store.ts#L291@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-002-AC1",
+          "given": "A floor with one sheet and captures on 1 March and 1 April",
+          "when": "The user opens compare with the sheet on both sides, 1 March on the left and 1 April on the right",
+          "then": "Both sides show the same sheet, each with its own date's captures",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-003",
+      "type": "business-rule",
+      "title": "BIM and reality start locked together",
+      "statement": "When reality is compared with BIM, the two sides start in sync (locked): moving in one moves the other to the nearest matching place. Users can unlock to move each side on its own, and lock again.",
+      "rationale": "Current code matches this for BIM against 360 video. The PRD's server-side state API was not found; sync state is held in the browser.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-034"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-023",
+          "title": "Prior PRD - Sync/desync, lock/unlock viewer (BIM navigation) (t3d-prd-agent prd-organised)",
+          "at": "FR-001, FR-002, AC-001, AC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer-container updateSyncViews",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-container.tsx#L2131@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-003-AC1",
+          "given": "A 360 video reality is open on one side",
+          "when": "The user opens BIM compare on the other side",
+          "then": "The views start synced, and moving in the reality moves BIM to the nearest 360 image position",
+          "status": "draft"
+        },
+        {
+          "id": "VIEW-REQ-003-AC2",
+          "given": "BIM and a 360 video are synced",
+          "when": "The user clicks the lock button",
+          "then": "The views unsync, a message says \"Views are not in sync\", and each side moves on its own",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-004",
+      "type": "business-rule",
+      "title": "When the sync button is offered",
+      "statement": "The sync button appears only for BIM against a 360 video, and for two 360 images compared with each other. Two 360 images start unsynced. BIM against a 360 image, phone image, drone image or laser has no button. All other compare pairs, including drone map against drone map, are always synced.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-034"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer-container shouldShowSyncView",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-container.tsx#L2204@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "two 360 images start unsynced",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-container.tsx#L2152@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-004-AC1",
+          "given": "Two 360 image realities in reality-reality compare",
+          "when": "The compare opens",
+          "then": "The views are unsynced and the button tooltip says \"Align Realities and click to sync.\"",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-004-AC2",
+          "given": "BIM compared with a phone image reality",
+          "when": "The compare opens",
+          "then": "No sync button is shown",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-005",
+      "type": "business-rule",
+      "title": "Customers see only active realities in the viewer",
+      "statement": "The viewer timeline and the layers for a date show customers only active realities. Support users also see realities in review. Viewer data stays readable for projects in Setup, In-construction and Archived.",
+      "rationale": "Relates to what LIVE means (CAPT-REQ-005, DEC-025).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-025"
+      ],
+      "implemented_by": [
+        "svc.capture-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getTimeLineByStructure status filter",
+          "code": "capture-api:src/application/service/capture.service.ts#L150@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getLayersListForSnapshot",
+          "code": "capture-api:src/application/service/capture.service.ts#L1152@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "route project-status check",
+          "code": "capture-api:src/frameworks/routes/capture.routes.ts#L31@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/visualisations.md (360° Panorama Viewer, client-specific variants)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-005-AC1",
+          "given": "A date with one active and one in-review reality",
+          "when": "A customer and a support user open that date's layers",
+          "then": "The customer sees one reality and the support user sees two",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-005-AC2",
+          "given": "An archived project",
+          "when": "A project viewer opens a structure's timeline",
+          "then": "The timeline loads",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-006",
+      "type": "requirement",
+      "title": "Select several captures on a floor plan and view them in split mode",
+      "statement": "Users can select several captures on a floor plan and open them together in split mode.",
+      "rationale": "PRD-only. The PRD itself leaves the final multi-select behaviour open (\"after discussing with KT\"). No matching multi-select flow was confirmed in code.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-034"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-024",
+          "title": "Prior PRD - Viewer enhancements (t3d-prd-agent prd-organised)",
+          "at": "FR-010, AC-009, Open Questions",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-006-AC1",
+          "given": "Three captures pinned on a floor plan",
+          "when": "The user selects two of them and enters split mode",
+          "then": "The two captures open side by side",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

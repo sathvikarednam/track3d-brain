@@ -1,0 +1,19 @@
+{
+  "id": "DEC-062",
+  "title": "Who may spend credit and run the Sales credit tools",
+  "status": "open",
+  "question": "Should only company super admins and Sales approve visual projects on the credit model, overriding regional and allowlist auto-approval? Should Sales access come from a system role, an email allowlist file, or a catalog permission? How should service-to-service credit calls prove who they are?",
+  "context": "Visual approval is limited to super admins and Sales (BILL-REQ-007), which changes PROJ-REQ-004's auto-approval for visual projects. Intent changes are Sales-only (BILL-REQ-009).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "BILL",
+    "PROJ",
+    "USER"
+  ],
+  "requirements": [
+    "BILL-REQ-007",
+    "BILL-REQ-009",
+    "PROJ-REQ-004"
+  ]
+}

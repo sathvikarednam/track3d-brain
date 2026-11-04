@@ -1,0 +1,524 @@
+{
+  "id": "BILL-FEAT-03",
+  "name": "Sales credit administration",
+  "summary": "What Track3D Sales do on the credit model: create progress projects from order forms, override the pool, approve size corrections, move existing companies in, convert projects, and watch companies on the Sales credit pages. Work in progress: only on the feature/progress-linked-credit branches, not on track-3d.",
+  "components": [
+    "svc.project-api",
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-060",
+    "DEC-061",
+    "DEC-062"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Every action here is for Track3D Sales: the Sales system role, or an email on an allowlist kept by support admins. That is not a catalog permission, so it is shown as support-user conditional. Customers have no access.",
+    "actions": [
+      {
+        "action": "Open the Sales credit pages",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "deny",
+          "admin": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Sales role or allowlisted email"
+      },
+      {
+        "action": "Approve or reject a size correction",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Sales only"
+      },
+      {
+        "action": "Request a size correction on a progress project",
+        "permission": "update-project-details",
+        "grants": {
+          "company-super-admin": "allow",
+          "admin": "unknown",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "Goes to Sales instead of being saved"
+      },
+      {
+        "action": "Move a company into the credit model",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Sales only; one-way"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "BILL-NFR-004",
+      "kind": "latency",
+      "statement": "Time for Sales to act on a customer blocked for lack of credit.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is there a response-time promise to a blocked customer, and who covers it outside Sales hours?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "BILL-REQ-013",
+      "type": "business-rule",
+      "title": "Progress projects are created only by Sales, above a minimum size",
+      "statement": "Once the credit model is live, only Sales can create a progress project, from an order form or the Sales form, and only at or above the progress minimum site area. Customers who try are asked to contact Sales. Everything else a customer creates is a visual project.",
+      "rationale": "Only on feature/progress-linked-credit (constructn-api@984e5354512a); not on track-3d. Today customers with create-project can create progress projects themselves (PROJ-FEAT-01).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-060",
+        "DEC-061"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "progress create Sales-only (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L123@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "progress minimum (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L125@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-013-AC1",
+          "given": "The credit model is live",
+          "when": "A company super admin creates a Progress Monitoring project",
+          "then": "It is refused with \"Progress projects are created by Sales from an order form.\"",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-013-AC2",
+          "given": "Sales create a progress project below the progress minimum site area",
+          "when": "They save it",
+          "then": "It is refused and the message names the minimum",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-014",
+      "type": "business-rule",
+      "title": "Sales may allow a visual project beyond the pool",
+      "statement": "When creating or approving a visual project, Sales may go beyond the company's available credit by giving a reason. The pool is used first; the excess is logged as an override with the reason. An override is also the only way to create a visual project for a company with no active progress project.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5, constructn-api@984e5354512a); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-061"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "override honoured for Sales only (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L163@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "override entry (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L393@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "A company with no credit account at all is refused before the override is considered; confirm whether Sales should be able to override that case"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-014-AC1",
+          "given": "A company with 20,000 sq ft available",
+          "when": "Sales create a 50,000 sq ft visual project with a reason",
+          "then": "20,000 sq ft is drawn from the pool and 30,000 sq ft is logged as an override with the reason",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-015",
+      "type": "business-rule",
+      "title": "An enterprise admin's size change to a progress project waits for Sales",
+      "statement": "When anyone other than Sales changes a progress project's site area, the project keeps its old size and the change becomes a pending correction for Sales. If Sales approve, the project's size and its credit (five times the new area) change; if they reject, nothing changes. Sales' own size and date changes apply straight away. One pending correction per project; it is dropped if the project's credit expires.",
+      "rationale": "Only on feature/progress-linked-credit (constructn-api@984e5354512a, project-api@0b8add5cbba5); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "size change sent to Sales (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L354@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "pending correction (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L266@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "decideCorrection (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L311@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Reducing a progress project's size below what visual projects already drew from it is allowed; confirm what happens to the shortfall"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-015-AC1",
+          "given": "A 200,000 sq ft progress project on the credit model",
+          "when": "A company super admin changes its site area to 250,000 sq ft",
+          "then": "The project still shows 200,000 sq ft and a correction to 250,000 sq ft waits for Sales",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-015-AC2",
+          "given": "That pending correction",
+          "when": "Sales approve it",
+          "then": "The project's site area becomes 250,000 sq ft and its lot's granted credit becomes 1,250,000 sq ft",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-016",
+      "type": "business-rule",
+      "title": "Sales can move an existing company into the credit model",
+      "statement": "Sales can preview and then move an existing company into the credit model, choosing which of its progress projects earn credit. Each chosen project must be approved, have a square-foot size, a start date and duration, and not have ended. Its credit runs to its existing end date. The company's existing visual projects are grandfathered and use no credit. The move is one-way, and moved companies are not held to the minimum sizes.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5, db-models@39f53b96975a); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-060"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "previewMove (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L641@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "moveCompany (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L691@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "minimums apply to new order forms only (feature/progress-linked-credit)",
+          "code": "db-models:src/definitions/credit-constants.ts#L6@39f53b96975a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-016-AC1",
+          "given": "A company with one approved progress project that has no duration",
+          "when": "Sales try to move it into the credit model",
+          "then": "The move is refused and names the project with the gap \"no-dates\"",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-016-AC2",
+          "given": "A company with three existing visual projects",
+          "when": "Sales move it into the credit model",
+          "then": "All three are marked grandfathered and no credit is taken for them",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-017",
+      "type": "business-rule",
+      "title": "Converting a project between progress and visual never reuses credit",
+      "statement": "Sales can convert a project on the credit model between progress and visual. Visual to progress: the credit it used stays used, and it earns new progress credit like any approved progress project (it must meet the progress minimum). Progress to visual: its unused credit expires at once and it carries on as a paid visual-only project. Visual projects that drew from it are unaffected.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5, constructn-api@984e5354512a); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-061"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "convertProject (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L549@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-017-AC1",
+          "given": "A progress project with 400,000 sq ft of unused credit",
+          "when": "Sales convert it to visual",
+          "then": "Its lot expires with 400,000 sq ft lost and the project becomes a paid visual-only project",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-018",
+      "type": "business-rule",
+      "title": "Paid visual-only projects are built but switched off",
+      "statement": "Sales can sell a visual project on its own order form that neither uses nor earns credit, at or above a separate visual-only minimum size. This is switched off by a separate setting until its price is confirmed. While off, every visual project Sales create uses credit like any other.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5, constructn-api@984e5354512a); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-061"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "isVisualOnlyEnabled (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L72@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "Sales visual-only create (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L135@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "recordVisualOnlyProject (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L440@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-018-AC1",
+          "given": "Visual-only projects are switched on",
+          "when": "Sales create a visual project from an order form at or above the visual-only minimum",
+          "then": "No credit is taken, the project is marked as directly funded, and a visual-only entry is logged",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-019",
+      "type": "business-rule",
+      "title": "Prices are shown for information; payment is offline",
+      "statement": "Each kind of project (progress, visual-only) has a fixed price per square foot, a minimum size and a credit multiplier, the same for every company and contract. The Sales form shows the price and, for progress projects, the credit it will add. The platform takes no payment and issues no invoice. Changing a price needs a release.",
+      "rationale": "Only on feature/progress-linked-credit (db-models@39f53b96975a, track3d-web@af7f2c449f38); not on db-models master or track3d-web main. Figures are deliberately not copied here.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-061"
+      ],
+      "implemented_by": [
+        "mod.db-models",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "PROJECT_PRICING (feature/progress-linked-credit)",
+          "code": "db-models:src/definitions/credit-constants.ts#L24@39f53b96975a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "OrderFormPriceSummary (feature/progress-linked-credit)",
+          "code": "track3d-web:src/features/credits/components/ProgressPriceSummary.tsx#L32@af7f2c449f38"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-019-AC1",
+          "given": "Sales fill in a progress project's size on the Sales form",
+          "when": "The size is below the progress minimum",
+          "then": "Create is blocked and the minimum is shown",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-020",
+      "type": "requirement",
+      "title": "Sales credit pages",
+      "statement": "Sales have a credit list of companies on the model (available, starting later, active progress projects, credit expiring within 30 days, pending corrections), a company page (each progress project's lot, each visual project and which progress projects funded it), the company's ledger, pending corrections, notifications and a list of companies blocked for lack of credit, as sales leads.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5, track3d-web@af7f2c449f38); not on track-3d or track3d-web main.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "Sales routes (feature/progress-linked-credit)",
+          "code": "project-api:src/frameworks/routes/creditV1.routes.ts#L50@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "listCompanies (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit-sales.service.ts#L28@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "companyDetail (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit-sales.service.ts#L64@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-020-AC1",
+          "given": "A company with a lot ending in 20 days with unused credit",
+          "when": "Sales open the credit list",
+          "then": "That company's row shows the unused amount as expiring soon",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-021",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "SCHD",
+  "name": "Schedule",
+  "summary": "Construction schedule import, planned timing and comparison with observed progress.",
+  "related": [
+    "PROG",
+    "RPT"
+  ],
+  "owner": null,
+  "feature_order": [
+    "SCHD-FEAT-01",
+    "SCHD-FEAT-02",
+    "SCHD-FEAT-03",
+    "SCHD-FEAT-04"
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "id": "NOTIF-FEAT-02",
+  "name": "SMS commands",
+  "summary": "Replies people text to the platform's SMS number (HELP, STOP, START, and queries).",
+  "components": [
+    "svc.messaging-service"
+  ],
+  "decisions": [],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "An incoming phone number is matched to a user. There is no project role involved.",
+    "actions": [
+      {
+        "action": "Text HELP",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "NOTIF-NFR-002",
+      "kind": "latency",
+      "statement": "Time to reply to an incoming SMS command.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is there a carrier or compliance requirement on reply time for STOP and HELP?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "NOTIF-REQ-005",
+      "type": "business-rule",
+      "title": "HELP, STOP and START are handled separately",
+      "statement": "Incoming texts are trimmed and lower-cased. HELP returns help text. STOP deletes the phone's session and replies with an unsubscribe message. START replies that the number is subscribed. Anything else is matched to a user by phone number and handled as a query.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.messaging-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-100"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-100",
+          "code": "messaging-service:src/application/service/webhook-v2.service.ts#L46@41fa757919eb"
+        }
+      ],
+      "open_checks": [
+        "A START reply doesn't prove a lasting subscription was created; phone normalisation, shared numbers and Twilio request authentication need checks"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "NOTIF-REQ-005-AC1",
+          "given": "A user texts \" Stop \"",
+          "when": "The message is handled",
+          "then": "Their SMS session is deleted, and they get the unsubscribe reply",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

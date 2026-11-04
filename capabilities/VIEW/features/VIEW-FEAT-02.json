@@ -1,0 +1,369 @@
+{
+  "id": "VIEW-FEAT-02",
+  "name": "3D realities, splats and the drone viewer",
+  "summary": "Viewing a reality in 3D: Gaussian splats, point clouds, navigation controls and the drone map view. Which of these customers get, compared with support users, is the main open question.",
+  "components": [
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-035"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "These modes are gated by user type and capture type, not by a permission string. Project viewing itself needs view-project (VIEW-FEAT-01).",
+    "actions": [
+      {
+        "action": "Use 3D (splat) mode on a drone capture",
+        "permission": null,
+        "grants": {
+          "admin": "conditional",
+          "collaborator": "conditional",
+          "viewer": "conditional",
+          "support-user": "allow"
+        },
+        "note": "Only when a splat file is found for the capture"
+      },
+      {
+        "action": "Use 3D (splat) mode on a non-drone capture",
+        "permission": null,
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Support users only"
+      },
+      {
+        "action": "Use point cloud mode",
+        "permission": null,
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Support users only"
+      },
+      {
+        "action": "Open the drone map view",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Shown when the structure has a drone capture"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "VIEW-NFR-003",
+      "kind": "latency",
+      "statement": "Time to load a splat or point cloud for a capture until it can be navigated.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What load time is acceptable for splats and point clouds, and for what file size?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "VIEW-REQ-007",
+      "type": "business-rule",
+      "title": "A splat is shown only when a splat file exists next to the capture",
+      "statement": "For video-walk captures, the viewer looks for a Gaussian splat beside the capture's images file, trying in turn splat_compressed.ply, splat.ksplat, splat.ply and the processing pipeline's point_cloud.ply. The first one found is used. 360 images, phone images and drone panoramas never get a splat. If none is found, 3D mode stays off.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-035"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "splat-manager getValidPath",
+          "code": "track3d-web:src/adapter/hooks/splat-manager.tsx#L334@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "splat-manager skips image layers",
+          "code": "track3d-web:src/adapter/hooks/splat-manager.tsx#L255@4a87277b3101"
+        }
+      ],
+      "open_checks": [
+        "Which processing step writes the splat files, and for which capture modes, was not traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-007-AC1",
+          "given": "A 360 video capture whose folder has splat.ply but no splat_compressed.ply or splat.ksplat",
+          "when": "The capture is opened",
+          "then": "splat.ply is loaded as the splat",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-007-AC2",
+          "given": "A 360 image capture",
+          "when": "It is opened",
+          "then": "No splat is looked for or loaded",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-008",
+      "type": "business-rule",
+      "title": "Who can use 3D (splat) mode",
+      "statement": "The PRD expects users to navigate Gaussian splat models. Today customers get the Reality and 3D buttons only on drone captures; support users get them on every capture. 3D is disabled when no splat was found.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The Gaussian splat PRD addresses users generally. The code hides 3D mode from customers except on drone captures. Product must say whether splats are a customer feature (DEC-035)."
+      },
+      "decisions": [
+        "DEC-035"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-019",
+          "title": "Prior PRD - Gaussian splat viewer (t3d-prd-agent prd-organised)",
+          "at": "US-001, Goals",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer-toolbars reality/3D buttons",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-toolbars.tsx#L2796@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "3D button disabled without splat",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-toolbars.tsx#L2843@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-008-AC1",
+          "given": "A customer opens a 360 video capture that has a splat",
+          "when": "They look at the reality toolbar",
+          "then": "(Current behaviour) No 3D button is shown",
+          "status": "disputed"
+        },
+        {
+          "id": "VIEW-REQ-008-AC2",
+          "given": "A customer opens a drone capture with no splat file",
+          "when": "They look at the reality toolbar",
+          "then": "The 3D button is shown but disabled",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-009",
+      "type": "requirement",
+      "title": "Orbit and first-person navigation in 3D",
+      "statement": "3D views offer intuitive real-time navigation: orbit and first-person controls. Today a drone capture opens in orbit and other captures in first-person, and the BIM view has its own orbit option.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-035"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-019",
+          "title": "Prior PRD - Gaussian splat viewer (t3d-prd-agent prd-organised)",
+          "at": "FR-001, AC-001, EC-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "reality-viewer 3D controls",
+          "code": "track3d-web:src/components/rahman/core/viewer/reality-viewer.tsx#L1554@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-009-AC1",
+          "given": "A drone capture with a splat",
+          "when": "The user switches to 3D mode",
+          "then": "Orbit controls are active",
+          "status": "draft"
+        },
+        {
+          "id": "VIEW-REQ-009-AC2",
+          "given": "A 360 video capture with a splat, viewed by a support user",
+          "when": "They switch to 3D mode",
+          "then": "First-person controls are active",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-010",
+      "type": "requirement",
+      "title": "Compare a splat with a non-splat reality",
+      "statement": "Compare mode works when one side is a Gaussian splat and the other is not, for example a splat of one date against a 360 video of another. Notes, tasks and issues stay visible in image view.",
+      "rationale": "The code has a separate splat viewer for the compare side. How differences between the two kinds are handled is a PRD open question.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-035"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-019",
+          "title": "Prior PRD - Gaussian splat viewer (t3d-prd-agent prd-organised)",
+          "at": "FR-002, FR-003, AC-002, AC-003, Open Questions",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "splat-manager loadGsplatCompare",
+          "code": "track3d-web:src/adapter/hooks/splat-manager.tsx#L172@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-010-AC1",
+          "given": "A drone capture with a splat on 1 May and one without on 1 June",
+          "when": "The user compares the two dates",
+          "then": "The left side shows the splat and the right side shows the other reality, both navigable",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-011",
+      "type": "business-rule",
+      "title": "Who can switch to point cloud view",
+      "statement": "The BIM navigation PRD shows a \"Show point cloud\" button whenever images are available. Today the point cloud mode button is shown only to support users with beta features on. A later drone PRD asked to remove the Reality/Point Cloud toggle for drone captures, which matches today's customer experience.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "bim-navigation FR-003 expects a point cloud button for users. The code limits it to support users behind a beta flag. The unregistered drone-viewer PRD (2024-11) asked for the toggle to be removed. Product must say whether customers get point clouds at all (DEC-035)."
+      },
+      "decisions": [
+        "DEC-035"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-023",
+          "title": "Prior PRD - Sync/desync, lock/unlock viewer (BIM navigation) (t3d-prd-agent prd-organised)",
+          "at": "FR-003, AC-003",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer-toolbars point cloud mode",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-toolbars.tsx#L2824@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-011-AC1",
+          "given": "A customer viewing a 360 video reality",
+          "when": "They look at the reality toolbar",
+          "then": "(Current behaviour) No point cloud button is shown",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-012",
+      "type": "business-rule",
+      "title": "Drone captures open in a map view",
+      "statement": "When a structure has a drone capture, the viewer offers a Map View of the drone orthophoto. With no sheet, the drone map is the default view (VIEW-REQ-001).",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-035"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer-toolbars Map View button",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-toolbars.tsx#L2879@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/visualisations.md (Estimation Viewer (Ortho))",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-012-AC1",
+          "given": "A structure with a drone capture",
+          "when": "A user opens it in reality view",
+          "then": "A Map View button is shown and opens the drone map",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-012-AC2",
+          "given": "A structure with only 360 video captures",
+          "when": "A user opens it in reality view",
+          "then": "No Map View button is shown",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

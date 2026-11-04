@@ -1,0 +1,21 @@
+{
+  "id": "DSGN",
+  "name": "Designs, BIM and documents",
+  "summary": "Uploading 2D sheets and BIM models to project locations, processing them into viewable plans, choosing the capture sheet for each location, replacing designs with revisions, and taking in multi-page PDF drawing sets.",
+  "related": [
+    "PROJ",
+    "PROG",
+    "CAPT",
+    "INTG",
+    "VIEW",
+    "NOTIF"
+  ],
+  "owner": null,
+  "feature_order": [
+    "DSGN-FEAT-01",
+    "DSGN-FEAT-02",
+    "DSGN-FEAT-03",
+    "DSGN-FEAT-04",
+    "DSGN-FEAT-05"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "DEC-026",
+  "title": "Upload reliability promises",
+  "status": "open",
+  "question": "What do we promise about uploads? This covers duplicate files and duplicate completion events, partial success in a batch, resuming after network loss or app restart, retry limits, cancellation, and expiry of abandoned uploads.",
+  "context": "Today a repeated completion event counts twice and can mark a capture complete early (UPLD-REQ-001). Resumable multipart sessions exist in the newer uploader (UPLD-REQ-004). An earlier review recommended that a duplicate event must never stand in for another unique file.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "UPLD",
+    "CAPT"
+  ],
+  "requirements": [
+    "UPLD-REQ-001",
+    "UPLD-REQ-003",
+    "UPLD-REQ-004",
+    "UPLD-REQ-005"
+  ]
+}

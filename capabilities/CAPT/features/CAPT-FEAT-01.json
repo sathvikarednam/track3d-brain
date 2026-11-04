@@ -1,0 +1,218 @@
+{
+  "id": "CAPT-FEAT-01",
+  "name": "Capture creation",
+  "summary": "Recording site data at a project location and time with the mobile app: capture modes, grouping into snapshots, duplicate detection, and registering files to upload.",
+  "components": [
+    "svc.capture-api",
+    "svc.constructn-api",
+    "svc.t3d-uploader-service"
+  ],
+  "decisions": [
+    "DEC-028"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Capturing is a project action. The project must also be in an access stage that allows it (PROJ-REQ-015).",
+    "actions": [
+      {
+        "action": "Capture and submit a capture session",
+        "permission": "capture",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Upload capture media",
+        "permission": "upload",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "CAPT-NFR-001",
+      "kind": "volume",
+      "statement": "Largest capture session (files and total size per capture, captures per day per project) that must succeed.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What are the largest 360 video and drone sessions customers upload today, and what must we support?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "CAPT-REQ-001",
+      "type": "business-rule",
+      "title": "Assigned users capture site data on mobile and upload it",
+      "statement": "A user assigned to a project signs in to the mobile app, finds the project, captures site data and uploads it. Offline capture and resume promises are not established until a released mobile build is reviewed.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-028"
+      ],
+      "implemented_by": [
+        "svc.capture-api",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-BR-009",
+        "T3D-CAND-CAPTURE-UPLOAD-FR-001",
+        "T3D-CAND-CAPTURE-UPLOAD-FR-002"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-009",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-016",
+          "title": "Prior PRD - Capture upload (including drone and GCP) (t3d-prd-agent)",
+          "at": "FR-001, FR-002",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The released mobile app is not in the inspected repositories; offline capture, upload resume and app-version contracts are unverified"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-001-AC1",
+          "given": "A collaborator assigned to project P, on site with the mobile app",
+          "when": "They select P, choose a location, capture and upload",
+          "then": "A capture for that location and date exists in P and its files upload",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-002",
+      "type": "business-rule",
+      "title": "A repeated capture from the same device is reused",
+      "statement": "Creating a capture reuses an existing one with the same device, capture time and structure, so a retried submission doesn't create a duplicate. Without a device ID a new capture is always created.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-028"
+      ],
+      "implemented_by": [
+        "svc.capture-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-033"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-033",
+          "code": "capture-api:src/application/service/capture.servicev2.ts#L1430@ac5726e820f2"
+        }
+      ],
+      "open_checks": [
+        "The check reads before it creates, so two concurrent submissions can both create; the project isn't part of the match; partial registration needs repair on retry"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-002-AC1",
+          "given": "A capture from device D at 10:02 on structure S",
+          "when": "The app resubmits the same capture after a timeout",
+          "then": "The existing capture is returned and no second capture is created",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-003",
+      "type": "business-rule",
+      "title": "Captures are grouped into snapshots by structure and local date",
+      "statement": "New captures are grouped by structure and by date in the project's time zone. Each group is attached to the snapshot for that structure and day, which is created if needed. Capture records are created before upload sessions are registered, and a capture that already existed gets no new upload session.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.capture-api",
+        "svc.t3d-uploader-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-034"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-034",
+          "code": "capture-api:src/application/service/capture.servicev2.ts#L1724@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-114",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-003-AC1",
+          "given": "A project in America/Chicago, and two captures on structure S at 23:30 and 00:30 local time",
+          "when": "They are created",
+          "then": "They are attached to snapshots for two different local dates",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-004",
+      "type": "business-rule",
+      "title": "Seven capture modes",
+      "statement": "A capture has one mode: 360 video, 360 image, phone image, phone video, LiDAR scan, drone image or laser. Which modes each project type supports isn't decided (DEC-028).",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-028"
+      ],
+      "implemented_by": [
+        "svc.capture-api",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "capture.md (Capture Mode enum)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-004-AC1",
+          "given": "A capture submitted with mode \"Thermal\"",
+          "when": "It is saved",
+          "then": "It is rejected as an unknown mode",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

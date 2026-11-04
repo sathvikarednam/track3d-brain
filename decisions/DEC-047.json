@@ -1,0 +1,16 @@
+{
+  "id": "DEC-047",
+  "title": "What an anonymous share viewer may see and do",
+  "status": "open",
+  "question": "What can someone who opens a share link reach: only the shared view and date, the whole structure, or more of the project? Must every request be tied to that link's project and view, and must disabling a link end open sessions at once?",
+  "context": "Share links are meant to give outside stakeholders controlled access (SHARE-REQ-013).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "SHARE"
+  ],
+  "requirements": [
+    "SHARE-REQ-010",
+    "SHARE-REQ-013"
+  ]
+}

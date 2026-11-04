@@ -1,0 +1,332 @@
+{
+  "id": "DSGN-FEAT-03",
+  "name": "Capture sheet and design activation",
+  "summary": "Which sheet each location captures against, how a design becomes active, and how BIM models are shared down the hierarchy.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-041"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Make a sheet the capture sheet",
+        "permission": "update-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Activate a design",
+        "permission": "update-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "update-project-bim for BIM models"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "DSGN-NFR-005",
+      "kind": "availability",
+      "statement": "Every location that holds captures always has exactly one capture sheet.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Should a location with captures ever be allowed to have no capture sheet, for example while its only sheet is replaced?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "DSGN-REQ-024",
+      "type": "business-rule",
+      "title": "The capture sheet is chosen automatically",
+      "statement": "The first usable sheet uploaded to a location becomes its capture sheet. An architectural sheet uploaded later takes over as capture sheet, and people with capture permission are told. A capture sheet that someone chose by hand is never replaced automatically. Zone sheets and internal sheets don't become the capture sheet automatically.",
+      "rationale": "The PRD and code agree on the first-sheet and architectural takeover rules. Code sends a project notification when an architectural sheet arrives after other sheet types; whether it reaches exactly the people with capture permission was not traced.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-028",
+          "title": "Prior PRD - Hierarchy management (sheets and BIMs per level) (t3d-prd-agent prd-organised)",
+          "at": "FR-005, AC-005, EC-003",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L190@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L307@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Confirm who receives the \"Design Updated\" notification sent when an architectural sheet takes over"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-024-AC1",
+          "given": "A floor with no sheets",
+          "when": "An electrical PDF finishes processing there",
+          "then": "It becomes the floor's capture sheet",
+          "status": "draft"
+        },
+        {
+          "id": "DSGN-REQ-024-AC2",
+          "given": "A floor whose capture sheet is an electrical sheet chosen automatically",
+          "when": "An architectural PDF finishes processing there",
+          "then": "The architectural sheet becomes the capture sheet and users with capture permission are notified",
+          "status": "draft"
+        },
+        {
+          "id": "DSGN-REQ-024-AC3",
+          "given": "A floor whose capture sheet was chosen by hand",
+          "when": "An architectural PDF finishes processing there",
+          "then": "The hand-chosen capture sheet stays",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-025",
+      "type": "business-rule",
+      "title": "One capture sheet per location, and what can be one",
+      "statement": "A location has at most one capture sheet. Only an active sheet can be chosen as the capture sheet by hand; BIM models, DWG and DXF sheets, and zone sheets can't be capture sheets. Choosing a new capture sheet unsets the old one, including any extra ones left by concurrent uploads.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L557@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L607@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L473@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "design.md (Business Rules",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-025-AC1",
+          "given": "An active DWG sheet",
+          "when": "An admin tries to make it the capture sheet",
+          "then": "The change is refused",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-025-AC2",
+          "given": "A floor with capture sheet A and active sheet B",
+          "when": "An admin makes B the capture sheet",
+          "then": "B is the only capture sheet on the floor and A is kept as an ordinary sheet",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-026",
+      "type": "business-rule",
+      "title": "Changing the capture sheet is announced",
+      "statement": "When an admin changes a location's capture sheet, a project notification is sent and the Track3D team is alerted. The admin may delete the old capture sheet at the same time, unless an asset category uses it.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L661@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L589@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-026-AC1",
+          "given": "A floor whose capture sheet is used by an asset category",
+          "when": "An admin makes another sheet the capture sheet and asks to delete the old one",
+          "then": "The change is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-027",
+      "type": "business-rule",
+      "title": "A new PDF sheet goes live by itself only before any capture",
+      "statement": "When a PDF sheet (not a zone sheet) finishes processing and its location has no captured realities, it becomes active straight away. Otherwise it waits for review and someone must activate it.",
+      "rationale": "Whether customers or the Track3D team should review sheets for locations with captures is open (DEC-041).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-041"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L372@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-027-AC1",
+          "given": "A new floor with no captures",
+          "when": "A PDF sheet finishes processing there",
+          "then": "It becomes active without review",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-027-AC2",
+          "given": "A floor that already has captures",
+          "when": "A new PDF sheet finishes processing there",
+          "then": "It is not active until someone activates it",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-028",
+      "type": "business-rule",
+      "title": "Capture sheets and active designs can't simply be switched off",
+      "statement": "The capture sheet can't be made inactive or set to error; another sheet must become the capture sheet first. On the older v1 status route, an active design can't be made inactive directly, and activating a sheet makes every other active sheet on that location inactive.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L701@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L282@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "The v1 status route deactivates all other active sheets on activation, but the v4 update route doesn't (that code is commented out); confirm which behaviour customers get"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-028-AC1",
+          "given": "A floor's capture sheet",
+          "when": "An admin tries to make it inactive",
+          "then": "The change is refused with a message to choose another capture sheet first",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-029",
+      "type": "business-rule",
+      "title": "Child locations show their parent's BIM model",
+      "statement": "When a location has no active BIM model of its own, it shows the nearest parent's active BIM model, marked as inherited. No copy of the model is stored on the child.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/services/structure-services.ts#L272@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-029-AC1",
+          "given": "A building with an active BIM model and a floor without one",
+          "when": "A user opens the floor",
+          "then": "The building's BIM model is shown for the floor, marked as inherited",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

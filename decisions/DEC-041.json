@@ -1,0 +1,20 @@
+{
+  "id": "DEC-041",
+  "title": "When a new sheet goes live without review",
+  "status": "open",
+  "question": "Should a newly processed sheet become active by itself, and if so only for locations with no captures (today), or always, or never without review?",
+  "context": "Today a PDF sheet goes active automatically when its location has no captured realities, and otherwise waits for someone to activate it (DSGN-REQ-027). Activating a sheet on a location with captures can affect alignment and progress (see DEC-003).",
+  "options": [
+    "Keep the current rule",
+    "Always require review",
+    "Always activate and notify"
+  ],
+  "decision": null,
+  "capabilities": [
+    "DSGN",
+    "PROG"
+  ],
+  "requirements": [
+    "DSGN-REQ-027"
+  ]
+}

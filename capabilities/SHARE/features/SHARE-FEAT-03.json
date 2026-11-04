@@ -1,0 +1,186 @@
+{
+  "id": "SHARE-FEAT-03",
+  "name": "Sharing inside a project",
+  "summary": "Sharing with named project users rather than by public link: shared folders, measurement visibility and shared progress views.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-048"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Measurement sharing permissions are in CAPT-FEAT-04. Shared folders have no permission string or code.",
+    "actions": [
+      {
+        "action": "Share a saved progress view",
+        "permission": "view-progress-overview",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Only the view's owner"
+      },
+      {
+        "action": "Create and share a folder",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "PRD says site admins"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "SHARE-NFR-003",
+      "kind": "volume",
+      "statement": "Number of users one item can be shared with in a single action.",
+      "target": {
+        "max_recipients_per_share": 100
+      },
+      "status": "inferred-from-code",
+      "open_question": null
+    }
+  ],
+  "requirements": [
+    {
+      "id": "SHARE-REQ-014",
+      "type": "requirement",
+      "title": "Shared folders of project links",
+      "statement": "Site admins can create folders with names unique in the project, add and organise links in them, and share a folder with chosen users at set permission levels. Only those users can open it, a removed user loses access at once, and sharing an empty folder is allowed with a warning.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-048"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-038",
+          "title": "Prior PRDs - Public sharing, shared content, and permissions and sharing (t3d-prd-agent prd-organised)",
+          "at": "shared-content FR-001..FR-004, AC-001..AC-003, EC-001..EC-003",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "No shared-folder code was found in the repositories read for this migration; the permission levels are an open PRD question"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-014-AC1",
+          "given": "A project that already has a folder named Handover",
+          "when": "A site admin creates another folder named Handover",
+          "then": "They are asked for a different name",
+          "status": "draft"
+        },
+        {
+          "id": "SHARE-REQ-014-AC2",
+          "given": "A user removed from a shared folder",
+          "when": "They try to open it",
+          "then": "Access is denied",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "SHARE-REQ-015",
+      "type": "requirement",
+      "title": "Public measurements are visible to all project users but editable by few",
+      "statement": "A measurement's creator can make it public so every project user sees it. Only the creator, admins and the measurement's assignees can edit it; anyone else is told they lack permission.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-038",
+          "title": "Prior PRDs - Public sharing, shared content, and permissions and sharing (t3d-prd-agent prd-organised)",
+          "at": "permissions-and-sharing FR-001, AC-001, EC-001",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "CAPT-REQ-013 covers private-unless-shared measurements from code; check the edit rule against it before changing either"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-015-AC1",
+          "given": "A measurement its creator has made public",
+          "when": "A project user who is not creator, admin or assignee tries to edit it",
+          "then": "The edit is refused with a permission message",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "SHARE-REQ-016",
+      "type": "business-rule",
+      "title": "Sharing a saved progress view gives each recipient their own copy",
+      "statement": "Only a saved view's owner can share it, with up to 100 other users at once and never with themselves. System default views can't be shared. Each recipient gets an independent copy, renamed if they already have a view of that name, and it becomes their default when it is their first view of an auto-default type.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "shareSavedView",
+          "code": "api-2d-progress:src/application/service/saved-view.service.ts#L520@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "apis/route-inventory.md §20 Saved Views",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "No check was seen that recipients are users of the view's project"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-016-AC1",
+          "given": "A recipient who already has a view with the same name",
+          "when": "The owner shares their view with them",
+          "then": "The recipient gets a copy under a different name",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "SHARE-REQ-016-AC2",
+          "given": "A user who isn't the view's owner",
+          "when": "They try to share it",
+          "then": "It is refused",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "SHARE-REQ-016-AC3",
+          "given": "A system default view",
+          "when": "Its owner tries to share it",
+          "then": "It is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

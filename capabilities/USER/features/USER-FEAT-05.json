@@ -1,0 +1,580 @@
+{
+  "id": "USER-FEAT-05",
+  "name": "Project roles and permissions",
+  "summary": "What a user may do in a project: system and custom roles, permission strings, how direct and group roles combine, and who may change roles.",
+  "components": [
+    "svc.permission-management",
+    "svc.constructn-api",
+    "svc.api-gateway-service",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-013"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The confirmed rule is that permissions, not titles, decide (USER-REQ-029). This matrix shows what the seed roles hold. A custom role with the same permission strings gets the same rights.",
+    "actions": [
+      {
+        "action": "View project users",
+        "permission": "view-project-user",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Change a user's project role",
+        "permission": "update-project-user",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Create a custom role",
+        "permission": "create-project-role",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Update a custom role",
+        "permission": "update-project-role",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a custom role",
+        "permission": "delete-project-role",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "USER-NFR-005",
+      "kind": "latency",
+      "statement": "Added latency of the permission check on each API request.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What per-request budget is acceptable for permission evaluation, including cache misses?"
+    },
+    {
+      "id": "USER-NFR-006",
+      "kind": "freshness",
+      "statement": "How quickly a role change takes effect on every API.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is a delay acceptable after a role is changed or removed, and how long? Permissions are cached (T3D-RULE-023)."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "USER-REQ-020",
+      "type": "business-rule",
+      "title": "Project actions need a verified user with the right permission",
+      "statement": "To act in a project, a user must be verified and hold a role there that grants the permission for that action. Roles are assigned manually.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.permission-management",
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [
+        "T3D-BR-005",
+        "T3D-BR-016"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-005, T3D-BR-016",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-022",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-020-AC1",
+          "given": "A verified user whose project role lacks create-asset",
+          "when": "They try to create a progress asset in that project",
+          "then": "The action is denied",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-021",
+      "type": "business-rule",
+      "title": "Before any project assignment, a user can manage only their own profile",
+      "statement": "An ordinary verified user with no project assignment can only manage their own profile. Company-wide super-admin authority, if separately granted, is a different rule (USER-REQ-038).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.permission-management",
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [
+        "T3D-BR-031"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-031",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-022",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Prove it despite default permission records and alternate token paths"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-021-AC1",
+          "given": "A verified user with no project assignment and no company authority",
+          "when": "They try to edit their profile, and separately to view or manage any project",
+          "then": "Profile editing works, and every project action is denied",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-022",
+      "type": "business-rule",
+      "title": "Effective permissions combine the direct role and all group roles",
+      "statement": "A user's permissions on a project are the union of their direct role and every role they get through groups on that project. With no assignment, they have none.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.permission-management"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-022"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-022",
+          "code": "permission-management:src/application/service/user-entity-role.service.ts#L105@77d70fa539ba"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-126",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-022-AC1",
+          "given": "A viewer on project P who is also in a group that grants collaborator on P",
+          "when": "They try to create an asset in P",
+          "then": "It is allowed, because collaborator grants create-asset",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-023",
+      "type": "business-rule",
+      "title": "Three system roles, plus custom roles per project",
+      "statement": "Every project has three system roles: admin (all project permissions), collaborator (read plus limited write) and viewer (read only). Users with the permission can add custom roles scoped to one project, with any subset of project permissions.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.permission-management"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/user-management.md §1.1, §1.2",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-023-AC1",
+          "given": "A new permission string is added to the catalog",
+          "when": "The seed runs",
+          "then": "The admin system role gains it",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-024",
+      "type": "business-rule",
+      "title": "Custom roles always include the default permissions",
+      "statement": "A custom role can't use a reserved name (admin, collaborator, viewer) or the name of another role in the same project. When saved, it also receives every permission in the Default group, even ones the creator didn't select.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.permission-management"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-023"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-023",
+          "code": "permission-management:src/application/service/role.service.ts#L32@77d70fa539ba"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-007",
+          "title": "Permission seed catalog (permission-management scripts/seed-data/permission.json)",
+          "at": "seed_default_permission_strings: view-zones, view-project, visual-documentation",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-024-AC1",
+          "given": "A user creates a custom role and selects only view-asset",
+          "when": "The role is saved",
+          "then": "It holds view-asset plus view-zones, view-project and visual-documentation",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "USER-REQ-024-AC2",
+          "given": "A project with a custom role named Site lead",
+          "when": "Someone creates another role named Site lead, or one named viewer",
+          "then": "The role is rejected",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-025",
+      "type": "requirement",
+      "title": "Create custom roles and assign them",
+      "statement": "Users with role-management permission can create custom roles from selected permissions and assign them to people. Assigned users can then use only the features their role permits.",
+      "rationale": "The PRD says \"administrators\". The confirmed rule makes this permission-based (USER-REQ-029). Saved roles also receive the default permissions (USER-REQ-024).",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.permission-management",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-ROLES-PERMISSIONS-FR-001",
+        "T3D-CAND-ROLES-PERMISSIONS-FR-008",
+        "T3D-CAND-USER-MANAGEMENT-FR-001",
+        "T3D-CAND-USER-MANAGEMENT-FR-002",
+        "T3D-CAND-USER-MANAGEMENT-FR-003"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-008",
+          "title": "Prior PRD - Roles and permissions (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-001, FR-008",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-010",
+          "title": "Prior PRD - User management / user profile (t3d-prd-agent prd-organised)",
+          "at": "FR-001..FR-003",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-025-AC1",
+          "given": "A user with create-project-role",
+          "when": "They select permissions and create a role",
+          "then": "The role is saved and shown in the roles list",
+          "status": "draft"
+        },
+        {
+          "id": "USER-REQ-025-AC2",
+          "given": "A custom role exists",
+          "when": "It is assigned to a user",
+          "then": "The user's access changes to match the role",
+          "status": "draft"
+        },
+        {
+          "id": "USER-REQ-025-AC3",
+          "given": "A user holds a custom role",
+          "when": "They use the project",
+          "then": "They can reach only the features the role permits",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-026",
+      "type": "requirement",
+      "title": "System roles can't be changed, only cloned",
+      "statement": "The default system roles can't be edited or deleted. They can be cloned into a custom role, which can then be changed.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.permission-management",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-ROLES-PERMISSIONS-FR-002"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-008",
+          "title": "Prior PRD - Roles and permissions (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-023",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-026-AC1",
+          "given": "A user viewing the system roles",
+          "when": "They try to edit or delete one",
+          "then": "The action is prevented, and cloning is offered instead",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-027",
+      "type": "requirement",
+      "title": "Roles list shows permissions and user counts",
+      "statement": "The roles screen lists every role with its permissions and the number of users holding it.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-ROLES-PERMISSIONS-FR-003"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-008",
+          "title": "Prior PRD - Roles and permissions (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-003",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-027-AC1",
+          "given": "A project with system and custom roles",
+          "when": "A user opens the roles screen",
+          "then": "Each role is shown with its permissions and how many users hold it",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-028",
+      "type": "requirement",
+      "title": "Import roles from another project",
+      "statement": "A user can import custom roles from another project where they have admin access.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.permission-management",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-ROLES-PERMISSIONS-FR-004"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-008",
+          "title": "Prior PRD - Roles and permissions (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-028-AC1",
+          "given": "A user is admin on project Q, which has a custom role Inspector",
+          "when": "They import roles from Q into project P",
+          "then": "Inspector appears in P's roles list",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-029",
+      "type": "business-rule",
+      "title": "Inviting users and changing roles is permission-based",
+      "statement": "Any user assigned to a project may invite users and change their project roles if they hold the relevant permissions. An admin title alone neither grants nor is required for this. The limit on which roles they may grant is not decided (DEC-013).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-013"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.permission-management",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-030"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-030",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-029-AC1",
+          "given": "A collaborator whose custom role includes update-project-user and assign-project-user",
+          "when": "They invite a user and change another user's role",
+          "then": "Both actions are allowed, even though they are not an admin",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-030",
+      "type": "business-rule",
+      "title": "Anyone with update-project-user can grant any project role",
+      "statement": "In the web app, changing a project user's role requires update-project-user on that project. There is no limit on which role may be granted, so a holder can make someone (including, unverified, themselves) an admin. Users who hold super-admin or regional-admin can't have their project role changed this way.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-013"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "change-user-role route",
+          "code": "constructn-api:src/routes/v4/project.routes.ts#L167@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "changeUserRole super-admin guard",
+          "code": "constructn-api:src/controllersv2/project.controller.ts#L1315@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "The UI showed role labels and controls only. Denied server behaviour and grant limits were not tested"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-030-AC1",
+          "given": "A user with update-project-user but not admin on project P",
+          "when": "They change another member's role to admin",
+          "then": "(Current behaviour) The change succeeds",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "USER-REQ-030-AC2",
+          "given": "A company super-admin who is a member of project P",
+          "when": "Someone changes their project role on P",
+          "then": "The change is rejected",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-031",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "disputed",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

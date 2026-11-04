@@ -1,0 +1,304 @@
+{
+  "id": "INTG-FEAT-01",
+  "name": "Integration connections and status",
+  "summary": "Connecting a user's Procore or Autodesk account, linking a Track3D project to a Procore, Autodesk or Fieldwire project, and the status Track3D shows for each connection.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-049",
+    "DEC-053"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The v4 link and unlink routes check link-project. Reading the integration status checks project access but no permission string.",
+    "actions": [
+      {
+        "action": "Link or unlink a project to Procore, Autodesk or Fieldwire",
+        "permission": "link-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Save or replace the project's Fieldwire API key",
+        "permission": "link-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "See integration status for a project",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Only project access is checked"
+      },
+      {
+        "action": "Connect a personal Procore or Autodesk account",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "INTG-NFR-001",
+      "kind": "latency",
+      "statement": "Time to load the integration status of a project, which today waits on Procore, Autodesk and Fieldwire together.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How long may the integrations tab take, and should one slow or failing platform block the others?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "INTG-REQ-001",
+      "type": "requirement",
+      "title": "Link a Track3D project to a Procore project",
+      "statement": "A user signed in with Procore can link a Track3D project to a Procore project and then sees the Procore project ID on the project details page. A user who isn't signed in to Procore is asked to sign in first.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-049"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-031",
+          "title": "Prior PRD - Integration (merged Procore and SMS assistant) (t3d-prd-agent prd-organised)",
+          "at": "FR-009, FR-010, AC-009, AC-010, EC-005",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-032",
+          "title": "Prior PRD - Procore integration (t3d-prd-agent prd-organised)",
+          "at": "FR-001, FR-002, AC-001, AC-002, EC-001",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Procore and Autodesk sign-in methods are covered by USER-REQ-007 and DEC-011; this requirement covers only project linking"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-001-AC1",
+          "given": "A user signed in with Procore on a project's details page",
+          "when": "They choose Link Project to Procore and pick a Procore project",
+          "then": "The project is linked and the Procore project ID shows on the details page",
+          "status": "draft"
+        },
+        {
+          "id": "INTG-REQ-001-AC2",
+          "given": "A user who hasn't signed in with Procore",
+          "when": "They try to link the project to Procore",
+          "then": "They are asked to sign in with Procore first",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-002",
+      "type": "business-rule",
+      "title": "Integration status is several independent flags",
+      "statement": "For Procore and Autodesk, Track3D reports separately whether the user is signed in, whether the project is linked, and whether the linked company or hub is one the user can still see. Fieldwire reports signed in and linked. Signed in does not mean linked, and none of the flags means data is syncing.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-049"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-096"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-096",
+          "code": "constructn-api:src/services/integrations.service.ts#L8@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "All three platform calls run together, so one failing platform fails the whole status call. Autodesk 'custom integration' is true whenever the user sees any hub"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-002-AC1",
+          "given": "A user signed in with Procore whose project is not linked to Procore",
+          "when": "They open the project's integration status",
+          "then": "Procore shows signed in, not linked and not company-mapped",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "INTG-REQ-002-AC2",
+          "given": "A linked Procore project whose stored company is not in the user's current Procore company list",
+          "when": "The status is read",
+          "then": "Procore shows linked but not company-mapped",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-003",
+      "type": "business-rule",
+      "title": "A project links to one account per platform",
+      "statement": "A project that is already linked to Procore or Fieldwire can't be linked again until it is unlinked. Procore and Autodesk links can be removed; there is no Fieldwire unlink, which the PRD puts out of scope.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-049"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "linkToProcore",
+          "code": "constructn-api:src/controllersv2/project.controller.ts#L6769@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "linkToFieldwire",
+          "code": "constructn-api:src/controllersv2/project.controller.ts#L7252@06132d2a6f1f"
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-034",
+          "title": "Prior PRD - Fieldwire integration (t3d-prd-agent prd-organised)",
+          "at": "Out of Scope (unlinking or changing project mappings)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-003-AC1",
+          "given": "A project already linked to Procore",
+          "when": "Someone links it to Procore again",
+          "then": "It is rejected as already linked",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "INTG-REQ-003-AC2",
+          "given": "A project already linked to Fieldwire",
+          "when": "Someone links it to Fieldwire again",
+          "then": "It is rejected as already linked",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-004",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "INTG-REQ-005",
+      "type": "business-rule",
+      "title": "Procore and Autodesk connect per user, Fieldwire per project",
+      "statement": "A Procore or Autodesk connection belongs to the user who signed in, and calls to those platforms use that user's own access. A Fieldwire connection belongs to the project, through the API key saved on it. Automatic Procore design updates use the access of the user who imported the design.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-053"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "procoreIntegration",
+          "code": "constructn-api:src/controllersv2/user.controller.ts#L840@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "procoreGetRequestAPI",
+          "code": "constructn-api:src/controllers/procore.controller.ts#L120@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "updateFieldwireApiKey",
+          "code": "constructn-api:src/controllersv2/project.controller.ts#L7152@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "procoreWebhookTrigger owner token",
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L962@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "SRC-004 client-customisations/procore.md says no Procore tokens are stored; the code stores them on the user's preferences. The doc is out of date",
+        "What happens to linked projects and automatic design updates when the linking or importing user leaves the project or company is not handled"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-005-AC1",
+          "given": "Two users of one project, only one of whom has connected Procore",
+          "when": "The other user browses Procore data from Track3D",
+          "then": "(Current behaviour) The call uses their own (missing) Procore access and returns nothing",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-006",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

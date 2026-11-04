@@ -1,0 +1,465 @@
+{
+  "id": "BILL-FEAT-02",
+  "name": "Spending credit on visual projects",
+  "summary": "The one credit check a visual project goes through: who may spend credit, how much is taken, what happens when there isn't enough, and what can't change afterwards. Work in progress: only on the feature/progress-linked-credit branches, not on track-3d.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-062",
+    "DEC-063"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Spending credit is tied to approving a visual project, not to a catalog permission. Sales (system role) may also approve and may override; shown under support-user as conditional.",
+    "actions": [
+      {
+        "action": "Approve a visual project (spends credit)",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "deny",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Sales role only among Track3D staff"
+      },
+      {
+        "action": "Create a visual project",
+        "permission": "create-project",
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "conditional",
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": "A non-super-admin's project is created pending; credit is taken when a super admin approves it"
+      },
+      {
+        "action": "Go beyond the pool with a reason",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Sales role only"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "BILL-NFR-003",
+      "kind": "throughput",
+      "statement": "Two visual projects created at the same moment must not overdraw the pool.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Code retries a conflicting write up to five times, then asks the user to retry. Is that acceptable under load, and how many simultaneous creations per company should be supported?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "BILL-REQ-006",
+      "type": "business-rule",
+      "title": "A visual project takes credit for its full size once",
+      "statement": "Under the credit model, a visual project needs a size in square feet (or square metres). When it becomes approved, its full size is taken from the pool in one go, from the soonest-ending lot first. It is never checked again; later changes to the pool do not stop it.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5, constructn-api@984e5354512a); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-063"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "drawForVisualProject (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L357@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "optimistic write on version (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L169@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-006-AC1",
+          "given": "A pool with lot A (100,000 sq ft left, ends in June) and lot B (500,000 sq ft left, ends in December)",
+          "when": "A super admin creates a 150,000 sq ft visual project",
+          "then": "Lot A is used up and 50,000 sq ft is taken from lot B",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-006-AC2",
+          "given": "A visual project with no size, or only a money value",
+          "when": "It is created or approved under the credit model",
+          "then": "It is refused and the user is asked for its size in square feet",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-007",
+      "type": "business-rule",
+      "title": "Only super admins and Sales spend credit",
+      "statement": "Only the company's super admins and Track3D Sales may approve a visual project on the credit model. A visual project created by anyone else, including one that the regional or allowlist auto-approval would approve, is saved as pending approval and holds no credit until a super admin approves it. Drafts and pending projects hold no credit.",
+      "rationale": "Only on feature/progress-linked-credit (constructn-api@984e5354512a, project-api@0b8add5cbba5); not on track-3d. It changes the auto-approval outcome described in PROJ-REQ-004 for visual projects.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-062"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "auto-approved but not an approver (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L154@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "canApproveVisual (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L528@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-007-AC1",
+          "given": "A regional admin whose projects are normally auto-approved",
+          "when": "They create a visual project under the credit model",
+          "then": "It is saved as Pending approval and no credit is taken",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-007-AC2",
+          "given": "A pending visual project",
+          "when": "A project admin who is not a company super admin tries to approve it",
+          "then": "It is refused with \"Only a super admin can approve visual projects.\"",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-008",
+      "type": "business-rule",
+      "title": "Visual projects are refused without enough credit, and Sales are told",
+      "statement": "A visual project is refused when the company is not on the credit model, has no active progress project, or has less available credit than the project's size. The customer is told how much is available and to contact Sales. Each refusal is logged, and Sales get one open notification per company per day (with an email), with repeat attempts counted on it.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5, db-models@39f53b96975a); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "refusal checks (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L393@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "notifySales (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L508@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "SalesNotification (feature/progress-linked-credit)",
+          "code": "db-models:src/definitions/sales-notification.ts#L9@39f53b96975a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-008-AC1",
+          "given": "A company with 40,000 sq ft available",
+          "when": "A super admin creates a 60,000 sq ft visual project",
+          "then": "It is refused with a message saying 40,000 sq ft is available and to contact Sales, and a blocked-no-credit entry is logged",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-008-AC2",
+          "given": "The same company is refused three times in one day",
+          "when": "Sales open their notifications",
+          "then": "There is one open notification for that company with three attempts",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-009",
+      "type": "business-rule",
+      "title": "A visual project's size and a project's intent are fixed for customers",
+      "statement": "Under the credit model, a visual project's size can't be changed after it is created, and only Sales can change a project between progress and visual. A paid visual-only project may be resized by Sales only.",
+      "rationale": "Only on feature/progress-linked-credit (constructn-api@984e5354512a); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-062"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "size fixed (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L344@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "intent change Sales-only (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L319@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-009-AC1",
+          "given": "An approved visual project on the credit model",
+          "when": "A super admin edits its size",
+          "then": "The change is refused with \"A visual project's size can't be changed after it is created.\"",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-009-AC2",
+          "given": "A project on the credit model",
+          "when": "A project admin changes its intent from Visual Documentation to Progress Monitoring",
+          "then": "The change is refused and they are asked to contact Sales",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-010",
+      "type": "requirement",
+      "title": "Credit taken for a project that was never saved is handed back",
+      "statement": "If a visual project's save or approval fails after its credit was taken, the credit is handed back to lots that are still active. If that call is lost, the sweep hands back any draw whose project still doesn't hold it after a 15-minute grace period (looking back one day). A draw whose project holds the credit can't be handed back.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5, constructn-api@984e5354512a); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.project-api",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "cancelDraw (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L475@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "orphan draw grace (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit-sweep.service.ts#L24@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "A draw orphaned for more than a day is outside the sweep's look-back and is never handed back"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-010-AC1",
+          "given": "Credit was taken for a new visual project and the project save then failed",
+          "when": "15 minutes pass and the sweep runs",
+          "then": "The credit returns to its active lots and a draw-cancelled entry is logged",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-011",
+      "type": "business-rule",
+      "title": "Credit data can't be set from a project request",
+      "statement": "A project's credit marker (progress or visual, size, funding, grandfathered) is written only by the credit service. Create and update requests have any credit fields, and any override, removed before they are used. Only a Sales user's override reason is honoured.",
+      "rationale": "Only on feature/progress-linked-credit (constructn-api@984e5354512a, db-models@39f53b96975a); not on track-3d. Protects the pool from being bypassed by a crafted request.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "beforeCreateProject strips credit (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L113@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "beforeUpdateProject strips credit (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L295@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "ProjectCredit marker (feature/progress-linked-credit)",
+          "code": "db-models:src/definitions/project.ts#L81@39f53b96975a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Only the create and update paths that call the hooks strip credit fields; other project write paths (clone, import, project-api's own updates) were not checked"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-011-AC1",
+          "given": "A super admin's create request that includes a credit field marking the project as grandfathered",
+          "when": "The project is created",
+          "then": "The field is ignored and credit is checked as for any new visual project",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-011-AC2",
+          "given": "A super admin sends an override reason",
+          "when": "The visual project is created without enough credit",
+          "then": "The override is ignored and the project is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-012",
+      "type": "requirement",
+      "title": "Customers see their company's credit",
+      "statement": "Above the projects list, customers on the credit model see their company's available visual project credit, credit starting later, and the next expiry. The new-project form checks the size against the balance and, for super admins, blocks Create when credit is missing or short. Sales do not see this strip.",
+      "rationale": "Only on feature/progress-linked-credit (track3d-web@af7f2c449f38, project-api@0b8add5cbba5); not on track-3d or track3d-web main. Shown only when the web credit flag is on.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "CreditStrip (feature/progress-linked-credit)",
+          "code": "track3d-web:src/features/credits/components/CreditStrip.tsx#L26@af7f2c449f38"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "VisualCreditCheck (feature/progress-linked-credit)",
+          "code": "track3d-web:src/features/credits/components/VisualCreditCheck.tsx#L43@af7f2c449f38"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "companyMemberOrSales (feature/progress-linked-credit)",
+          "code": "project-api:src/frameworks/middlewares/credit-access.ts#L62@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-012-AC1",
+          "given": "A project viewer on one project of a company on the credit model",
+          "when": "They ask for the company's credit balance",
+          "then": "They get the company total, starting-later credit and next expiry, but not the ledger",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

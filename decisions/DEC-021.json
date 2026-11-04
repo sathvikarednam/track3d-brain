@@ -1,0 +1,18 @@
+{
+  "id": "DEC-021",
+  "title": "What a cross-company clone contains",
+  "status": "open",
+  "question": "When a project is shared between companies, what does each company's clone copy: structure, designs, captures, progress, users, roles? Can the clones ever be re-synchronised?",
+  "context": "Clones must be independent after creation (PROJ-REQ-021). The external duplication worker hasn't been traced (PROJ-REQ-022).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROJ",
+    "CAPT",
+    "PROG"
+  ],
+  "requirements": [
+    "PROJ-REQ-021",
+    "PROJ-REQ-022"
+  ]
+}

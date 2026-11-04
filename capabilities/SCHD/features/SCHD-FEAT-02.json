@@ -1,0 +1,142 @@
+{
+  "id": "SCHD-FEAT-02",
+  "name": "Planned dates by location and zone",
+  "summary": "Planned start and finish dates for each stage, per structure or zone, set by import or edited by hand, and exported as CSV.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-030",
+    "DEC-022"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The seed catalog has no schedule-specific permission strings. Who may upload or edit schedules is unknown (DEC-010 covers related edit rights).",
+    "actions": [
+      {
+        "action": "Edit planned dates",
+        "permission": "update-category-stage",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "Timelines are stored on stages"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "SCHD-NFR-002",
+      "kind": "volume",
+      "statement": "Largest number of stage × location date rows a project's plan must support.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How many structures, zones and stages do the largest scheduled projects have?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "SCHD-REQ-004",
+      "type": "business-rule",
+      "title": "Planned dates are stored per stage and location",
+      "statement": "Planned start and finish dates are stored on each stage, per structure or per zone. Manual bulk edits and imported schedules write the same dates, so whichever runs last wins.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-030"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-055"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-055",
+          "code": "api-2d-progress:src/application/service/asset-category.service.ts#L1623@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Bulk writes aren't shown to be all-or-nothing across validation, logs and other derived data"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-004-AC1",
+          "given": "An imported plan gives Drywall-Framing on floor 2 the dates 1–20 March",
+          "when": "A user edits that row by hand to 5–25 March",
+          "then": "The stored plan is 5–25 March until the next import",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-011",
+      "type": "requirement",
+      "title": "Zone-level planned dates",
+      "statement": "Schedule uploads can include start and end dates per zone. CSV downloads always reflect the current zone structure, showing NA for levels with no zones. An upload is rejected if any zone's dates fall outside its level's dates.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-022",
+        "DEC-030"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-008",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-009",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-010",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-011"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-018",
+          "title": "Prior PRD - Schedule management (t3d-prd-agent prd-organised)",
+          "at": "FR-008..FR-011",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "schedule CSV export",
+          "code": "api-2d-progress:src/application/service/progress-schedule.service.ts#L623@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-011-AC1",
+          "given": "A CSV with zone-level dates for floor 2",
+          "when": "It is uploaded",
+          "then": "The zone plan for floor 2 is updated",
+          "status": "draft"
+        },
+        {
+          "id": "SCHD-REQ-011-AC2",
+          "given": "Floor 3 has no zones",
+          "when": "The schedule CSV is downloaded",
+          "then": "Floor 3's zone column shows NA",
+          "status": "draft"
+        },
+        {
+          "id": "SCHD-REQ-011-AC3",
+          "given": "Floor 2 is planned for 1–31 March",
+          "when": "A CSV gives one of its zones 25 March – 10 April",
+          "then": "The upload is rejected",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

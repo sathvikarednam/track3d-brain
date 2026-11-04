@@ -1,0 +1,15 @@
+{
+  "id": "DEC-073",
+  "title": "Gamification scope, scoring and consent",
+  "status": "open",
+  "question": "Do we build capture gamification? If so, how are points, project-level scores and benchmarks calculated, who sees leaderboards, how is consent recorded, and do companies give real-world rewards?",
+  "context": "The gamification PRD describes streaks, coverage and quality scoring, opt-in leaderboards and safety scores, and lists rewards and project scoring as open. No code exists (ENT-REQ-018).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "ENT"
+  ],
+  "requirements": [
+    "ENT-REQ-018"
+  ]
+}

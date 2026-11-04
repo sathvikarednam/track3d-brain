@@ -1,0 +1,17 @@
+{
+  "id": "DEC-053",
+  "title": "Who owns an integration connection and its credentials",
+  "status": "open",
+  "question": "Does a connection to Procore, Autodesk or Fieldwire belong to a user, a project or a company? What happens when the connecting user leaves, and how are the stored keys and tokens protected and shown?",
+  "context": "Procore and Autodesk connect per user and Fieldwire per project (INTG-REQ-005). Automatic design updates depend on the importing user's Procore access.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "INTG"
+  ],
+  "requirements": [
+    "INTG-REQ-005",
+    "INTG-REQ-013",
+    "INTG-REQ-018"
+  ]
+}

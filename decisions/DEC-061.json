@@ -1,0 +1,24 @@
+{
+  "id": "DEC-061",
+  "title": "Credit rules and pricing",
+  "status": "open",
+  "question": "Are the credit rules intended: five times the progress site area, usable only inside the progress project's dates, lost on expiry, and never returned when a visual project ends? Who owns the per-kind prices and minimums, and should they stay in code (one value for every company and contract) or become per-contract data? When is the visual-only price confirmed?",
+  "context": "Pricing lives in a shared code constant, changed only by a release (BILL-REQ-019). Visual-only projects are switched off \"until the price is confirmed\" (BILL-REQ-018). Sales overrides allow going beyond the pool (BILL-REQ-014).",
+  "options": [
+    "Keep fixed system-wide pricing",
+    "Per-contract pricing from the order form"
+  ],
+  "decision": null,
+  "capabilities": [
+    "BILL"
+  ],
+  "requirements": [
+    "BILL-REQ-001",
+    "BILL-REQ-002",
+    "BILL-REQ-013",
+    "BILL-REQ-014",
+    "BILL-REQ-017",
+    "BILL-REQ-018",
+    "BILL-REQ-019"
+  ]
+}

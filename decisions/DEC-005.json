@@ -1,0 +1,17 @@
+{
+  "id": "DEC-005",
+  "title": "Alert audiences, clearing, snoozing and recurrence",
+  "status": "open",
+  "question": "Who receives each alert type, and who may clear it for everyone? Does a cleared alert return when the condition recurs in a later capture? How do assignment, expiry and thresholds work?",
+  "context": "Today snoozes are personal, while a manual clear is shared and suppresses the same condition in future captures. The UI asks users to clear an alert once it is addressed (PROG-REQ-041, PROG-REQ-042).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG"
+  ],
+  "requirements": [
+    "PROG-REQ-038",
+    "PROG-REQ-041",
+    "PROG-REQ-042"
+  ]
+}

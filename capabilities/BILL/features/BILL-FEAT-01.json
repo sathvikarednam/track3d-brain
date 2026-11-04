@@ -1,0 +1,319 @@
+{
+  "id": "BILL-FEAT-01",
+  "name": "Credit pool and ledger",
+  "summary": "How a company earns visual project credit from its progress projects, when that credit can be used, when it expires, and the history kept of every change. Work in progress: only on the feature/progress-linked-credit branches, not on track-3d.",
+  "components": [
+    "svc.project-api",
+    "svc.constructn-api",
+    "mod.db-models"
+  ],
+  "decisions": [
+    "DEC-060",
+    "DEC-061",
+    "DEC-063"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Credit is earned and expired by the system (project approval and an hourly sweep), not by a person. Reading the company balance is open to anyone with a company or project role in that company. No catalog permission guards any credit route; Sales access is a system role, shown here under support-user.",
+    "actions": [
+      {
+        "action": "See the company's credit balance",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "unknown",
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "support-user": "allow"
+        },
+        "note": "Any company role, or any role on one of the company's projects. Regional roles are not checked explicitly."
+      },
+      {
+        "action": "See the credit ledger",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "deny",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Sales only; customers never see ledger entries"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "BILL-NFR-001",
+      "kind": "freshness",
+      "statement": "How soon credit expires, or a missed grant is repaired, after a progress project ends, is archived or is approved.",
+      "target": null,
+      "status": "draft",
+      "open_question": "The sweep runs hourly by default (configurable), so expiry can lag by up to an hour while usable credit is already checked live. Is an hour acceptable?"
+    },
+    {
+      "id": "BILL-NFR-002",
+      "kind": "retention",
+      "statement": "How long the credit ledger is kept.",
+      "target": null,
+      "status": "draft",
+      "open_question": "The ledger is append-only with no retention rule. Is it kept forever as a commercial record?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "BILL-REQ-001",
+      "type": "business-rule",
+      "title": "An approved progress project adds credit to its company's pool",
+      "statement": "When a Sales-created progress project is approved, its company's pool gains a lot worth five times the project's site area in square feet. The lot is usable from the project's start date until its start date plus duration. Site area may be given in square feet or square metres (converted); a money value earns nothing. The first grant enrols the company in the credit model.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5, constructn-api@984e5354512a, db-models@39f53b96975a); not on track-3d. Describes work in progress, not today's behaviour.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-060",
+        "DEC-061"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "grantForProgressProject (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L232@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "afterApproved (feature/progress-linked-credit)",
+          "code": "constructn-api:src/services/credit-hooks.service.ts#L259@984e5354512a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "PROJECT_PRICING (feature/progress-linked-credit)",
+          "code": "db-models:src/definitions/credit-constants.ts#L24@39f53b96975a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "A progress project without a start date, duration or square-foot size is refused credit; confirm Sales can always supply these at approval"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-001-AC1",
+          "given": "The credit model is live and Sales creates a progress project of 200,000 sq ft starting 1 March for 12 months",
+          "when": "The project is approved",
+          "then": "The company pool gains a lot of 1,000,000 sq ft, usable from 1 March until 1 March the next year",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-001-AC2",
+          "given": "A progress project whose scale is a money value rather than a size",
+          "when": "Credit is granted",
+          "then": "The grant is refused because the project has no site area in square feet",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-001-AC3",
+          "given": "A progress project that is already in the pool",
+          "when": "Its grant is called again (for example by the sweep)",
+          "then": "Nothing changes; it is never granted twice",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-002",
+      "type": "business-rule",
+      "title": "Only live progress projects' credit can be used",
+      "statement": "Available credit is the unused part of lots that are active, inside their date window now, and whose progress project is still Approved. Credit from a progress project that starts later is shown as \"starting later\" and can't be used yet.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-061"
+      ],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "usableLots (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L120@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getBalance (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L132@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-002-AC1",
+          "given": "A company whose only progress project starts next month",
+          "when": "A super admin tries to create a visual project today",
+          "then": "It is refused because there is no active progress project, and the balance shows the credit as starting later",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-002-AC2",
+          "given": "A progress project that was archived a few minutes ago, before the sweep has run",
+          "when": "A visual project is created",
+          "then": "Its lot is not drawn from, because the project is no longer Approved",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-003",
+      "type": "business-rule",
+      "title": "Credit expires with its progress project and never returns",
+      "statement": "A lot expires when its progress project reaches its end date, is completed, archived or deleted. Unused credit in it is lost. Credit already used by a visual project is never returned to the pool, even when the visual project ends. Visual projects keep running after the credit they drew from expires.",
+      "rationale": "Only on feature/progress-linked-credit (project-api@0b8add5cbba5); not on track-3d. Expiry is driven by an hourly sweep rather than by each archive or delete path.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-063"
+      ],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "expireEndedLots (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L592@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "expireVisualProject (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit.service.ts#L625@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "runCreditSweep (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit-sweep.service.ts#L27@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-003-AC1",
+          "given": "A progress project with 300,000 sq ft unused that is archived",
+          "when": "The sweep next runs",
+          "then": "Its lot is expired with reason \"progress-archived\" and the 300,000 sq ft is no longer available",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-003-AC2",
+          "given": "A visual project that used 50,000 sq ft of credit",
+          "when": "It is archived",
+          "then": "(Current behaviour) Its credit is marked expired once and the 50,000 sq ft does not return to the pool",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-004",
+      "type": "requirement",
+      "title": "Every credit change is kept in an append-only ledger",
+      "statement": "Each enrolment, grant, draw, override, refusal, expiry, resize, date change, correction, conversion and grandfathering is written to the company's credit ledger with who did it (or \"system\") and the values before and after. Entries are never changed or deleted. A draw records which progress projects funded it. Customers never see the ledger.",
+      "rationale": "Only on feature/progress-linked-credit (db-models@39f53b96975a, project-api@0b8add5cbba5); not on track-3d.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.project-api",
+        "mod.db-models"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "CreditLedger (feature/progress-linked-credit)",
+          "code": "db-models:src/definitions/credit-ledger.ts#L5@39f53b96975a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "Sales ledger read (feature/progress-linked-credit)",
+          "code": "project-api:src/application/services/credit-sales.service.ts#L122@0b8add5cbba5"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Append-only is a convention in the service; nothing in the database stops an update or delete"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-004-AC1",
+          "given": "A visual project of 80,000 sq ft funded from two progress projects",
+          "when": "Its credit is taken",
+          "then": "The ledger has two draw entries sharing one draw ID, one per progress project, adding up to 80,000 sq ft",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-005",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

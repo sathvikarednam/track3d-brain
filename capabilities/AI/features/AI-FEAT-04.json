@@ -1,0 +1,298 @@
+{
+  "id": "AI-FEAT-04",
+  "name": "Actions the assistant takes",
+  "summary": "What the assistant can do, not just read: generate report files, set up and change emailed report schedules in web chat, and, on the unreleased mobile and field branches, create issues and tasks, comment, change asset stages and drive the app screen, with a confirmation step. Also the voice and field reporting asked for in the Field OS PRD.",
+  "components": [
+    "mod.progress-agent",
+    "svc.ai-gateway",
+    "svc.api-2d-progress",
+    "mcp.track3d-mcp",
+    "mob.track3d-mobile"
+  ],
+  "decisions": [
+    "DEC-068",
+    "DEC-032",
+    "DEC-010"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The assistant acts with the user's own token, so the Track3D service behind each action decides whether the user's role allows it. Field writes exist only on unreleased branches and are off unless the host enables them.",
+    "actions": [
+      {
+        "action": "Generate a progress report file through the assistant",
+        "permission": "download-progress-reports",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "unknown",
+          "viewer": "unknown",
+          "support-user": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Create or change an emailed report schedule through the assistant",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown",
+          "support-user": "unknown"
+        },
+        "note": "Decided by the report scheduler API; no permission string is checked by the assistant"
+      },
+      {
+        "action": "Create an issue or task through the field assistant",
+        "permission": "create-note",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Unreleased; off unless host writes are enabled"
+      },
+      {
+        "action": "Change progress asset stages through the field assistant",
+        "permission": "update-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Unreleased; permission string assumed from the catalog and not confirmed against the progress API"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "AI-NFR-005",
+      "kind": "volume",
+      "statement": "How much one confirmed action may change. On the field branch one confirmation can move up to 500 assets to a new stage. Web chat schedule actions have no limit on recipients beyond at least one.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "What is the largest change the assistant may make in one confirmed step (DEC-068)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "AI-REQ-018",
+      "type": "business-rule",
+      "title": "(Current behaviour) Web chat can create, change, stop and restore emailed report schedules",
+      "statement": "In web chat the progress assistant can generate a PDF or CSV progress report, and create, update, delete and restore scheduled report emails, using the user's own token. It asks for missing details (frequency, recipient emails) before creating. Only deletion has a confirmation step, and that is an instruction to the model rather than a server check. Deleting is a soft delete that can be restored. Recipients can be any email addresses the user gives.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-068",
+        "DEC-032"
+      ],
+      "implemented_by": [
+        "mod.progress-agent",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "createReportSchedule",
+          "code": "ginee-stack:agents/progress-agent/src/tools/report-schedule.tool.ts#L121@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "deleteReportSchedule",
+          "code": "ginee-stack:agents/progress-agent/src/tools/report-schedule.tool.ts#L311@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "confirm before deleting",
+          "code": "ginee-stack:agents/progress-agent/src/prompts.ts#L122@237dcd2e8828"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-018-AC1",
+          "given": "A user asks \"email the weekly progress report for Tower A to pm@example.com\"",
+          "when": "The frequency and recipient are known",
+          "then": "(Current behaviour) The assistant creates the schedule without a separate confirmation step",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "AI-REQ-018-AC2",
+          "given": "A user asks to stop a named schedule",
+          "when": "The assistant handles it",
+          "then": "It names the schedule and asks for confirmation before deleting, and says it can be restored",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-019",
+      "type": "business-rule",
+      "title": "Field assistant writes need a confirmation in a later turn",
+      "statement": "On the mobile field branch (not released), the assistant can create an issue or task, comment on a note, and move progress assets to a new stage. These tools exist only when the host switches project writes on. The first call only returns a preview and stores the pending action; the change happens only when the user confirms and the same action, with identical details, is called again in a later turn within 15 minutes.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-068",
+        "DEC-010"
+      ],
+      "implemented_by": [
+        "mcp.track3d-mcp",
+        "mob.track3d-mobile"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "confirmGate",
+          "code": "ginee-stack:servers/track3d-mcp/src/field.ts#L415@d3c8138352c6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "changeAssetStage",
+          "code": "ginee-stack:servers/track3d-mcp/src/field.ts#L494@d3c8138352c6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "allowUserWrites",
+          "code": "ginee-stack:servers/track3d-mcp/src/app.ts#L85@d3c8138352c6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "HOST_ALLOW_PROJECT_WRITES",
+          "code": "ginee-stack:servers/track3d-host/src/server.ts#L46@d3c8138352c6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-050",
+          "title": "Branch inventory - Ginee assistant, AI gateway and MCP repositories (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "A stage change made through the assistant should show up in progress history the same way as a manual one (PROG-FEAT-04); not checked."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-019-AC1",
+          "given": "Project writes are enabled and a user says \"mark the level 2 walls completed\"",
+          "when": "The assistant first calls the stage change",
+          "then": "Nothing is saved, and the user is shown a preview with Confirm and Cancel",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "AI-REQ-019-AC2",
+          "given": "The model calls the same stage change with confirmed set in the same turn as the preview",
+          "when": "The tool runs",
+          "then": "It is treated as a new preview and nothing is saved",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-020",
+      "type": "business-rule",
+      "title": "App actions only change what is on the user's screen",
+      "statement": "On the mobile field branch (not released), the assistant can run the actions the current app screen offers, such as filtering a list, opening a project or structure, or switching viewer mode or date. App actions never change Track3D data; data changes use the confirmed write tools.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-068"
+      ],
+      "implemented_by": [
+        "mcp.track3d-mcp",
+        "mob.track3d-mobile"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "appAction tool",
+          "code": "ginee-stack:servers/track3d-mcp/src/field.ts#L386@d3c8138352c6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-020-AC1",
+          "given": "A user on the mobile project list asks \"show only my active projects\"",
+          "when": "The screen offers a filter action",
+          "then": "The assistant applies the filter on screen and replies in one short sentence",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-021",
+      "type": "requirement",
+      "title": "Spoken site notes become structured reports",
+      "statement": "Field users should be able to speak instead of type. Voice input is turned into structured site reports and daily field reports, and the assistant asks for clarification when the recording is unclear. On the unreleased mobile branch, spoken questions are transcribed by OpenAI before the assistant answers them.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-065",
+        "DEC-068"
+      ],
+      "implemented_by": [
+        "mob.track3d-mobile",
+        "svc.track3d-host"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-053",
+          "title": "Prior PRD - Track3D Field Operating System (t3d-prd-agent prd-organised)",
+          "at": "FR-005, FR-006 and EC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "OpenAITranscriber",
+          "code": "ginee-stack:servers/track3d-host/src/server.ts#L156@d3c8138352c6"
+        }
+      ],
+      "open_checks": [
+        "No released code turns voice into a report; the mobile branch only transcribes questions. Whether a generated report is saved as a daily note is not decided."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-021-AC1",
+          "given": "A field engineer records a spoken update on site",
+          "when": "The recording is processed",
+          "then": "A structured site report is produced for them to review",
+          "status": "draft"
+        },
+        {
+          "id": "AI-REQ-021-AC2",
+          "given": "A recording that is noisy or incomplete",
+          "when": "It is processed",
+          "then": "The user is asked to clarify instead of getting a report with guessed content",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

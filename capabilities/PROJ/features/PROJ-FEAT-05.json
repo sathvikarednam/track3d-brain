@@ -1,0 +1,234 @@
+{
+  "id": "PROJ-FEAT-05",
+  "name": "Site hierarchy, designs and zones",
+  "summary": "Arranging project locations, attaching BIM models and 2D sheets, and defining zones within a structure.",
+  "components": [
+    "svc.project-api",
+    "svc.constructn-api",
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-022",
+    "DEC-003"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Create a structure",
+        "permission": "create-project-structure",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Update or reorder structures",
+        "permission": "update-project-structure",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a structure",
+        "permission": "delete-project-structure",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Add a design (sheet)",
+        "permission": "create-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Add a BIM model",
+        "permission": "create-project-bim",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "View zones",
+        "permission": "view-zones",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Create or update zones",
+        "permission": "create-zones",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete",
+        "permission": "delete-zones",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROJ-NFR-005",
+      "kind": "volume",
+      "statement": "Largest hierarchy (structures, depth, designs per structure, zones per structure) that must stay usable.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What are today's largest projects by structures, designs and zones, and what depth must be supported (DEC-022)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROJ-REQ-023",
+      "type": "business-rule",
+      "title": "The site hierarchy is flexible",
+      "statement": "Project locations nest freely. The hierarchy doesn't have to follow fixed site, building, floor and area levels. Allowed depth and relationships are open (DEC-022).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-022"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-035"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-035",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "structure.md (recursive tree)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-023-AC1",
+          "given": "A project with a building",
+          "when": "A user adds a floor under it, an area under the floor, and a room under the area",
+          "then": "All four levels are saved and shown in that order",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-024",
+      "type": "business-rule",
+      "title": "Zones must not overlap",
+      "statement": "Zones may not overlap. Which zones are compared, how shared edges are treated, and whether overlap is blocked or flagged are open (DEC-022).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-022"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-036"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-036",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Verify the create, edit, import, clone, alignment and high-ceiling paths; none is shown to enforce non-overlap",
+        "Zone coverage uses system-space polygons first, then planar ones, and doesn't check overlap; unsupported shapes fail"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-024-AC1",
+          "given": "A zone exists on a floor",
+          "when": "A user draws a new zone that overlaps it within the same comparison scope",
+          "then": "The overlap is prevented",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-025",
+      "type": "business-rule",
+      "title": "Customers see only active, non-internal designs",
+      "statement": "Design counts, the structure status chip and the \"has progress\" flag use the project's active designs. For customers this excludes designs marked internal; support users see those too.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-031"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-031",
+          "code": "constructn-api:src/views/web/viewlistv2.ts#L8061@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-025-AC1",
+          "given": "A structure with two active designs, one marked internal",
+          "when": "A customer and a support user view it",
+          "then": "The customer sees a design count of 1, and the support user sees 2",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

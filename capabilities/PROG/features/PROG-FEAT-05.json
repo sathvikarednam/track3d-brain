@@ -1,0 +1,290 @@
+{
+  "id": "PROG-FEAT-05",
+  "name": "Progress overview",
+  "summary": "Progress as it stood on a selected date, across locations, categories and stages: the heatmap and hierarchy views, and the totals and percentages shown there.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-002",
+    "DEC-007"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "View progress overview",
+        "permission": "view-progress-overview",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Download progress overview",
+        "permission": "download-progress-overview",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-007",
+      "kind": "latency",
+      "statement": "Time for the overview to load for the selected date and categories on a large project.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What p95 load time is acceptable, and on which project size? Current figures should come from frontend RUM and API traces."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-018",
+      "type": "requirement",
+      "title": "Progress can be browsed through the site hierarchy",
+      "statement": "Users can monitor progress through a hierarchical view of locations and their assets.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-008"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-008",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-018-AC1",
+          "given": "A project with a building, two floors and assets on each floor",
+          "when": "A user opens the progress overview",
+          "then": "They can expand building to floor to see progress at each level",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-024",
+      "type": "business-rule",
+      "title": "Overview counts only eligible data as of the selected day",
+      "statement": "The overview includes only dates, assets and categories that are eligible on the selected day (active, tracked, live categories and visible snapshots). Support users also see inactive snapshots, so their totals can differ from a customer's for the same project.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-007"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-056"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-056",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L13869@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-024-AC1",
+          "given": "A structure with progress on an active snapshot (40 units) and an inactive snapshot (10 more units)",
+          "when": "A customer and a support user view the overview for the same day",
+          "then": "The customer sees 40, and the support user's total includes the inactive snapshot",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-025",
+      "type": "business-rule",
+      "title": "Project totals are computed per view, not stored",
+      "statement": "No single project-level percentage is stored. Each view sums the selected locations when it is requested, and the denominator depends on the view (overview, schedule and reports each build their own).",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-002"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-057"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-057",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L1997@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/progress-calculation.md §13",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-025-AC1",
+          "given": "Two floors with 40/100 and 10/50 units of the same stage",
+          "when": "Both floors are selected in the overview",
+          "then": "The combined value is 50/150, calculated at request time",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-026",
+      "type": "requirement",
+      "title": "Show progress completed or progress remaining",
+      "statement": "Users can switch the overview between progress completed and progress remaining.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-004"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-026-AC1",
+          "given": "A stage at 30 of 100 units",
+          "when": "The user switches to progress remaining",
+          "then": "The stage shows 70 remaining (70%) instead of 30 completed (30%)",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-027",
+      "type": "requirement",
+      "title": "Category status heatmap",
+      "statement": "The overview shows a grid heatmap of progress status by category for the selected date range.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-013"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-013",
+          "code": null
+        },
+        {
+          "type": "runtime-observation",
+          "ref": "SRC-005",
+          "title": "Demo UI pass 2026-10-28-demo-01",
+          "at": "T3D-UI-014",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Displayed N/C, N/A, zero-with-asterisk values, differing date labels and overwritten takeoff need defined meanings"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-027-AC1",
+          "given": "A date range and categories are selected",
+          "when": "The user views the heatmap",
+          "then": "Each cell shows the correct progress status for that category and location",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-028",
+      "type": "requirement",
+      "title": "Select several categories, and remember the selection",
+      "statement": "Users can select several categories and stages at once on the progress page. Each category has its own distinct colour, and the selection is remembered across sessions.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-017",
+        "T3D-CAND-PROGRESS-TRACKING-FR-018",
+        "T3D-CAND-PROGRESS-TRACKING-FR-020"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-017, FR-018, FR-020",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-028-AC1",
+          "given": "Several categories are selected",
+          "when": "The user views the progress page",
+          "then": "Each selected category has a distinct colour",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-028-AC2",
+          "given": "A user has selected categories and stages",
+          "when": "They log in again",
+          "then": "The same categories and stages are still selected",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "DEC-030",
+  "title": "Schedule versions, calendars and manual edits",
+  "status": "open",
+  "question": "Are uploaded schedules versioned, with a baseline and rollback? Which work calendar (weekends, holidays) applies? Are dependencies honoured? When someone edits a planned date by hand, does a later import overwrite it?",
+  "context": "Manual timeline edits and imports write the same planned dates (SCHD-REQ-004). The schedule's working days skip weekends only, with no holidays (SCHD-REQ-009). Version history is a PRD candidate with no code (SCHD-REQ-003).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "SCHD"
+  ],
+  "requirements": [
+    "SCHD-REQ-003",
+    "SCHD-REQ-004",
+    "SCHD-REQ-009"
+  ]
+}

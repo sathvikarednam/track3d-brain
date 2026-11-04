@@ -1,0 +1,682 @@
+{
+  "id": "DSGN-FEAT-01",
+  "name": "Uploading sheets and BIM models",
+  "summary": "Adding 2D sheets and BIM models to a project location, choosing their sheet or BIM type, naming them, and the access rules around design uploads.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-040",
+    "DEC-044"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The server picks the sheet or BIM permission itself: on create it checks create-project-design when the request type is \"Plan Drawings\" (which the web sends for every sheet) and create-project-bim otherwise; on update and delete it uses the stored category. The grants reflect intended design from role naming (SRC-004), not deployed role data.",
+    "actions": [
+      {
+        "action": "Add a sheet",
+        "permission": "create-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Add a BIM model",
+        "permission": "create-project-bim",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Edit",
+        "permission": "update-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Edit",
+        "permission": "update-project-bim",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Import a design from Autodesk or Procore",
+        "permission": "import-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Download a design",
+        "permission": "download-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "View sheet types",
+        "permission": "view-sheet-type",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Add a sheet type",
+        "permission": "add-sheet-type",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Update a sheet type",
+        "permission": "update-sheet-type",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a sheet type",
+        "permission": "delete-sheet-type",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "View BIM types",
+        "permission": "view-bim-type",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Add",
+        "permission": "add-bim-type",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "update-bim-type and delete-bim-type follow the same grants"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "DSGN-NFR-001",
+      "kind": "volume",
+      "statement": "Largest design file and largest number of sheets and BIM models per location and per project that upload must handle.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What maximum file size and number of designs per location must uploads support? The PRDs ask but don't answer."
+    },
+    {
+      "id": "DSGN-NFR-002",
+      "kind": "latency",
+      "statement": "Large design uploads complete without significant delay, and are queued at peak times rather than failing.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What upload time is acceptable for a typical and a maximum-size drawing set or BIM model?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "DSGN-REQ-001",
+      "type": "requirement",
+      "title": "Supported design file types",
+      "statement": "Users can upload sheets as PDF, DWG or DXF and BIM models as RVT or NWD. Whether DXF should stay supported, and whether other formats are needed, is open in the PRDs.",
+      "rationale": "The web upload accepts exactly these five extensions. The stored format list also allows IFC, SKP, SVF and SVF2, which the web doesn't offer for upload.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-028",
+          "title": "Prior PRD - Hierarchy management (sheets and BIMs per level) (t3d-prd-agent prd-organised)",
+          "at": "Dependencies (pdf, dwg, nwd, rvt, dxf); Open Questions (.dxf)",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-029",
+          "title": "Prior PRD - Hierarchy and design (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-006",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "track3d-web:src/features/hierarchy-designs/components/UnifiedImportPopup.tsx#L639@2fd5bdd22190"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "design.md (Storage Descriptor format)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-001-AC1",
+          "given": "A project admin on the Hierarchy and Designs page",
+          "when": "They pick a .pdf, .dwg, .dxf, .rvt or .nwd file",
+          "then": "The file is accepted for upload; .pdf, .dwg and .dxf become sheets and .rvt and .nwd become BIM models",
+          "status": "draft"
+        },
+        {
+          "id": "DSGN-REQ-001-AC2",
+          "given": "A project admin on the Hierarchy and Designs page",
+          "when": "They pick an .ifc file",
+          "then": "(Current behaviour) The web upload doesn't accept it",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-002",
+      "type": "business-rule",
+      "title": "Every design is a sheet or a BIM model, and a sheet has a sheet type",
+      "statement": "A design is either a BIM model or a sheet. A sheet takes its type from one of the project's sheet types; if none is given it is stored as a generic drawing. The Architectural Sheet type is stored under the legacy name \"Plan Drawings\".",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L1684@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "design.md (category)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-002-AC1",
+          "given": "An admin uploads a PDF and chooses the Electrical Sheet type",
+          "when": "The design is created",
+          "then": "It is a sheet whose type is Electrical Sheet",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-002-AC2",
+          "given": "An admin uploads a PDF and chooses the Architectural Sheet type",
+          "when": "The design is created",
+          "then": "It is a sheet whose stored type name is \"Plan Drawings\" and whose configured type is Architectural Sheet",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-003",
+      "type": "business-rule",
+      "title": "Built-in sheet and BIM types, with Architectural Sheet locked",
+      "statement": "Every new project starts with seven sheet types (Architectural, Electrical, Fire Safety, Plumbing Drainage, Plumbing Domestic, Cable Tray and Mechanical) and one BIM type. Architectural Sheet and the BIM type can't be rearranged, renamed, recoloured or deleted, and no sheet type can be swapped into Architectural Sheet when another type is deleted.",
+      "rationale": "General option rules (unique names, locked options, in-use options) are in PROJ-REQ-026..028.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:scripts/seed-data/sheetstypev2.json#L4@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:scripts/seed-data/bimtypes.json#L4@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "project-api:src/application/services/projectConfigurationV1.service.ts#L658@0d3ad660d655"
+        }
+      ],
+      "open_checks": [
+        "The seed is read by the v4/v5 project controller at project creation; confirm projects created through other paths get the same types"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-003-AC1",
+          "given": "A newly created project",
+          "when": "An admin opens its sheet types",
+          "then": "The seven built-in sheet types are listed, Architectural Sheet first",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-003-AC2",
+          "given": "A project whose Electrical Sheet type is being deleted",
+          "when": "The admin chooses Architectural Sheet as the replacement type for its designs",
+          "then": "The change is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-004",
+      "type": "business-rule",
+      "title": "Who may upload and edit designs",
+      "statement": "Only project admins may add, edit or delete sheets and BIM models. Collaborators and viewers can view and download them.",
+      "rationale": "The role matrix and permission seed give design and BIM write permissions to admins only. The PRDs disagree with each other: one has collaborators cropping and tagging PDF pages, another has collaborators only viewing.",
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The document-management PRD (US-002) has a collaborator cropping and tagging PDF pages for designs. The hierarchy-design PRD (US-006) says a collaborator only views structures \"without making changes\". The current role matrix denies collaborators create, update and delete on designs and BIM. See DEC-040."
+      },
+      "decisions": [
+        "DEC-040"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-026",
+          "title": "Prior PRD - Document management (multi-page PDF floor plans) (t3d-prd-agent prd-organised)",
+          "at": "US-002",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-029",
+          "title": "Prior PRD - Hierarchy and design (t3d-prd-agent prd-tech-docs)",
+          "at": "US-005, US-006, US-007",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/user-management.md §5 (Project - Hierarchy & Designs; Project - BIM)",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-007",
+          "title": "Permission seed catalog (permission-management scripts/seed-data/permission.json)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-004-AC1",
+          "given": "A collaborator on a project",
+          "when": "They try to upload a sheet",
+          "then": "(Current behaviour) The upload is refused for lack of permission",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-005",
+      "type": "business-rule",
+      "title": "How many BIM models a project may have",
+      "statement": "A project may hold several BIM models and several sheets for each location, and users can switch between them when viewing.",
+      "rationale": "The hierarchy-management PRD asks for multiple BIMs and sheets per level. The web treats BIM as \"meant to be uploaded once per project\" and warns, without blocking, when any BIM already exists anywhere in the project.",
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "PRD FR-006 and US-003 want multiple BIM models per project and per level. The web's duplicate check says BIM is meant to be uploaded once per project and shows a non-blocking warning when one already exists, or when the file's checksum matches an existing BIM. See DEC-044."
+      },
+      "decisions": [
+        "DEC-044"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-028",
+          "title": "Prior PRD - Hierarchy management (sheets and BIMs per level) (t3d-prd-agent prd-organised)",
+          "at": "US-003, FR-006, FR-007, FR-008",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "track3d-web:src/features/hierarchy-designs/utils/bimDuplicateCheck.ts#L12@2fd5bdd22190"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "track3d-web:src/features/hierarchy-designs/components/BimDuplicateWarningPopup.tsx#L22@2fd5bdd22190"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-005-AC1",
+          "given": "A project that already has a BIM model on its building level",
+          "when": "An admin uploads another BIM model to a floor",
+          "then": "(Current behaviour) An informational warning is shown and the admin can proceed or cancel",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-006",
+      "type": "requirement",
+      "title": "A design's display name is separate from its file name",
+      "statement": "Users can rename a design after upload. The platform and legend show the display name instead of the original file name. Renaming keeps the original file extension.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-028",
+          "title": "Prior PRD - Hierarchy management (sheets and BIMs per level) (t3d-prd-agent prd-organised)",
+          "at": "FR-001, FR-002, AC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L3247@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-006-AC1",
+          "given": "A sheet uploaded as \"L2_rev3_final.pdf\"",
+          "when": "An admin renames it to \"Level 2 plan\"",
+          "then": "It is shown everywhere as \"Level 2 plan.pdf\" and its stored file is unchanged",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-007",
+      "type": "requirement",
+      "title": "Change a sheet's type and keep sheet tags unique",
+      "statement": "Users can change a sheet's type from a dialog after upload. The same tag can't be given to two sheets; existing duplicate tags get a number appended.",
+      "rationale": "Not traced in code. The PRD doesn't say what a sheet tag is or which permission is needed.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-028",
+          "title": "Prior PRD - Hierarchy management (sheets and BIMs per level) (t3d-prd-agent prd-organised)",
+          "at": "FR-003, FR-004, AC-003, AC-004, Dependencies, Open Questions",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Find where a sheet's type is changed after upload and whether tag uniqueness is enforced anywhere"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-007-AC1",
+          "given": "A tag already used by another sheet in the project",
+          "when": "A user tries to give it to a second sheet",
+          "then": "The assignment is blocked and a tooltip explains why",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-008",
+      "type": "business-rule",
+      "title": "A cropped sheet keeps its original PDF",
+      "statement": "When a user crops a PDF page before upload, both the cropped sheet and the original file are stored. Tasks are not auto-imported from an integration for a cropped sheet.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L1822@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "track3d-web:src/features/hierarchy-designs/components/BaseSheetTypeSelector.tsx#L866@2fd5bdd22190"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-008-AC1",
+          "given": "An admin crops page 3 of a drawing set before uploading it",
+          "when": "The upload completes",
+          "then": "The cropped sheet is the design, and the uncropped PDF is kept alongside it",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-009",
+      "type": "business-rule",
+      "title": "Internal designs are hidden from customers",
+      "statement": "A design is internal only when the upload explicitly marks it so. Customers don't see internal designs in lists and get \"not found\" when opening one; support users see them.",
+      "rationale": "Counts and status chips follow the same rule (PROJ-REQ-025). The server doesn't check that the person marking a design internal is a support user.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L77@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L257@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L1704@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-009-AC1",
+          "given": "A structure with one internal sheet",
+          "when": "A customer opens that sheet by its link",
+          "then": "They get \"not found\", while a support user sees it",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-009-AC2",
+          "given": "A project admin who is not a support user",
+          "when": "They upload a design with the internal flag set",
+          "then": "(Current behaviour) The design is saved as internal",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-010",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "DSGN-REQ-011",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "DSGN-REQ-012",
+      "type": "requirement",
+      "title": "Find designs by filter and search",
+      "statement": "Users can search, filter and sort a project's designs and BIM models.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-029",
+          "title": "Prior PRD - Hierarchy and design (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-003, AC-003",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-025",
+          "title": "Prior PRD - Design management (t3d-prd-agent prd-organised)",
+          "at": "FR-009, FR-010, EC-003, EC-005",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The web has a design filters dialog; which fields it filters on was not traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-012-AC1",
+          "given": "A project with sheets of several types",
+          "when": "A user filters by one sheet type",
+          "then": "Only designs of that type are shown",
+          "status": "draft"
+        },
+        {
+          "id": "DSGN-REQ-012-AC2",
+          "given": "A filter that matches no design",
+          "when": "It is applied",
+          "then": "A \"no results\" message is shown",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

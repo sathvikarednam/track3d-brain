@@ -1,0 +1,18 @@
+{
+  "id": "DEC-037",
+  "title": "Who may align, split and change realities",
+  "status": "open",
+  "question": "Which roles may change a reality's status, transformation matrix or images, or split it? Are these Track3D-only operations? When a reality is realigned or split, what must happen to its pinpoints, notes, measurements and progress? How is automatic alignment from \"correctly aligned\" realities supposed to work, and is there a confirmation step?",
+  "context": "The split-merge PRD describes multi-reality walkthroughs, manual matrices and automatic alignment (VIEW-REQ-021, VIEW-REQ-022). Splitting refreshes pinpoints, the snapshot and capture counts (VIEW-REQ-020).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "VIEW",
+    "CAPT"
+  ],
+  "requirements": [
+    "VIEW-REQ-020",
+    "VIEW-REQ-021",
+    "VIEW-REQ-022"
+  ]
+}

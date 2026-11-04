@@ -1,0 +1,285 @@
+{
+  "id": "UPLD-FEAT-01",
+  "name": "File transfer and completion",
+  "summary": "Moving files from the client to storage and telling the rest of the system they've arrived: multipart sessions, completion callbacks, per-capture counting, retries and recovery.",
+  "components": [
+    "svc.t3d-uploader-service",
+    "svc.upload-api",
+    "svc.capture-api",
+    "svc.api-gateway-service"
+  ],
+  "decisions": [
+    "DEC-026"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Starting an upload needs the upload permission.",
+    "actions": [
+      {
+        "action": "Start an upload",
+        "permission": "upload",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Report an upload as complete",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "UPLD-NFR-001",
+      "kind": "throughput",
+      "statement": "Sustained upload throughput per client and across the platform during peak capture hours.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What concurrent uploads and bandwidth must the uploader sustain, for example end of shift across all projects?"
+    },
+    {
+      "id": "UPLD-NFR-002",
+      "kind": "freshness",
+      "statement": "Today a failed completion callback is retried with exponential backoff up to 60 minutes between attempts, until a configured maximum, then marked failed.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "How long may \"uploaded\" take to reach the capture after storage succeeds, and who is alerted when callbacks fail for good?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "UPLD-REQ-001",
+      "type": "business-rule",
+      "title": "Each completion event adds one to the capture's file count",
+      "statement": "Every completion event for a capture adds one to its completed-file count, without checking which file it is. When the count reaches the expected number, the capture is marked uploaded and its job moves on. Upload progress is completed divided by expected, with no cap. A repeated event therefore counts twice, can show more than 100%, and can mark the capture complete before every file has arrived.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-026"
+      ],
+      "implemented_by": [
+        "svc.capture-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-035",
+        "T3D-RULE-036"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-035",
+          "code": "capture-api:src/application/service/capture.servicev2.ts#L1833@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-036",
+          "code": "capture-api:src/application/service/capture.servicev2.ts#L1865@ac5726e820f2"
+        }
+      ],
+      "open_checks": [
+        "Reproduce duplicate callbacks advancing completion before every unique file finishes, in an isolated environment"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-001-AC1",
+          "given": "A capture expecting 3 files, with 2 uploaded",
+          "when": "The completion event for file 2 is delivered again",
+          "then": "(Current behaviour) The capture is marked uploaded although file 3 hasn't arrived",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-002",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "UPLD-REQ-003",
+      "type": "business-rule",
+      "title": "Legacy upload completion counts each file once, but can lose the capture event",
+      "statement": "In the legacy upload service, each file is marked uploaded and added to the capture only if it isn't there already. The capture-completed event is published once all files are in. A repeat of an already-added file skips publishing, so if publishing failed the first time, a retry won't fix it.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-026"
+      ],
+      "implemented_by": [
+        "svc.upload-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-040"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-040",
+          "code": "upload-api:src/application/service/fileUploadv2.service.ts#L1167@ba3cd50f0cc9"
+        }
+      ],
+      "open_checks": [
+        "Inject a failure after the file is saved and before publish, retry, and prove the capture completes exactly once (no durable outbox is shown)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-003-AC1",
+          "given": "The last file of a capture completes, but publishing the completed event fails",
+          "when": "The same completion is retried",
+          "then": "(Current behaviour) The retry skips publishing, and the capture never completes",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-004",
+      "type": "business-rule",
+      "title": "Multipart uploads are idempotent and finish exactly once",
+      "statement": "In the newer uploader, a session is found again by its idempotency key, so a retried start doesn't create a second session. A completed session is kept, while a failed one can be replaced. Completing takes a lock so only one request finishes it. Stored parts are checked first, then storage is finalised, the session saved and a completion event created.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-026"
+      ],
+      "implemented_by": [
+        "svc.t3d-uploader-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-042",
+        "T3D-RULE-043"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-042",
+          "code": "t3d-uploader-service:src/modules/upload/upload.service.ts#L221@26b90c79c566"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-043",
+          "code": "t3d-uploader-service:src/modules/upload/upload.service.ts#L657@26b90c79c566"
+        }
+      ],
+      "open_checks": [
+        "There is no track-3d branch for t3d-uploader-service (track-3d-dev and track-3d-azure exist), so the production version is unconfirmed",
+        "Completed state is saved before the event is created; a crash in between isn't recovered by event retries"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-004-AC1",
+          "given": "Two clients send \"complete\" for the same session at the same moment",
+          "when": "Both are processed",
+          "then": "Storage is finalised once, and one completion event is created",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "UPLD-REQ-004-AC2",
+          "given": "A session is missing one of its parts in storage",
+          "when": "Completion is requested",
+          "then": "It fails, and the session returns to uploading so the part can be resent",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-005",
+      "type": "business-rule",
+      "title": "Completion callbacks are retried with backoff",
+      "statement": "Each completion event is saved and sent to its callback with a timeout. On failure it is retried after min(60, 2^attempts) minutes, until the configured maximum, then marked failed. An event that was never created isn't retried.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-026"
+      ],
+      "implemented_by": [
+        "svc.t3d-uploader-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-044"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-044",
+          "code": "t3d-uploader-service:src/modules/upload/uploadEvent.service.ts#L8@26b90c79c566"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-005-AC1",
+          "given": "A callback that has failed 3 times",
+          "when": "The next retry is scheduled",
+          "then": "It is due 8 minutes later",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-006",
+      "type": "business-rule",
+      "title": "Status checks can repair an upload from storage",
+      "statement": "Checking an upload's missing parts or recovery status can look at what storage actually holds, and complete or re-create the session, rather than only returning cached links.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-026"
+      ],
+      "implemented_by": [
+        "svc.upload-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-041"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-041",
+          "code": "upload-api:src/application/service/fileUploadv2.service.ts#L1627@ba3cd50f0cc9"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-006-AC1",
+          "given": "All parts of a file are in storage, but the session was never completed",
+          "when": "The client asks for missing parts",
+          "then": "The session is completed from the stored parts",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

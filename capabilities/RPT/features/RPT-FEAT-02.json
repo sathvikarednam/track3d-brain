@@ -1,0 +1,171 @@
+{
+  "id": "RPT-FEAT-02",
+  "name": "Report catalog, issued reports and downloads",
+  "summary": "The list of a project's reports, what an issued report means after data is corrected, and downloadable report links.",
+  "components": [
+    "svc.project-api",
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-004",
+    "DEC-033"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Download progress reports",
+        "permission": "download-progress-reports",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Download capture reports",
+        "permission": "download-capture-reports",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "RPT-NFR-003",
+      "kind": "retention",
+      "statement": "How long issued report files and their download links remain available.",
+      "target": null,
+      "status": "draft",
+      "open_question": "The old PRD says both 30 days (storage) and 7 days (link). What is the intended retention and link lifetime?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "RPT-REQ-005",
+      "type": "business-rule",
+      "title": "The report catalog is tidied and sorted by recency",
+      "statement": "A project's report catalog is cleaned up when read. A missing or malformed catalog becomes empty, aliased section names are merged (keeping the first one seen), and reports are sorted newest first. A report job can exist with no catalog entry.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-033"
+      ],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-079"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-079",
+          "code": "project-api:src/application/services/project.service.ts#L2517@6bc5d334eaae"
+        }
+      ],
+      "open_checks": [
+        "Reconcile catalog, job row, file URL and expiry, download log and recipient notification after failure or retry",
+        "The demo saw a catalog and a configured send time; neither proves generated contents or actual delivery"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-005-AC1",
+          "given": "A project whose stored catalog isn't a list",
+          "when": "The catalog is read",
+          "then": "An empty list is returned rather than an error",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "RPT-REQ-006",
+      "type": "business-rule",
+      "title": "Reports reflect corrected progress",
+      "statement": "Report values come from current progress, which can go down after corrections or physical loss, and is recalculated when a takeoff error is corrected. What happens to reports already issued before a correction is open (DEC-004).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-004",
+        "DEC-033"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "svc.t3d-report-service"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-024, T3D-BR-037",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-006-AC1",
+          "given": "An erroneous takeoff for floor 2 is corrected from 100 to 80",
+          "when": "A new progress report covering last month is generated",
+          "then": "Last month's percentages for floor 2 use 80",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "RPT-REQ-009",
+      "type": "requirement",
+      "title": "Downloadable capture report",
+      "statement": "Users can request an HTML report of all of a project's active captures. A download link is emailed to them, and the report is kept in cloud storage for a limited time.",
+      "rationale": "The PRD says the report is kept for 30 days but the link lasts 7. Product to reconcile (RPT-NFR-003).",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-006",
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-007",
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-008"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-013",
+          "title": "Prior PRD - Project management (t3d-prd-agent prd-organised)",
+          "at": "FR-006..FR-008",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-009-AC1",
+          "given": "A project with active snapshots",
+          "when": "A user requests the capture report",
+          "then": "The report includes every active snapshot",
+          "status": "draft"
+        },
+        {
+          "id": "RPT-REQ-009-AC2",
+          "given": "The report is generated",
+          "when": "The download link is emailed",
+          "then": "The link works for 7 days",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

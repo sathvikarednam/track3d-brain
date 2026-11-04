@@ -1,0 +1,18 @@
+{
+  "id": "DEC-033",
+  "title": "What each report type contains",
+  "status": "open",
+  "question": "For each report type: who is it for, which project scope, date range, locations, categories and stages, and which units, denominators and sections does it include? Is unapproved data shown, and is a partial result acceptable?",
+  "context": "The renderer and catalog exist (RPT-REQ-001, RPT-REQ-005), but no report content contract has been approved.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "RPT",
+    "PROG"
+  ],
+  "requirements": [
+    "RPT-REQ-001",
+    "RPT-REQ-005",
+    "RPT-REQ-006"
+  ]
+}

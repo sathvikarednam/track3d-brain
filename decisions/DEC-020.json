@@ -1,0 +1,16 @@
+{
+  "id": "DEC-020",
+  "title": "How project names are compared",
+  "status": "open",
+  "question": "For the rule that names are unique within a company, do case and spacing count? Do archived or deleted projects still hold their name, and what happens on rename?",
+  "context": "Product wants uniqueness within a company only (PROJ-REQ-019). Today a unique index covers all companies (PROJ-REQ-020).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROJ"
+  ],
+  "requirements": [
+    "PROJ-REQ-019",
+    "PROJ-REQ-020"
+  ]
+}

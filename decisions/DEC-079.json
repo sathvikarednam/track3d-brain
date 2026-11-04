@@ -1,0 +1,20 @@
+{
+  "id": "DEC-079",
+  "title": "Takeoff deletion with linked progress, and takeoff import rules",
+  "status": "open",
+  "question": "Should deleting a takeoff asset that progress assets are linked to be blocked, warned about, or allowed with unlinking? For spreadsheet import, is overwrite the default, is the unit of measure strictly enforced, are missing categories and stages created automatically, and how is a Zone, Level, Area hierarchy expressed?",
+  "context": "The code unlinks progress silently on deletion (PROG-REQ-045, disputed).",
+  "options": [
+    "Block deletion while progress assets are linked (the PRD)",
+    "Allow deletion and unlink, with a warning listing the affected progress",
+    "Allow deletion and unlink silently (today)"
+  ],
+  "decision": null,
+  "capabilities": [
+    "PROG"
+  ],
+  "requirements": [
+    "PROG-REQ-045",
+    "PROG-REQ-049"
+  ]
+}

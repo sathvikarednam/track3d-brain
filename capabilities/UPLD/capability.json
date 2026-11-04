@@ -1,0 +1,14 @@
+{
+  "id": "UPLD",
+  "name": "Uploads",
+  "summary": "Transferring capture and design files, from session registration to upload complete.",
+  "related": [
+    "CAPT"
+  ],
+  "owner": null,
+  "feature_order": [
+    "UPLD-FEAT-01",
+    "UPLD-FEAT-02",
+    "UPLD-FEAT-03"
+  ]
+}

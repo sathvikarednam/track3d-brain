@@ -1,0 +1,15 @@
+{
+  "id": "DEC-052",
+  "title": "How inbound integration webhooks prove who sent them",
+  "status": "open",
+  "question": "What must Procore, Autodesk, Fieldwire, Togal and internal pipeline callbacks present before Track3D acts on them (signature, shared secret, IP allow list), and what is logged from them?",
+  "context": "The Fieldwire handler acts on the posted data directly (INTG-REQ-016), and the Togal handler logs full headers.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "INTG"
+  ],
+  "requirements": [
+    "INTG-REQ-016"
+  ]
+}

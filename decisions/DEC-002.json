@@ -1,0 +1,19 @@
+{
+  "id": "DEC-002",
+  "title": "Aggregation, denominators and configuration history",
+  "status": "open",
+  "question": "How are progress totals aggregated and compared? This covers denominator fallback when takeoff is missing, zero and over-100 behaviour, weighting across stages, categories and locations, formula and unit changes, rounding, and what is audited when configuration changes.",
+  "context": "Today stages are reported independently with no weighting. Project totals are summed at query time, denominators differ by view, and missing takeoff falls back to the measured value (PROG-REQ-001, -008, -025).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG",
+    "RPT"
+  ],
+  "requirements": [
+    "PROG-REQ-001",
+    "PROG-REQ-004",
+    "PROG-REQ-008",
+    "PROG-REQ-025"
+  ]
+}

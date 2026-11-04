@@ -1,0 +1,21 @@
+{
+  "id": "DEC-044",
+  "title": "How many BIM models a project may have",
+  "status": "open",
+  "question": "Is a project limited to one BIM model, or may it hold several (per project, per location), with users switching between them in design and compare views?",
+  "context": "The hierarchy-management PRD asks for several BIM models and sheets per level. The web assumes BIM is uploaded once per project and shows a non-blocking warning otherwise; child locations inherit the parent's BIM (DSGN-REQ-005, DSGN-REQ-029).",
+  "options": [
+    "One BIM model per project",
+    "One per location with inheritance",
+    "Several per location"
+  ],
+  "decision": null,
+  "capabilities": [
+    "DSGN",
+    "VIEW"
+  ],
+  "requirements": [
+    "DSGN-REQ-005",
+    "DSGN-REQ-029"
+  ]
+}

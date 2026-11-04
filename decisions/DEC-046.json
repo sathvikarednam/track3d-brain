@@ -1,0 +1,15 @@
+{
+  "id": "DEC-046",
+  "title": "Share link lifetime and expiry",
+  "status": "open",
+  "question": "Must every share link expire? If so, what is the default and the longest allowed lifetime, which time zone does an expiry date use, who is warned before a link expires, and how quickly must an expired link stop opening?",
+  "context": "The public-sharing PRD asks for expiry, change of expiry and warnings, and leaves the default open (SHARE-REQ-004).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "SHARE"
+  ],
+  "requirements": [
+    "SHARE-REQ-004"
+  ]
+}

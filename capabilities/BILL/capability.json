@@ -1,0 +1,17 @@
+{
+  "id": "BILL",
+  "name": "Credits, plans and billing",
+  "summary": "What a customer is entitled to create and use: project tiers (progress or visual), the progress-linked credit pool that pays for visual projects, company-level plan controls, and the Sales and customer views of credit. Payments themselves happen outside the platform.",
+  "related": [
+    "PROJ",
+    "USER",
+    "PROG"
+  ],
+  "owner": null,
+  "feature_order": [
+    "BILL-FEAT-01",
+    "BILL-FEAT-02",
+    "BILL-FEAT-03",
+    "BILL-FEAT-04"
+  ]
+}

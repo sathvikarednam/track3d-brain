@@ -1,0 +1,164 @@
+{
+  "id": "UPLD-FEAT-02",
+  "name": "Upload experience",
+  "summary": "What users see when uploading: choosing files, validation and errors, parallel uploads and progress.",
+  "components": [
+    "web.track3d-web",
+    "svc.t3d-uploader-service",
+    "svc.upload-api"
+  ],
+  "decisions": [
+    "DEC-026",
+    "DEC-027"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Upload files",
+        "permission": "upload",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "UPLD-NFR-003",
+      "kind": "volume",
+      "statement": "Maximum file size and files per batch for each upload category.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What limits apply per category (DEC-027)? Limits shown in the UI aren't proof of enforcement (T3D-UI-GAP-005)."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "UPLD-REQ-007",
+      "type": "requirement",
+      "title": "Easy file selection with accurate live progress",
+      "statement": "Uploading has a simple interface for choosing files, and shows live progress that matches the real transfer.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-UPLOADER-FR-001",
+        "T3D-CAND-UPLOADER-FR-004"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-017",
+          "title": "Prior PRD - Uploader (t3d-prd-agent)",
+          "at": "FR-001, FR-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-007-AC1",
+          "given": "A user opens the upload screen",
+          "when": "They select files",
+          "then": "The selection is clear, and each file can be removed before upload starts",
+          "status": "draft"
+        },
+        {
+          "id": "UPLD-REQ-007-AC2",
+          "given": "An upload in progress",
+          "when": "Half of the bytes have transferred",
+          "then": "Progress shows about 50% and never more than 100%",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-008",
+      "type": "requirement",
+      "title": "Invalid files are rejected with a clear, actionable message",
+      "statement": "Files are validated before upload. A rejected file gets a message saying what is wrong and what to do.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-027"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.upload-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-UPLOADER-FR-002"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-017",
+          "title": "Prior PRD - Uploader (t3d-prd-agent)",
+          "at": "FR-002",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Validate format, size and count limits, GPS requirements, partial batches and retries per mode and client; the limits shown in the UI aren't enforcement proof",
+        "Several web upload error handlers return nothing; check whether users see an actionable failure or the flow carries on as if it succeeded"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-008-AC1",
+          "given": "A user selects a file in an unsupported format",
+          "when": "It is validated",
+          "then": "It is rejected with a message naming the supported formats",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-009",
+      "type": "requirement",
+      "title": "Several formats, uploaded in parallel",
+      "statement": "Uploads accept several file formats, and several files upload at the same time.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-027"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.t3d-uploader-service"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-UPLOADER-FR-003"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-017",
+          "title": "Prior PRD - Uploader (t3d-prd-agent)",
+          "at": "FR-003",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-009-AC1",
+          "given": "A user selects ten images of mixed supported formats",
+          "when": "The upload starts",
+          "then": "Several files transfer at once, and all ten complete",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

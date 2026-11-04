@@ -1,0 +1,252 @@
+{
+  "id": "PROG-FEAT-04",
+  "name": "Corrections and history",
+  "summary": "Changing previously recorded progress: correcting mistakes, recording physical loss of work, deleting assets, and how dated history and downstream views respond.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-004",
+    "DEC-006"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "There is no separate correction permission. Corrections use asset update rights.",
+    "actions": [
+      {
+        "action": "Correct recorded progress",
+        "permission": "update-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete an asset and its history",
+        "permission": "delete-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-006",
+      "kind": "retention",
+      "statement": "How long correction history and previous values are kept, and whether a deleted asset's history can be restored.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is an audit trail of every correction required (and for how long), for example for customer disputes?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-019",
+      "type": "business-rule",
+      "title": "Progress may decrease",
+      "statement": "Customer-visible progress may go down for valid reasons, including corrections to previously marked progress and actual loss of completed work, such as a constructed wall being destroyed. Progress does not have to be monotonic. These examples are not an exhaustive list.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-004",
+        "DEC-006"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-024"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-024",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-049",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L3592@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Versioned views (v2/v3)",
+        "Charts were observed in the demo"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-019-AC1",
+          "given": "A wall had 100 units measured, and 30 units were later physically lost",
+          "when": "A later valid measurement records 70",
+          "then": "Customer-visible progress for the later date is 70; it is not held at 100",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-019-AC2",
+          "given": "Previously marked progress was too high",
+          "when": "An authorised user corrects the measured quantity downward",
+          "then": "The corrected, lower progress is shown",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-020",
+      "type": "business-rule",
+      "title": "Editing a date replaces or adds that date's entry",
+      "statement": "Editing an asset's progress for a date replaces the entry for that date, or adds a new dated entry if there is none. The previous height and factor are written to the audit history and rollups recalculate. There is no monotonic check, and the edit carries no reason saying whether it is a correction or physical loss.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-006"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-049"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-049",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L3592@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-020-AC1",
+          "given": "An asset with a 2026-03-02 entry of 100",
+          "when": "A user edits 2026-03-02 to 80",
+          "then": "The 2026-03-02 entry becomes 80, the old values are in the audit history, and totals for that date recalculate",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-021",
+      "type": "business-rule",
+      "title": "Progress can't be recorded before an asset existed",
+      "statement": "An edit dated before the asset's own date is rejected.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-048"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-048",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L3592@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-021-AC1",
+          "given": "An asset dated 2026-03-02",
+          "when": "A user edits its progress for 2026-02-20",
+          "then": "The edit is rejected",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-022",
+      "type": "business-rule",
+      "title": "Zero-only edits can be rejected, and effective dates can shift to now",
+      "statement": "Today an edit whose only inputs are zero can be rejected by a required-input check, so progress may not be reducible to zero this way. When no snapshot exists for the requested date, the change can be stored at the current time while the audit history keeps the requested day.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "PROG-REQ-019 allows decreases, which should include reducing to zero on the date entered. This code path may block that and may record a different effective date. Product to decide in DEC-006, then verify every edit path."
+      },
+      "decisions": [
+        "DEC-006"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-048",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L3592@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Verify the full UI and controller paths for decrease to zero and effective dates"
+      ],
+      "acceptance_criteria": []
+    },
+    {
+      "id": "PROG-REQ-023",
+      "type": "business-rule",
+      "title": "Deleting an asset removes its history",
+      "statement": "Deleting a progress asset removes the asset and its zone links and refreshes totals. Its history disappears with it, so deletion is not the same as recording that work was lost on a date.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-006"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-050"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-050",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L638@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Audit reconstruction"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-023-AC1",
+          "given": "An asset with entries on three past dates",
+          "when": "It is deleted",
+          "then": "Totals for all three dates no longer include it",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

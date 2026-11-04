@@ -1,0 +1,20 @@
+{
+  "id": "DEC-042",
+  "title": "Automated intake of multi-page drawing sets",
+  "status": "open",
+  "question": "Is automatic splitting of multi-page PDFs, with an agent creating the hierarchy and assigning pages, in scope? If so, what does the agent output and how are its mistakes reviewed?",
+  "context": "The PDF processing PRD asks for it (DSGN-REQ-034) but leaves the output format and error reporting open. Nothing implementing it was found. The web supports manual page preview, crop and rotate (DSGN-REQ-033).",
+  "options": [
+    "Manual page assignment only",
+    "Automatic split with manual assignment",
+    "Full agent intake with review"
+  ],
+  "decision": null,
+  "capabilities": [
+    "DSGN"
+  ],
+  "requirements": [
+    "DSGN-REQ-033",
+    "DSGN-REQ-034"
+  ]
+}

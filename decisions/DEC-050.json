@@ -1,0 +1,21 @@
+{
+  "id": "DEC-050",
+  "title": "Sync direction, timing and conflicts with linked platforms",
+  "status": "open",
+  "question": "For each linked platform, which data flows which way, how often, and who wins when both sides change? Should a new design version in the other platform update the Track3D design automatically or only notify admins?",
+  "context": "Procore and Autodesk designs update automatically (INTG-REQ-011) while the Fieldwire PRD says notify and don't update (INTG-REQ-014). Fieldwire timing is 15 minutes, daily and immediate in different places (INTG-REQ-017).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "INTG"
+  ],
+  "requirements": [
+    "INTG-REQ-007",
+    "INTG-REQ-008",
+    "INTG-REQ-010",
+    "INTG-REQ-011",
+    "INTG-REQ-014",
+    "INTG-REQ-016",
+    "INTG-REQ-017"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "VIEW",
+  "name": "Viewer and visualisation",
+  "summary": "Looking at a site through its captures and designs. Covers the 360°/panorama, sheet, BIM and drone map views, point clouds and Gaussian splats, side-by-side compare and sync, overlays and heat maps on the viewer, aligning and splitting realities, and viewer exports such as the offline viewer package.",
+  "related": [
+    "CAPT",
+    "PROJ",
+    "PROG",
+    "COLB"
+  ],
+  "owner": null,
+  "feature_order": [
+    "VIEW-FEAT-01",
+    "VIEW-FEAT-02",
+    "VIEW-FEAT-03",
+    "VIEW-FEAT-04",
+    "VIEW-FEAT-05"
+  ]
+}

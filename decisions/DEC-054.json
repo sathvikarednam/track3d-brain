@@ -1,0 +1,19 @@
+{
+  "id": "DEC-054",
+  "title": "Reprocessing and rework policy",
+  "status": "open",
+  "question": "When a processing attempt fails, is rejected in review or is cancelled, what happens next? Who may start a new attempt, how many automatic retries are allowed, and which attempt's output becomes the one customers see?",
+  "context": "Failed and rejected runs are terminal today (PROC-REQ-020). Scheduled VM jobs that fail to start get a replacement run, manual jobs don't (PROC-REQ-023). Operators can split a run into a new child run for review (PROC-REQ-024). Cancelling only changes the local record (PROC-REQ-022). No rule says which attempt is authoritative.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROC",
+    "CAPT"
+  ],
+  "requirements": [
+    "PROC-REQ-020",
+    "PROC-REQ-022",
+    "PROC-REQ-023",
+    "PROC-REQ-024"
+  ]
+}

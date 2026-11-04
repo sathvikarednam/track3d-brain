@@ -1,0 +1,321 @@
+{
+  "id": "BILL-FEAT-04",
+  "name": "Project tiers and company plan controls",
+  "summary": "What a project or company is entitled to today and in work in progress. Today the only shipped split is the project's intent: Progress Monitoring projects get 2D progress, Visual Documentation projects don't. A company-level project intent control and contract-type fields exist on development branches only.",
+  "components": [
+    "svc.api-2d-progress",
+    "svc.constructn-api",
+    "mod.db-models"
+  ],
+  "decisions": [
+    "DEC-063",
+    "DEC-064"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Setting a company's project intent control is limited to support users through the company update route. Reading the allowed intents is open to users who could create a project in that company.",
+    "actions": [
+      {
+        "action": "Set a company's project intent control",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "deny",
+          "admin": "deny",
+          "support-user": "allow"
+        },
+        "note": "Only on constructn-api track-3d-dev"
+      },
+      {
+        "action": "See which project intents a company may create",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "allow",
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown",
+          "support-user": "allow"
+        },
+        "note": "Same reach as project creation; the raw setting is not returned"
+      },
+      {
+        "action": "Use 2D progress on a project",
+        "permission": null,
+        "grants": {
+          "admin": "conditional",
+          "collaborator": "conditional",
+          "viewer": "conditional"
+        },
+        "note": "Only when the project intent is Progress Monitoring; project role permissions still apply"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "BILL-NFR-005",
+      "kind": "availability",
+      "statement": "What happens to project creation when a company's plan setting can't be read.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Project intent control refuses creation with \"contact support\" when the setting can't be read. Is blocking the right failure mode, and how quickly must support respond?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "BILL-REQ-022",
+      "type": "business-rule",
+      "title": "Today a project's intent is the only entitlement split",
+      "statement": "A project is either Progress Monitoring or Visual Documentation. On a Visual Documentation project, 2D progress requests outside the zone permissions are refused and new snapshots don't trigger automatic progress. No plan, quota or credit limits what a company creates or how many captures it uploads or processes.",
+      "rationale": "Shipped: on api-2d-progress and constructn-api track-3d. The credit model (BILL-FEAT-01 to 03) and project intent control (BILL-REQ-023) are not on track-3d. No credit, quota or billing code was found in capture-api or api-2d-progress (SRC-045).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-063"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "intent gate (track-3d)",
+          "code": "api-2d-progress:src/frameworks/middlewares/has-permissions.ts#L140@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "snapshot auto-progress gate (track-3d)",
+          "code": "constructn-api:src/services/snapshot-service.ts#L27@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "client-customisations/project-tiers.md",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The absence of usage metering was checked by searching capture-api and api-2d-progress only; other services were not searched"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-022-AC1",
+          "given": "A Visual Documentation project",
+          "when": "A project admin opens a 2D progress endpoint that is not a zone permission",
+          "then": "It is refused with 403 \"This is Visual Documentation Project, Progress is not Applicable\"",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-022-AC2",
+          "given": "A Progress Monitoring project with automatic reports on",
+          "when": "A new snapshot is created",
+          "then": "Automatic progress generation runs",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-023",
+      "type": "business-rule",
+      "title": "A company setting limits which project intents can be created",
+      "statement": "Each company has a hidden project intent control: both intents (the default), Visual Documentation only, or none. It applies to project creation, draft submission and intent changes; existing projects keep their intent. \"None\" blocks project creation with a \"contact your admin or Track3D support\" message. Only support users can set it, and every change is audited with who, when, old and new value and a reason. Customers see only which intents they may pick.",
+      "rationale": "Only on constructn-api track-3d-dev@615c0d351599 (model fields on db-models master@9a44863c02b7); not on constructn-api track-3d. Code calls it a \"5X interim setup\", which suggests it precedes the credit model.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-064"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "mod.db-models"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "ALLOWED_INTENTS_BY_CONTROL (track-3d-dev)",
+          "code": "constructn-api:src/services/project-intent-control.service.ts#L36@615c0d351599"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "assertProjectCreationAllowed (track-3d-dev)",
+          "code": "constructn-api:src/services/project-intent-control.service.ts#L122@615c0d351599"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "assertProjectIntentUpdateAllowed (track-3d-dev)",
+          "code": "constructn-api:src/services/project-intent-control.service.ts#L142@615c0d351599"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "audit entry (track-3d-dev)",
+          "code": "constructn-api:src/services/project-intent-control.service.ts#L193@615c0d351599"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "projectIntentControl field (master)",
+          "code": "db-models:src/definitions/company.ts#L28@9a44863c02b7"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-023-AC1",
+          "given": "A company set to Visual Documentation only, with the control switched on",
+          "when": "A super admin creates a Progress Monitoring project",
+          "then": "It is refused and the message lists Visual Documentation as the allowed intent",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-023-AC2",
+          "given": "A company set to none",
+          "when": "A user submits a saved draft project",
+          "then": "It is refused as project creation is not available",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "BILL-REQ-023-AC3",
+          "given": "An existing Progress Monitoring project in a company set to Visual Documentation only",
+          "when": "Its name is edited",
+          "then": "The edit succeeds, because only intent changes are checked",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-024",
+      "type": "business-rule",
+      "title": "Whether project intent control is on by default",
+      "statement": "The switch for project intent control is described as off by default (so companies can be backfilled first), but the code treats a missing setting as on.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The comment on PROJECT_INTENT_CONTROL_ENABLED says it is off by default; the code defaults it to \"true\". On a deploy without the setting, restrictions apply at once, before any backfill. Product and engineering to decide in DEC-064. Only on constructn-api track-3d-dev@615c0d351599; not on track-3d."
+      },
+      "decisions": [
+        "DEC-064"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "flag comment (track-3d-dev)",
+          "code": "constructn-api:src/config/feature-flags.ts#L72@615c0d351599"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "flag default (track-3d-dev)",
+          "code": "constructn-api:src/config/feature-flags.ts#L76@615c0d351599"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-024-AC1",
+          "given": "An environment with no PROJECT_INTENT_CONTROL_ENABLED setting",
+          "when": "A user in a company set to none creates a project",
+          "then": "(Current behaviour) It is refused, although the comment says the control is off by default",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "BILL-REQ-025",
+      "type": "business-rule",
+      "title": "Companies carry contract type and 5X fields that nothing uses yet",
+      "statement": "A company can be marked as prepaid or pay-as-you-go, and flagged as 5X. Only support users can set them, through the company update. No code path reads them yet.",
+      "rationale": "Fields are on db-models master@9a44863c02b7 and constructn-api track-3d-dev@615c0d351599; not on constructn-api track-3d, and not on the progress-linked credit branches. Their meaning is not stated in code.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-064"
+      ],
+      "implemented_by": [
+        "mod.db-models",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "contract type enum (master)",
+          "code": "db-models:src/definitions/company.ts#L32@9a44863c02b7"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "updateCompany support-only (track-3d-dev)",
+          "code": "constructn-api:src/controllersv2/company.controller.ts#L178@615c0d351599"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-045",
+          "title": "Branch inventory - progress-linked credit and project intent control (2026-10-29)",
+          "at": null,
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Searched constructn-api track-3d-dev only; other services and scripts may read these fields"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "BILL-REQ-025-AC1",
+          "given": "A company super admin who is not a Track3D support user",
+          "when": "They set their company's contract type",
+          "then": "The update is refused with \"Access denied\"",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

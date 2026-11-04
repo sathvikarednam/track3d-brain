@@ -1,0 +1,19 @@
+{
+  "id": "DEC-055",
+  "title": "What customers see when processing fails or is partial",
+  "status": "open",
+  "question": "Which processing states does a customer see (in progress, partly processed, failed), with what wording, and is the customer told by email? Are error tags such as \"Improper lighting\" shown to customers, and must a failed capture always come with a recommended action?",
+  "context": "Jobs carry a processing status and error tags (PROC-REQ-008). TechOps can set the outcome by hand (PROC-REQ-016), and a PRD asks for categorised issue emails with help articles (PROC-REQ-025). How much of this reaches the customer is not defined. LIVE itself is DEC-025.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROC",
+    "CAPT",
+    "NOTIF"
+  ],
+  "requirements": [
+    "PROC-REQ-008",
+    "PROC-REQ-016",
+    "PROC-REQ-025"
+  ]
+}

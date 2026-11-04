@@ -1,0 +1,17 @@
+{
+  "id": "DEC-038",
+  "title": "Viewer exports and design overlays - who, what and to whom",
+  "status": "open",
+  "question": "Who may request the offline viewer package, to which addresses may it be sent, how long may links live, and can a package be rebuilt after new captures? Which overlay formats on the drone map and sheet are supported (PDF, shapefile, DXF), who may add them, and is design-overlay-map the governing permission?",
+  "context": "Drone-map design overlays read a prepared per-structure file with no permission check, and shapefile and DXF overlays are PRD-only (VIEW-REQ-018, VIEW-REQ-019).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "VIEW"
+  ],
+  "requirements": [
+    "VIEW-REQ-018",
+    "VIEW-REQ-019",
+    "VIEW-REQ-025"
+  ]
+}

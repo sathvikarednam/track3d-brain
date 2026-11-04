@@ -1,0 +1,19 @@
+{
+  "id": "DEC-034",
+  "title": "Viewer default view, compare pairs and sync defaults",
+  "status": "open",
+  "question": "Which view should a structure open in when none is chosen, and where does the drone map sit in that order? Which compare pairs are offered, which start synced, and when may users unlock them? What should users see when no view is available? How should several captures picked on a floor plan open?",
+  "context": "The viewer-enhancements PRD orders sheet, BIM, 360 video. The code opens the drone map ahead of BIM (VIEW-REQ-001). Sync rules exist only in the browser and differ by capture type (VIEW-REQ-003, VIEW-REQ-004).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "VIEW"
+  ],
+  "requirements": [
+    "VIEW-REQ-001",
+    "VIEW-REQ-002",
+    "VIEW-REQ-003",
+    "VIEW-REQ-004",
+    "VIEW-REQ-006"
+  ]
+}

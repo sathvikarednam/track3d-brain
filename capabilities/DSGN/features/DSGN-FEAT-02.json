@@ -1,0 +1,559 @@
+{
+  "id": "DSGN-FEAT-02",
+  "name": "Design processing lifecycle",
+  "summary": "What happens after a design is uploaded: colour detection, PDF to image conversion, map tiles, Autodesk translation, review statuses, rejection with error reasons, and reminders when a location has no design.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-043"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Status changes go through update-project-design (or update-project-bim for BIM). The design-management PRD has the CS and TechOps teams reviewing designs, but no separate review permission was found in code.",
+    "actions": [
+      {
+        "action": "Change a sheet's status (review",
+        "permission": "update-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Change a BIM model's status",
+        "permission": "update-project-bim",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Complete an upload and start processing",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "DSGN-NFR-003",
+      "kind": "latency",
+      "statement": "Time from upload complete to a design being ready for review (images, tiles and Autodesk translation done).",
+      "target": null,
+      "status": "draft",
+      "open_question": "What processing time should customers be promised for a PDF sheet and for a BIM model?"
+    },
+    {
+      "id": "DSGN-NFR-004",
+      "kind": "freshness",
+      "statement": "Time allowed between a design being rejected and the uploader being told why.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is the immediate rejection email enough, or is there an SLA for the review itself (design-management PRD FR-012)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "DSGN-REQ-013",
+      "type": "business-rule",
+      "title": "Design statuses",
+      "statement": "A design moves through created (record made, file not yet uploaded), uploaded, processing, readyForCapture, inReview, and finally active, inActive or error. Completing an upload puts it into processing.",
+      "rationale": "The code-first docs show the lifecycle as created, uploaded, processing, readyForCapture, inReview, then active, inActive or error. In code the order isn't enforced as a sequence; each step is set by a callback or a status update.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "db-models:src/definitions/design.ts#L12@1cabc8a1de8d"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L2582@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "design.md (Status Lifecycle)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-013-AC1",
+          "given": "A design record has been created and its file upload has finished",
+          "when": "The browser reports the upload complete",
+          "then": "The design's status becomes processing",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-014",
+      "type": "business-rule",
+      "title": "PDF sheets are checked for colour, converted to images and tiled",
+      "statement": "Every PDF sheet is checked for colour. A coloured sheet keeps a colour copy and is converted to a monochrome version; a monochrome sheet is used as is. Sheets are turned into floor-plan images (a default image plus mono and, for coloured sheets, colour variants) and into map tiles, one tile set per variant. DWG and DXF sheets are tiled too.",
+      "rationale": "If colour detection fails, the sheet is treated as monochrome.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L2665@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L2819@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L2788@06132d2a6f1f"
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-025",
+          "title": "Prior PRD - Design management (t3d-prd-agent prd-organised)",
+          "at": "FR-003, AC-003 (convert PDFs to PNGs and store them)",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Tiles are generated by an ECS task; the local pdf-tiler prototype (SRC-030) looks similar but is not proven to be that task"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-014-AC1",
+          "given": "A coloured architectural PDF is uploaded",
+          "when": "Processing runs",
+          "then": "A colour copy and a monochrome version are both stored, and colour and mono floor-plan images and tile sets are produced",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-014-AC2",
+          "given": "A monochrome PDF is uploaded",
+          "when": "Processing runs",
+          "then": "One mono floor-plan image and one tile set are produced",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-015",
+      "type": "business-rule",
+      "title": "Designs are translated by Autodesk for viewing",
+      "statement": "Every processed design, BIM model or sheet, is uploaded to an Autodesk bucket for its project and translated into a 2D/3D viewable model with a thumbnail. Architectural sheets are sent in colour when a colour copy exists; other sheets are sent in monochrome.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/utils/autoDeskConversion.ts#L56@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/utils/autoDeskConversion.ts#L200@06132d2a6f1f"
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-025",
+          "title": "Prior PRD - Design management (t3d-prd-agent prd-organised)",
+          "at": "FR-002, AC-002 (translate design files via Autodesk)",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "design.md (Business Rules",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The project's Autodesk bucket is created with the transient retention policy (autoDeskConversion.ts#L114); confirm how long source files and viewables must stay available"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-015-AC1",
+          "given": "An RVT model has finished uploading",
+          "when": "Processing starts",
+          "then": "An Autodesk translation job is started and its reference is recorded on the design",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-016",
+      "type": "business-rule",
+      "title": "Outcome of Autodesk translation",
+      "statement": "When translation succeeds, a BIM model becomes ready for capture and viewable, and the Track3D team is emailed. A sheet becomes viewable and its capture-sheet and activation rules apply (DSGN-FEAT-03). When translation or the upload to Autodesk fails, the design goes back to uploaded.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L145@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L400@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/utils/autoDeskConversion.ts#L274@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-016-AC1",
+          "given": "A BIM model in processing",
+          "when": "Autodesk reports a successful translation",
+          "then": "The model is ready for capture and viewable",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-016-AC2",
+          "given": "A design in processing",
+          "when": "Autodesk reports a failed translation",
+          "then": "(Current behaviour) The design returns to uploaded, not error, and the uploader isn't told why",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-017",
+      "type": "business-rule",
+      "title": "A translation result is applied once",
+      "statement": "A translation result is applied only to a design that is still processing, and only once per design. A result that arrives before Autodesk shows the translation complete is ignored.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L112@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-017-AC1",
+          "given": "A design already moved out of processing",
+          "when": "Autodesk sends the same completion notice again",
+          "then": "The design is not changed",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-018",
+      "type": "business-rule",
+      "title": "Review steps need images and matching types",
+      "statement": "A sheet can be moved to readyForCapture or inReview only after its floor-plan image exists. A design can be made readyForCapture only if its sheet type matches the location's capture sheet. Saving an alignment to a design that isn't active moves it to inReview.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L769@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L779@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L726@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-018-AC1",
+          "given": "A sheet whose floor-plan image hasn't been produced",
+          "when": "Someone sets it to readyForCapture",
+          "then": "The change is refused",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-018-AC2",
+          "given": "A location whose capture sheet is architectural",
+          "when": "Someone sets an electrical sheet there to readyForCapture",
+          "then": "The change is refused because the types don't match",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-019",
+      "type": "business-rule",
+      "title": "Rejected designs record reasons and tell the uploader",
+      "statement": "A design that can't be used is set to error with one or more reasons, such as missing scale, missing legend, missing north arrow, low quality, vector sheet required, wrong level, schedule sheet, duplicate, or several drawings on one sheet. The uploader is emailed the reasons and the Track3D team is copied. The capture sheet can't be set to error. Reasons are cleared when a design leaves error.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-025",
+          "title": "Prior PRD - Design management (t3d-prd-agent prd-organised)",
+          "at": "EC-001 (notify the client of the error and request correction)",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L1046@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/services/design-services.ts#L75@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "db-models:src/definitions/design.ts#L21@1cabc8a1de8d"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-019-AC1",
+          "given": "A sheet in review with no scale",
+          "when": "It is set to error with the reason \"Scaling Information Missing\"",
+          "then": "The uploader receives an email listing that reason",
+          "status": "draft"
+        },
+        {
+          "id": "DSGN-REQ-019-AC2",
+          "given": "The capture sheet of a location",
+          "when": "Someone sets it to error",
+          "then": "The change is refused until another sheet is made the capture sheet",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-020",
+      "type": "requirement",
+      "title": "Internal design task tracker",
+      "statement": "The Track3D team has a task view of new and existing designs to process, with search, sorting and filtering, a red dot on sections with inactive or in-review designs, and an email when a task passes its SLA.",
+      "rationale": "Code creates a \"new design\" or \"existing design\" workflow record when the upload names one, which looks like the backing for this view. The view itself, the red dot and SLA emails were not traced.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-025",
+          "title": "Prior PRD - Design management (t3d-prd-agent prd-organised)",
+          "at": "US-003, FR-007, FR-008, FR-009, FR-010, FR-011, FR-012",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L1877@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Locate the internal task view (the PRD calls the app \"Legend\") and any SLA email; neither was found in constructn-api or track3d-web"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-020-AC1",
+          "given": "A design task that has passed its SLA",
+          "when": "The breach is detected",
+          "then": "An email notification is sent to the team",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-021",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "DSGN-REQ-022",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "DSGN-REQ-023",
+      "type": "business-rule",
+      "title": "Reminders when a location has no design",
+      "statement": "When a project is created, reminders are scheduled for its top-level location: to project admins 7, 14 and 30 days after the project start date, and to the Track3D team 14 and 30 days after. Uploading a design cancels the location's reminders. When the last design of a location is deleted, new reminders go to admins after 3 and 7 days and to the Track3D team after 7 days.",
+      "rationale": "Every caller passes an empty admin list, and the code that sends the reminders is outside constructn-api, so who actually receives them is unverified (DEC-043).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-043"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/queues/design-reminder-queue.ts#L283@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/queues/design-reminder-queue.ts#L373@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllersv2/project.controller.ts#L5816@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Find the reminder consumer and confirm how admin recipients are resolved when the job's admin list is empty",
+        "Reminders are only scheduled for the top-level location at project creation; confirm whether lower levels should get them"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-023-AC1",
+          "given": "A project starting today with no designs uploaded",
+          "when": "14 days pass",
+          "then": "A missing-design reminder is sent to the project admins and to the Track3D team",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-023-AC2",
+          "given": "A location with pending reminders",
+          "when": "A design upload completes there",
+          "then": "Its pending reminders are cancelled",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

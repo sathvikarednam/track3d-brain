@@ -1,0 +1,18 @@
+{
+  "id": "ENT",
+  "name": "Enterprise workspace",
+  "summary": "The company-level workspace for enterprise customers: the admin overview, organisation settings, the company-wide activity log, engagement features and consolidated emails. Who holds enterprise authority (super-admins, regional admins, regions, invitations, removals) is defined in USER-FEAT-07, not here.",
+  "related": [
+    "USER",
+    "PROJ",
+    "NOTIF",
+    "CAPT"
+  ],
+  "owner": null,
+  "feature_order": [
+    "ENT-FEAT-01",
+    "ENT-FEAT-02",
+    "ENT-FEAT-03",
+    "ENT-FEAT-04"
+  ]
+}

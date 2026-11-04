@@ -1,0 +1,473 @@
+{
+  "id": "PROG-FEAT-08",
+  "name": "Takeoff bulk operations and import",
+  "summary": "Working with many takeoff assets at once: a creation session that saves or discards a batch, count categories drawn as symbols, bulk and filter-based deletion, linking progress assets to takeoff assets, the takeoff change history, and importing takeoff from a spreadsheet or from Arth output.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-010",
+    "DEC-079"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Takeoff deletion checks delete-asset.",
+    "actions": [
+      {
+        "action": "Create takeoff assets (one or in a batch)",
+        "permission": "create-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": "Not enforced on the takeoff routes today"
+      },
+      {
+        "action": "Edit or split takeoff assets",
+        "permission": "update-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": "Not enforced on the takeoff routes today"
+      },
+      {
+        "action": "Delete takeoff assets (one",
+        "permission": "delete-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Import takeoff from Arth output",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown",
+          "support-user": "unknown"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      },
+      {
+        "action": "Delete takeoff assets in review or inactive by filter",
+        "permission": "delete-asset",
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "allow"
+        },
+        "note": "Customers' filter deletes reach active assets only"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-011",
+      "kind": "volume",
+      "statement": "Largest batch of takeoff assets that one creation session, bulk delete or spreadsheet import must handle.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is 50 MB the committed import limit, and how many assets may a single bulk action touch?"
+    },
+    {
+      "id": "PROG-NFR-012",
+      "kind": "latency",
+      "statement": "Time from a bulk takeoff change to recalculated location takeoff totals.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Recalculation runs in the background after the response; how stale may totals be, and should the UI show it?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-043",
+      "type": "requirement",
+      "title": "A takeoff creation session saves or discards its whole batch",
+      "statement": "A user picks a category and stage settings once, then draws any number of takeoff assets. A running total for each stage across the structure updates as they draw. Saving creates every asset in the session in one request; leaving with unsaved assets asks for confirmation and then discards them.",
+      "rationale": "Matches the bulk creation mode in the takeoff-management PRD (FR-004..FR-006). The PRD's tooltip for changing the configuration after drawing was not traced in code.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-062",
+          "title": "Prior PRDs - Takeoff management, electrical progress tracking and out-of-scope assets (t3d-prd-agent prd-organised)",
+          "at": "takeoff-management.md FR-004..FR-006, AC-004..AC-007",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "running total",
+          "code": "track3d-web:src/components/rahman/core/assets/CreateTakeoffAssetComponent.tsx#L299@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "discard confirmation",
+          "code": "track3d-web:src/app/(home)/viewer/page.tsx#L1190@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "createTakeOffBulk",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L136@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "The batch is saved with Promise.all; whether a failure part-way leaves some assets created was not checked"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-043-AC1",
+          "given": "A user in a creation session has drawn three wall assets for the Framing stage",
+          "when": "They draw a fourth",
+          "then": "The stage's running total for the structure includes all four before anything is saved",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-043-AC2",
+          "given": "A creation session with unsaved assets",
+          "when": "The user closes the panel and confirms the discard",
+          "then": "None of the session's assets are created",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-044",
+      "type": "business-rule",
+      "title": "Count categories turn drawn lines and polygons into one symbol",
+      "statement": "When every stage of a category is measured by count and the category has a fixed shape, a line or polygon drawn as takeoff is saved as a single symbol. A polygon becomes a symbol at its centre; a line becomes a symbol at the point halfway along its length.",
+      "rationale": "Supports count-based scopes such as electrical devices (electrical PRD goal of partial progress by counts).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "applyCountCategoryTransform",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L64@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "symbol shape",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L133@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-044-AC1",
+          "given": "A category whose only stage is measured by count",
+          "when": "A user draws a square polygon as takeoff",
+          "then": "One symbol is saved at the square's centre",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-044-AC2",
+          "given": "A category with one count stage and one length stage",
+          "when": "A user draws a line",
+          "then": "The line is saved as a line",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-045",
+      "type": "business-rule",
+      "title": "Deleting takeoff linked to progress unlinks the progress assets",
+      "statement": "Deleting a takeoff asset, one at a time, in bulk or by filter, removes it and silently removes the link from any progress asset that pointed to it. The PRD says such a deletion should be blocked and the user told about the dependency.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "takeoff-management.md EC-007 says deleting a takeoff asset linked to progress assets must be prevented. The code deletes it and pulls the takeoff ID from linked progress assets without warning."
+      },
+      "decisions": [
+        "DEC-079"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-062",
+          "title": "Prior PRDs - Takeoff management, electrical progress tracking and out-of-scope assets (t3d-prd-agent prd-organised)",
+          "at": "takeoff-management.md EC-007, AC-010",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "deleteTakeOffAsset",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L1223@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "deleteAssetsByFilters",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L3229@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-045-AC1",
+          "given": "A progress asset linked to takeoff asset T1",
+          "when": "A user deletes T1",
+          "then": "T1 is deleted and the progress asset is no longer linked to it (today's behaviour)",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-046",
+      "type": "business-rule",
+      "title": "Bulk takeoff deletion is all or nothing, and filter deletes respect review state",
+      "statement": "Deleting selected takeoff assets fails without deleting anything if any selected asset no longer exists. Deleting by structure and categories reaches only active takeoff for customers; for support users it also reaches takeoff that is in review or inactive. The same scope applies to filter-based updates.",
+      "rationale": "Covers the PRD's bulk delete for end users and for the Arth review team (FR-007, FR-008, EC-005).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-062",
+          "title": "Prior PRDs - Takeoff management, electrical progress tracking and out-of-scope assets (t3d-prd-agent prd-organised)",
+          "at": "takeoff-management.md FR-007, FR-008, EC-005",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "deleteTakeOffAssetBulk",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L1249@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "deleteAssetsByFilters scope",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L3220@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-046-AC1",
+          "given": "Five selected takeoff assets, one of which another user has just deleted",
+          "when": "The user deletes the selection",
+          "then": "The request fails and the other four assets remain",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-046-AC2",
+          "given": "A structure with active and in-review takeoff in the Drywall category",
+          "when": "A customer deletes Drywall takeoff by filter",
+          "then": "Only the active takeoff is deleted",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-047",
+      "type": "requirement",
+      "title": "Progress assets are linked to the takeoff assets they measure",
+      "statement": "Progress assets can be linked to, and unlinked from, one or more takeoff assets in one action. Every link is recorded in the progress audit log with the user. Linking fails if any named takeoff asset does not exist.",
+      "rationale": "This is how progress is marked per capture against a takeoff asset, as the electrical PRD asks (FR-002) and as the takeoff PRD's \"create progress assets from takeoff assets\" story describes (US-008, FR-011).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-062",
+          "title": "Prior PRDs - Takeoff management, electrical progress tracking and out-of-scope assets (t3d-prd-agent prd-organised)",
+          "at": "takeoff-management.md FR-011; electrical-progress-tracking.md FR-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "changeAssetLinkage",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L14124@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "asset-linked audit",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L14168@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-047-AC1",
+          "given": "Two progress assets and takeoff asset T1",
+          "when": "A user links both to T1",
+          "then": "Both carry T1 and the audit log has one asset-linked entry per asset",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-047-AC2",
+          "given": "A link request naming a takeoff asset that does not exist",
+          "when": "It is submitted",
+          "then": "It is rejected and no links change",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-048",
+      "type": "requirement",
+      "title": "Takeoff changes are recorded with who made them and when",
+      "statement": "Creating and deleting takeoff assets writes a progress audit entry with the user, the category and the effective date. The PRD also asks for a \"View history\" option beside \"Edit takeoff\" on the progress overview that shows these changes with user details and timestamps.",
+      "rationale": "The audit entries exist in code; a history view reading them for takeoff was not found. The PRD rules out rolling back to earlier takeoff from the history panel.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-062",
+          "title": "Prior PRDs - Takeoff management, electrical progress tracking and out-of-scope assets (t3d-prd-agent prd-organised)",
+          "at": "takeoff-management.md FR-019, AC-017",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "create-takeoff-asset audit",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L163@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Audit writes are fire-and-forget; a failed write is only logged. Edits other than category changes were not traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-048-AC1",
+          "given": "A user creates a takeoff asset dated 2026-03-02",
+          "when": "The asset is saved",
+          "then": "An audit entry records the user, the asset's category and that date",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-049",
+      "type": "requirement",
+      "title": "Import takeoff quantities from a spreadsheet",
+      "statement": "A user with upload rights downloads a template, fills it and uploads csv, xlsx or xls up to 50 MB. The file is validated with clear errors; empty or unsupported files are rejected. A partial file changes only the structures it names, and rows for structures that don't exist are ignored. Every upload is kept in an upload history.",
+      "rationale": "PRD only for the spreadsheet route. Overwrite default, unit enforcement and auto-creating categories are open (DEC-079).",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-079"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-062",
+          "title": "Prior PRDs - Takeoff management, electrical progress tracking and out-of-scope assets (t3d-prd-agent prd-organised)",
+          "at": "takeoff-management.md FR-001..FR-003, FR-018, AC-001..AC-003, AC-016, EC-001, EC-002, EC-013, EC-014",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-049-AC1",
+          "given": "A correctly filled template",
+          "when": "It is uploaded",
+          "then": "The takeoff quantities are imported without errors and the upload appears in the history",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-049-AC2",
+          "given": "A template with a row for a structure that does not exist",
+          "when": "It is uploaded",
+          "then": "That row is ignored and the other rows are imported",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-049-AC3",
+          "given": "An empty file or a .pdf",
+          "when": "It is uploaded",
+          "then": "It is rejected with an error message",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-050",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "PROG-REQ-051",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

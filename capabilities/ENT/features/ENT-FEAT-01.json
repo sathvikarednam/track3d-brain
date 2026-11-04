@@ -1,0 +1,350 @@
+{
+  "id": "ENT-FEAT-01",
+  "name": "Enterprise workspace and overview",
+  "summary": "The company-level workspace (Overview, Projects, Regions, User Management, Captures, Notes, Activities) and its overview counts. Who may act as an enterprise admin is defined in USER-FEAT-07; this feature covers what the workspace shows and who can reach it.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-070"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The grants below describe what the code allows, not what product intends.",
+    "actions": [
+      {
+        "action": "Open the enterprise workspace and overview counts",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "allow",
+          "admin": "conditional",
+          "collaborator": "conditional",
+          "viewer": "conditional",
+          "support-user": "unknown"
+        },
+        "note": "Project roles pass only if the user also holds some Company or Region grant in that company"
+      },
+      {
+        "action": "List company users and invitations",
+        "permission": "view-company",
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "allow",
+          "admin": "conditional",
+          "collaborator": "conditional",
+          "viewer": "conditional"
+        },
+        "note": "The permission check is commented out today"
+      },
+      {
+        "action": "Switch between companies the user administers",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "unknown",
+          "admin": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Turn a company's enterprise tier on or off",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "deny",
+          "regional-admin": "deny",
+          "admin": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "ENT-NFR-001",
+      "kind": "freshness",
+      "statement": "How current the overview counts (active users, active projects, captures) must be.",
+      "target": null,
+      "status": "draft",
+      "open_question": "The PRD asks for real-time data, and its open questions ask how often to refresh. What delay is acceptable?"
+    },
+    {
+      "id": "ENT-NFR-002",
+      "kind": "scalability",
+      "statement": "How many projects, users and linked companies one enterprise workspace must handle without slowing down.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What is the largest enterprise (projects, users, regions) the overview must support?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "ENT-REQ-001",
+      "type": "requirement",
+      "title": "Enterprise admins get one company-level workspace",
+      "statement": "Enterprise admins have a company-level workspace with an overview, projects, regions, user management, captures, notes and activities across the company's projects. It shows project health and helps them manage users across projects.",
+      "rationale": "The PRD also asks for automated insights on project issues. No insight engine was found in the enterprise code, so that part is PRD-only.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-070"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "admin-dashboard.md FR-006, FR-007, FR-008, AC-006..AC-008",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "company sidebar menu",
+          "code": "track3d-web:src/features/company-sidebar/components/CompanySidebar.tsx#L34@0ccd6d8bd9d8"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-001-AC1",
+          "given": "A company super-admin signed in to an enterprise company",
+          "when": "They open the company workspace",
+          "then": "They can reach Overview, Projects, Regions, User Management (users and groups), Captures, Notes and Activities",
+          "status": "draft"
+        },
+        {
+          "id": "ENT-REQ-001-AC2",
+          "given": "The overview fails to load",
+          "when": "The admin opens it",
+          "then": "An error is shown with a way to retry",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-002",
+      "type": "business-rule",
+      "title": "How the overview counts users and projects",
+      "statement": "Today the overview counts active, verified users assigned to the company's projects, in the company and its linked companies. A user is active if they have any activity in the last 24 hours. New users are those created since Monday. A project is active if it is live, approved, and has a capture since the Monday two weeks before the current week.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-070"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getActiveUsersStats",
+          "code": "constructn-api:src/controllersv2/enterprise-overview.controller.ts#L170@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "active in last 24h",
+          "code": "constructn-api:src/controllersv2/enterprise-overview.controller.ts#L190@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getCompanyProjectStats window",
+          "code": "constructn-api:src/controllersv2/enterprise-overview.controller.ts#L314@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "User counts cover all of the company's projects",
+        "Restricted check, handled with engineering separately."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-002-AC1",
+          "given": "A company user whose last activity was 30 hours ago",
+          "when": "The overview is loaded",
+          "then": "(Current behaviour) They count in total users but not in active users",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "ENT-REQ-002-AC2",
+          "given": "A live, approved project whose last capture was 10 days before this week's Monday",
+          "when": "The overview is loaded",
+          "then": "(Current behaviour) The project counts as active",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-003",
+      "type": "requirement",
+      "title": "Admins see every invited user across projects",
+      "statement": "In user management, admins see all invited users at company and project level, with a Projects column listing the projects each user is invited to. Invitation rules themselves are USER-REQ-045.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "admin-dashboard.md FR-001, FR-002, AC-001, AC-002, EC-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "list invites route",
+          "code": "constructn-api:src/routes/v4/enterprise-users.routes.ts#L91@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-003-AC1",
+          "given": "A user invited to three projects who accepted one",
+          "when": "An admin views the invited users list",
+          "then": "The user shows as a member of the accepted project and still invited to the other two",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-004",
+      "type": "requirement",
+      "title": "Admins of several companies can switch between them",
+      "statement": "A super-admin or regional admin who administers more than one company (for example a parent and a subsidiary) can switch the workspace between those companies, even when their email domain belongs to only one of them.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "admin-dashboard.md FR-003, AC-003, EC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "companies where user is super-admin",
+          "code": "constructn-api:src/routes/v4/company.routes.ts#L12@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "The company list endpoint returns only companies where the user is a super-admin. Whether regional admins can switch is unverified."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-004-AC1",
+          "given": "A super-admin of two companies, with an email domain of the first",
+          "when": "They pick the second company in the company switcher",
+          "then": "The workspace shows the second company's projects, users and activity",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-005",
+      "type": "business-rule",
+      "title": "Only Track3D support turns the enterprise tier on or off",
+      "statement": "Today a company becomes an enterprise company through a flag that only Track3D support users can set or clear. Company profile updates and deletion are also limited to support users.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-070",
+        "DEC-071"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "updateCompanyEnterpriseFlag",
+          "code": "constructn-api:src/controllersv2/company.controller.ts#L702@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "updateCompany",
+          "code": "constructn-api:src/controllersv2/company.controller.ts#L174@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "client-customisations/enterprise.md Company.isEnterprise",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The PRD says enterprise features switch on for users from enterprise email domains. Which behaviours the flag gates is not confirmed (SRC-004 flags this for review)."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-005-AC1",
+          "given": "A company super-admin who is not a support user",
+          "when": "They try to set their company's enterprise flag",
+          "then": "(Current behaviour) The request is refused as unauthorised",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-006",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "ENT-REQ-007",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

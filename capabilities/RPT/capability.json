@@ -1,0 +1,16 @@
+{
+  "id": "RPT",
+  "name": "Reports",
+  "summary": "Generated report artifacts, report catalogs and delivery schedules.",
+  "related": [
+    "PROG",
+    "SCHD"
+  ],
+  "owner": null,
+  "feature_order": [
+    "RPT-FEAT-01",
+    "RPT-FEAT-02",
+    "RPT-FEAT-03",
+    "RPT-FEAT-04"
+  ]
+}

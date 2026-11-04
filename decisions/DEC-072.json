@@ -1,0 +1,15 @@
+{
+  "id": "DEC-072",
+  "title": "Activity log history, download formats and limits",
+  "status": "open",
+  "question": "How long is company activity kept and viewable? Which download formats are offered (Excel, PDF, CSV), must the user choose one, and what happens when more than 5,000 entries match?",
+  "context": "The PRD asks for PDF or Excel downloads and CSV for logs older than one month. Today downloads default to Excel, offer PDF, have no CSV, and stop silently at the 5,000 newest rows (ENT-REQ-016). No expiry is set on the activity data.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "ENT"
+  ],
+  "requirements": [
+    "ENT-REQ-016"
+  ]
+}

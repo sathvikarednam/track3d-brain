@@ -1,0 +1,21 @@
+{
+  "id": "DEC-040",
+  "title": "Who may upload and prepare designs",
+  "status": "open",
+  "question": "Should collaborators be able to upload, crop and tag sheets and BIM models, or only project admins? Should the Track3D team's review step need its own permission?",
+  "context": "The role matrix allows design and BIM changes for admins only. The document-management PRD has collaborators cropping and tagging PDF pages, while the hierarchy-design PRD has collaborators only viewing (DSGN-REQ-004).",
+  "options": [
+    "Admins only (today)",
+    "Admins and collaborators",
+    "Admins plus a per-project custom role"
+  ],
+  "decision": null,
+  "capabilities": [
+    "DSGN",
+    "USER"
+  ],
+  "requirements": [
+    "DSGN-REQ-004",
+    "DSGN-REQ-033"
+  ]
+}

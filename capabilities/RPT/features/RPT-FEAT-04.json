@@ -1,0 +1,201 @@
+{
+  "id": "RPT-FEAT-04",
+  "name": "Report download logs and floor-plan progress PDFs",
+  "summary": "Who downloaded which report and when, and downloading a floor plan with its progress markings as a PDF for selected categories and stages.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The reporting PRD leaves open which roles may see the logs.",
+    "actions": [
+      {
+        "action": "Download a floor-plan progress PDF",
+        "permission": "download-progress-reports",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Read a report's download log",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "RPT-NFR-005",
+      "kind": "volume",
+      "statement": "Largest floor-plan PDF (levels, categories, page size) that must generate successfully.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How large can a multi-level floor-plan PDF get before it must be split or emailed only?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "RPT-REQ-011",
+      "type": "requirement",
+      "title": "Report downloads are logged and listed per report",
+      "statement": "Each report download is logged with the project, the user, the report's type, ID and name, and the time. A report's log lists the project name, report name and type, the downloader's name and email, and the time. Downloads by support users are left out of the list for customers.",
+      "rationale": "The reporting PRD also asks for a CSV export of the log named log_{report_name}_{YYYYMMDD}.csv; the service returns JSON only and no CSV export was found. The download is logged by the client calling the log route, so a download that skips that call is not logged.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-067",
+          "title": "Prior PRDs - Reporting and report scheduling (t3d-prd-agent prd-organised)",
+          "at": "reporting.md FR-009..FR-011, AC-007..AC-009",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "log route",
+          "code": "api-2d-progress:src/frameworks/routes/report-logs.routes.ts#L45@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "support downloads hidden",
+          "code": "api-2d-progress:src/application/service/report-logs.service.ts#L89@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-011-AC1",
+          "given": "A customer and a support user each downloaded report R",
+          "when": "A customer views R's download log",
+          "then": "Only the customer's download is listed, with their name, email and time",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "RPT-REQ-011-AC2",
+          "given": "A user with report access",
+          "when": "They export the download log",
+          "then": "A CSV named log_{report_name}_{YYYYMMDD}.csv is produced",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "RPT-REQ-012",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "RPT-REQ-013",
+      "type": "business-rule",
+      "title": "Out-of-scope assets in a floor-plan PDF follow the viewer setting",
+      "statement": "A floor-plan progress PDF is built from the viewer's current filters: if out-of-scope assets are hidden in the viewer they are left out of the PDF. The report-scheduling PRD says out-of-scope assets should appear in black in the downloaded file.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "report-scheduling.md EC-006 shows out-of-scope assets in black. The web app passes showOutOfScope=false to the report when they are hidden, which is the customer default (PROG-REQ-057)."
+      },
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-067",
+          "title": "Prior PRDs - Reporting and report scheduling (t3d-prd-agent prd-organised)",
+          "at": "report-scheduling.md EC-006",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "stage report URL",
+          "code": "track3d-web:src/adapter/utils/progress-report.utils.ts#L152@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "category report URL",
+          "code": "track3d-web:src/adapter/utils/progress-report.utils.ts#L226@0e9dabc75e2f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-013-AC1",
+          "given": "A customer with default filters and one out-of-scope asset on the floor plan",
+          "when": "They download the floor-plan PDF",
+          "then": "Today the asset is not in the PDF (current behaviour)",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "RPT-REQ-014",
+      "type": "requirement",
+      "title": "Download a floor plan with progress markings as a PDF",
+      "statement": "From the progress details page a user selects categories and stages, chooses page size, layout and format, and downloads a PDF whose colours match the platform; the PDF is also emailed to them. Download is not offered in compare mode. Takeoff and progress values are left out when the selected stages don't share a unit. Reports can cover several levels at once and be scheduled, appending pages without title pages.",
+      "rationale": "PRD only as a whole. Recurring delivery itself is RPT-FEAT-03; the web app does build floor-plan report requests from the selected stages or categories (RPT-REQ-013). Formats other than PDF and the progress-delta view are out of scope in the PRD.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-067",
+          "title": "Prior PRDs - Reporting and report scheduling (t3d-prd-agent prd-organised)",
+          "at": "report-scheduling.md FR-001..FR-012, AC-001..AC-013, EC-003, EC-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "RPT-REQ-014-AC1",
+          "given": "A user has selected two stages with the same unit",
+          "when": "They download the floor-plan PDF",
+          "then": "The PDF shows the selected progress markings in platform colours and is emailed to them",
+          "status": "draft"
+        },
+        {
+          "id": "RPT-REQ-014-AC2",
+          "given": "A user in compare mode",
+          "when": "They look for the download",
+          "then": "It is not available",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

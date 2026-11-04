@@ -1,0 +1,286 @@
+{
+  "id": "OPS-FEAT-02",
+  "name": "Support control panel and CS dashboards",
+  "summary": "Internal views for customer support and customer success: looking up customers and project progress, the CS capture dashboards (cards, tables, projects by company), status exports, and internal TechOps emails.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-074"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Only the full projects-by-company list checks for a support user.",
+    "actions": [
+      {
+        "action": "View CS dashboard cards and tables",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "allow",
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Current behaviour; intended audience is Track3D staff"
+      },
+      {
+        "action": "View every project of a named company",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "deny",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Export structure-stage status with compliance tabs",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "deny",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "PRD-only"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "OPS-NFR-002",
+      "kind": "freshness",
+      "statement": "How stale the CS dashboard cards and tables may be when served from cache.",
+      "target": null,
+      "status": "draft",
+      "open_question": "The cached view is refreshed in the background on each request. What maximum age is acceptable?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "OPS-REQ-006",
+      "type": "requirement",
+      "title": "Support staff can look up a customer and their project progress",
+      "statement": "The internal control panel lets support staff find a customer and see their information, and lets internal project managers track and update project progress. Missing customer data is flagged but doesn't block them.",
+      "rationale": "PRD-only. No dedicated control-panel app was found; the nearest code is the support-only projects-by-company list.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-074"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-056",
+          "title": "Prior PRDs - Track3D internal tools (control panel, performance monitoring, client discovery, internal notifications, release updates, data migration)",
+          "at": "control-panel.md FR-001, FR-002, AC-001, AC-002, EC-001, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-006-AC1",
+          "given": "A support user in the control panel",
+          "when": "They search for a customer company",
+          "then": "The company's details and projects are shown, with any missing details flagged",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-007",
+      "type": "requirement",
+      "title": "Only support users export structure-stage status",
+      "statement": "Support users can export the status of every structure and stage combination to Excel, optionally with the internal compliance report as extra tabs. Other users can't use the export.",
+      "rationale": "PRD-only. No such export was found on the branches read.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-074"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-056",
+          "title": "Prior PRDs - Track3D internal tools (control panel, performance monitoring, client discovery, internal notifications, release updates, data migration)",
+          "at": "control-panel.md FR-003, FR-004, FR-005, AC-003, AC-004, EC-003, EC-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-007-AC1",
+          "given": "A user who is not a support user",
+          "when": "They try to open the export",
+          "then": "Access is denied",
+          "status": "draft"
+        },
+        {
+          "id": "OPS-REQ-007-AC2",
+          "given": "A support user who chooses to include the compliance report",
+          "when": "The export finishes",
+          "then": "The Excel file has the status sheet plus the compliance tabs",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-008",
+      "type": "business-rule",
+      "title": "CS dashboards summarise captures over the caller's projects",
+      "statement": "Today the CS dashboard cards and tables (capture SLA by date for visual documentation and 2D progress, projects by company, captures by project, type and person) are built from a copy of each capture kept for the dashboard. They cover the caller's live projects across all companies. Listing every project of a named company is limited to support users.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-074"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getTableData",
+          "code": "constructn-api:src/views/web/viewlist.ts#L1221@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "support-only full list",
+          "code": "constructn-api:src/routes/v1/views.routes.ts#L28@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "dashboard capture copy",
+          "code": "db-models:src/definitions/cs-dashboard-capture.ts#L25@9a44863c02b7"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-008-AC1",
+          "given": "A customer admin who is not a support user",
+          "when": "They request every project of a named company",
+          "then": "The request is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-009",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "OPS-REQ-010",
+      "type": "business-rule",
+      "title": "Completed mobile upload groups email TechOps",
+      "statement": "Today, when a mobile upload group completes, the TechOps mailbox is emailed. For one company, identified by a company ID written into the code, a second internal mailbox is added.",
+      "rationale": "The per-company routing is code, not configuration (SRC-004 audit C1).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-074"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "TechOps mailbox",
+          "code": "constructn-api:src/controllers/capture.controller.ts#L3981@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "hardcoded company",
+          "code": "constructn-api:src/controllers/capture.controller.ts#L3985@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "client-customisations/audit.md C1",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-010-AC1",
+          "given": "A mobile upload group for an ordinary company completes after a partial upload",
+          "when": "The completion email is sent",
+          "then": "The TechOps mailbox is a recipient",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-011",
+      "type": "requirement",
+      "title": "Progress tracking shows as Yes or No in internal dashboards",
+      "statement": "The visual documentation dashboard and the Slack bot show, for each capture, whether progress tracking applies (Yes or No).",
+      "rationale": "PRD-only for the display. The dashboard capture copy has a marked-for-progress field, but its use in the dashboard and bot was not checked.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-056",
+          "title": "Prior PRDs - Track3D internal tools (control panel, performance monitoring, client discovery, internal notifications, release updates, data migration)",
+          "at": "release-updates.md FR-006, US-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-011-AC1",
+          "given": "A capture in a project that tracks progress",
+          "when": "It appears in the visual documentation dashboard",
+          "then": "Its progress tracking column reads Yes",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

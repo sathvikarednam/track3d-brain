@@ -1,0 +1,509 @@
+{
+  "id": "PROG-FEAT-12",
+  "name": "Saved views and predictions",
+  "summary": "Named filter views on the overview, trends, alerts and schedule pages, the prediction chart that projects completion from planned, recent, required and average rates, and further overview summaries asked for in PRDs.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-009",
+    "DEC-081"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Saved-view routes check a permission string, manage-saved-views, that is not in the seed catalog, so which roles hold it can't be read from the seed. A view can be changed or deleted only by its owner.",
+    "actions": [
+      {
+        "action": "Create",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Enforced with manage-saved-views"
+      },
+      {
+        "action": "View trends and predictions",
+        "permission": "view-progress-trends",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-017",
+      "kind": "latency",
+      "statement": "Time to compute the prediction chart for one stage across the selected locations.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What load time is acceptable for predictions on a large project, given they are computed on request?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-068",
+      "type": "business-rule",
+      "title": "Saved views belong to their owner and have unique names",
+      "statement": "A user saves the current filters of the overview, trends, alerts or schedule page as a named view for that project. Names are trimmed, must not be empty and must be unique per user, project and page. Only the owner can rename, change or delete a view. Each page also has a built-in default view that can't be changed or deleted, only made or unmade the default.",
+      "rationale": "Implements the overview PRD's save, retrieve, rename and delete of filtered views (FR-002) and the alerts V1 saved views (FR-004). Sharing a view is SHARE-FEAT-03.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "overview-enhancements.md FR-002, AC-002, API-001..API-004",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-064",
+          "title": "Prior PRDs - Progress alerts V1 and alerts management (t3d-prd-agent prd-organised)",
+          "at": "progress-alerts.md FR-004",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "view types",
+          "code": "api-2d-progress:src/entities/saved-view.ts#L63@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "unique name index",
+          "code": "api-2d-progress:src/adapters/repositories/mongodb/models/saved-view.model.ts#L68@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "owner-only change",
+          "code": "api-2d-progress:src/application/service/saved-view.service.ts#L388@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "built-in view locked",
+          "code": "api-2d-progress:src/application/service/saved-view.service.ts#L378@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-068-AC1",
+          "given": "A user already has an overview view named \"Level 3 framing\"",
+          "when": "They save another overview view with that name",
+          "then": "It is rejected because the name already exists",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-068-AC2",
+          "given": "A view owned by user A",
+          "when": "User B tries to rename it",
+          "then": "It is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-069",
+      "type": "business-rule",
+      "title": "One default view per page, chosen automatically on trends",
+      "statement": "Each user has at most one default view per project and page; making a view the default unsets the previous one, and with no default of their own the built-in view is the default. On trends only, a user's first view becomes the default automatically, they can't unset the default on their only view, and deleting the default passes it to their earliest remaining view.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "isAutoDefaultType",
+          "code": "api-2d-progress:src/application/service/saved-view.service.ts#L121@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "only view keeps default",
+          "code": "api-2d-progress:src/application/service/saved-view.service.ts#L404@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "reassign on delete",
+          "code": "api-2d-progress:src/application/service/saved-view.service.ts#L510@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "one default index",
+          "code": "api-2d-progress:src/adapters/repositories/mongodb/models/saved-view.model.ts#L61@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-069-AC1",
+          "given": "A user with no trends views",
+          "when": "They save their first trends view",
+          "then": "It becomes their default trends view",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-069-AC2",
+          "given": "A user with trends views T1 (oldest), T2 and default T3",
+          "when": "They delete T3",
+          "then": "T1 becomes the default",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-070",
+      "type": "business-rule",
+      "title": "Predictions project completion from four rates",
+      "statement": "For one stage, the prediction compares four rates per working week: planned (takeoff over the scheduled duration), recent (work in the last 28 days), required (remaining work over working days left to the scheduled end, zero once the latest capture is past that end) and average (work since the scheduled start). Each non-zero rate gives an estimated completion date; estimates more than a year out are flagged instead of dated, and the chart projects weekly totals up to one year after the latest capture.",
+      "rationale": "Extends the potential-delay forecast (PROG-REQ-031), which uses the average rate only. No required rate is given past the schedule end, as prediction-enhancements.md FR-004 asks.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-009",
+        "DEC-081"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "prediction-enhancements.md FR-004, EC-002, EC-003",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "planned rate",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L10131@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "recent rate",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L10176@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "required rate",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L10192@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "average rate",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L10206@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "over one year",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L10242@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "one-year horizon",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L10280@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "The recent rate uses calendar days (28) while the others use working days; confirm that mix is intended"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-070-AC1",
+          "given": "The latest capture is after the stage's scheduled end",
+          "when": "Predictions are calculated",
+          "then": "No required rate or required-rate completion date is given",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-070-AC2",
+          "given": "A recent rate so low that finishing would take more than 365 working days",
+          "when": "Predictions are calculated",
+          "then": "The recent-rate estimate is flagged as over one year instead of showing a date",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-071",
+      "type": "business-rule",
+      "title": "Predictions are off by default and limited to one stage",
+      "statement": "Predictions start switched off, including in the built-in trends view. The switch appears only in ML-method projects; it is disabled when takeoff is turned off (with a hint to enable it) or the stage is complete, and choosing more than one stage turns predictions off. The PRD says predictions should be on by default.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "prediction-enhancements.md FR-001 and AC-001 say predictions are enabled by default. The web app and the built-in trends view default them off, and also restrict them to ML-method projects, which the PRD does not mention."
+      },
+      "decisions": [
+        "DEC-078",
+        "DEC-081"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "prediction-enhancements.md FR-001, FR-005, AC-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "default off",
+          "code": "track3d-web:src/features/progress-overview/components/ProgressOverview.tsx#L246@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "ML method, takeoff and single stage",
+          "code": "track3d-web:src/features/progress-overview/components/ProgressOverview.tsx#L402@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "multi-stage off",
+          "code": "track3d-web:src/features/progress-overview/components/ProgressOverview.tsx#L324@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "switch only for ML method",
+          "code": "track3d-web:src/features/progress-overview/components/ProgressOverviewFilters.tsx#L1381@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "takeoff-disabled hint",
+          "code": "track3d-web:src/features/progress-overview/components/ProgressOverviewFilters.tsx#L1414@0e9dabc75e2f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-071-AC1",
+          "given": "An ML-method takeoff project and one selected stage",
+          "when": "A user opens trends with no saved view",
+          "then": "Today predictions are off until switched on (current behaviour)",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-072",
+      "type": "business-rule",
+      "title": "Predictions accept zones",
+      "statement": "The prediction calculation accepts structures, zones or both. The PRD says zone selection is ignored for predictions, with a message telling the user that zones aren't available.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "prediction-enhancements.md FR-003, AC-002 and EC-001 ignore zones (zone predictions are out of scope); the service computes predictions for zones when given them."
+      },
+      "decisions": [
+        "DEC-081"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "prediction-enhancements.md FR-003, AC-002, EC-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getPredictionChart",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L9826@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Check whether the web app sends zones to the prediction request or drops them"
+      ],
+      "acceptance_criteria": []
+    },
+    {
+      "id": "PROG-REQ-073",
+      "type": "business-rule",
+      "title": "Predictions switch the scheduled trend line on with them",
+      "statement": "Turning predictions on also turns on the scheduled trend line. Turning the scheduled trend line off turns predictions off and discards any temporary schedule dates the user was trying.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "prediction-enhancements.md FR-002, API-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "trend line off",
+          "code": "track3d-web:src/features/progress-overview/components/ProgressOverviewFilters.tsx#L848@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "predictions on",
+          "code": "track3d-web:src/features/progress-overview/components/ProgressOverviewFilters.tsx#L902@0e9dabc75e2f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-073-AC1",
+          "given": "Trends with the scheduled trend line off",
+          "when": "The user turns predictions on",
+          "then": "The scheduled trend line is turned on too",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-073-AC2",
+          "given": "Predictions on with temporary schedule dates entered",
+          "when": "The user turns the scheduled trend line off",
+          "then": "Predictions turn off and the temporary dates are discarded",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-074",
+      "type": "requirement",
+      "title": "Productivity under different working conditions",
+      "statement": "Users enter changes to working conditions and see how productivity would change, and the same insights are available through an API. Where an \"efficiency improvement\" could mean more output or less time, the system says which.",
+      "rationale": "PRD only. Alerts already carry suggestion fields (recent and required rate per day, a work rate and a manpower figure), but no user-defined work-condition model was found. Detailed manpower estimation is out of scope in the PRD.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-081"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "prediction-enhancements.md FR-006, FR-007, AC-003, AC-004, EC-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-074-AC1",
+          "given": "A user changes the working week from five to six days",
+          "when": "The system recalculates",
+          "then": "Updated productivity figures are shown",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-075",
+      "type": "requirement",
+      "title": "Overview highlights issues and summarises portfolio status",
+      "statement": "The overview highlights cells with issues by predefined criteria, with tooltips explaining them and links to where they can be fixed. Summary cards show schedule adherence, active projects and user activity, and the project performance card can be filtered and sorted, with details behind its status numbers and comment icons.",
+      "rationale": "PRD only; grouped from three overview enhancement PRDs. The issue criteria aren't defined. Schedule adherence itself is SCHD-REQ-013.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-065",
+          "title": "Prior PRDs - Predictions, overview enhancements, progress monitoring plan and iPad progress scope (t3d-prd-agent prd-organised)",
+          "at": "overview-enhancements.md FR-001, FR-003, FR-004, AC-001, AC-003, AC-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-075-AC1",
+          "given": "A cell in the overview meets an issue criterion",
+          "when": "The overview loads",
+          "then": "The cell is highlighted and its tooltip explains the issue",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "DEC-009",
+  "title": "Chart definitions, forecasts and missing data",
+  "status": "open",
+  "question": "What do interval versus cumulative values mean on each chart? How are forecasts produced and labelled, and how are missing data and calculation errors shown?",
+  "context": "Today a trend that fails to calculate looks the same as one with no data (PROG-REQ-033).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG"
+  ],
+  "requirements": [
+    "PROG-REQ-030",
+    "PROG-REQ-031",
+    "PROG-REQ-033"
+  ]
+}

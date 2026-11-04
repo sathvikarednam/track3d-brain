@@ -1,0 +1,16 @@
+{
+  "id": "DEC-012",
+  "title": "Email and domain changes, public domains and multiple domains",
+  "status": "open",
+  "question": "What happens to a user's home company when their email changes? How are public email domains (gmail.com and similar) handled, and can a company own several domains?",
+  "context": "The home company is decided by the work-email domain (USER-REQ-016), but none of these cases is defined.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "USER"
+  ],
+  "requirements": [
+    "USER-REQ-016",
+    "USER-REQ-017"
+  ]
+}

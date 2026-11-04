@@ -1,0 +1,20 @@
+{
+  "id": "DEC-013",
+  "title": "Which roles a user may grant",
+  "status": "open",
+  "question": "When a project user may change roles, which roles may they grant? Can a collaborator with the permission make someone, or themselves, an admin? Must the role belong to that project?",
+  "context": "The confirmed rule is permission-based but leaves the grant limit open (USER-REQ-029).",
+  "options": [
+    "Grant only roles with no more permissions than your own",
+    "Only admins grant admin",
+    "Any role (current)"
+  ],
+  "decision": null,
+  "capabilities": [
+    "USER"
+  ],
+  "requirements": [
+    "USER-REQ-029",
+    "USER-REQ-030"
+  ]
+}

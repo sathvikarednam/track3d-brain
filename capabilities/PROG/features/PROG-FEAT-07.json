@@ -1,0 +1,315 @@
+{
+  "id": "PROG-FEAT-07",
+  "name": "Progress alerts",
+  "summary": "System-generated conditions that need attention (stalled, slowed down, low confidence, behind or ahead of schedule, potential delay, and support-only types), with snoozing and clearing.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-005"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The seed catalog has no alert permission strings. Which roles may snooze or clear alerts, or clear them for everyone, is unknown (DEC-005).",
+    "actions": [
+      {
+        "action": "View alerts",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown",
+          "support-user": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Snooze an alert for myself",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Clear an alert for everyone",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "See support-only alert types",
+        "permission": null,
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-010",
+      "kind": "freshness",
+      "statement": "Time from a processed capture to its alerts appearing.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Must alerts appear when the capture is published, or within a stated delay?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-038",
+      "type": "business-rule",
+      "title": "Which alert types each audience sees",
+      "statement": "Every progress project can raise stalled, slowed-down and low-confidence alerts. Takeoff projects add behind, ahead and potential-delay alerts. Support users also see dependency alerts, plus over-100% alerts in takeoff projects. Customers never see the support-only types.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-005"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-064"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-064",
+          "code": "api-2d-progress:src/application/service/progress-alerts.service.ts#L176@406190aa76b6"
+        },
+        {
+          "type": "runtime-observation",
+          "ref": "SRC-005",
+          "title": "Demo UI pass 2026-10-28-demo-01",
+          "at": "T3D-UI-023",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-038-AC1",
+          "given": "A non-takeoff project",
+          "when": "A customer views alerts",
+          "then": "Only stalled, slowed-down and low-confidence alerts can appear",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-038-AC2",
+          "given": "A takeoff project with a stage over 100%",
+          "when": "A customer and a support user view alerts",
+          "then": "Only the support user sees the over-100% alert",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-039",
+      "type": "business-rule",
+      "title": "Stalled and slowed-down conditions",
+      "statement": "A stage is stalled when the latest interval added no progress. It is slowed down when, across the last three captures, the progress per calendar day in the latest interval is lower than in the one before. There is no minimum slowdown percentage.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-005"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-060"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-060",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L12634@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Negative deltas"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-039-AC1",
+          "given": "Captures on 1, 8 and 15 March with totals 0, 70 and 70",
+          "when": "Conditions are evaluated",
+          "then": "The stage is stalled",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-039-AC2",
+          "given": "Captures on 1, 8 and 22 March with totals 0, 70 and 140 (10 per day, then 5 per day)",
+          "when": "Conditions are evaluated",
+          "then": "The stage is slowed down",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-040",
+      "type": "business-rule",
+      "title": "Behind or ahead of schedule by 15 points",
+      "statement": "Schedule variance is the actual percentage minus the scheduled percentage at the latest capture (not today), using the plan end if the capture is later. 15 points or more below is behind, 15 or more above is ahead, and anything between is on track. Completed work has no variance.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-005"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-063"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-063",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L13062@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-040-AC1",
+          "given": "At the latest capture, 30% is done and 45% was scheduled",
+          "when": "Variance is calculated",
+          "then": "The stage is behind, because exactly -15 counts as behind",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-040-AC2",
+          "given": "At the latest capture, 40% is done and 50% was scheduled",
+          "when": "Variance is calculated",
+          "then": "The stage is on track",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-041",
+      "type": "business-rule",
+      "title": "Snoozing is personal and carries to new captures",
+      "statement": "A user can snooze an alert for themselves for a number of days or until a date. It ends at the start of that day in the project time zone (America/New_York if unset) and can't run past the project's planned end. When a new capture arrives, an unexpired snooze carries over while the condition persists.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-005"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-065",
+        "T3D-RULE-067"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-065",
+          "code": "api-2d-progress:src/application/service/progress-alert-actions.service.ts#L39@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-067",
+          "code": "api-2d-progress:src/application/service/progress-alert-actions.service.ts#L286@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-041-AC1",
+          "given": "User A snoozes a stalled alert for 7 days",
+          "when": "User B views alerts",
+          "then": "User B still sees the alert",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-041-AC2",
+          "given": "User A's snooze has 5 days left and the stage is still stalled",
+          "when": "A new capture is processed",
+          "then": "The alert stays snoozed for user A until the original end date",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-042",
+      "type": "business-rule",
+      "title": "Clearing an alert also suppresses it in future captures",
+      "statement": "A manual clear (with a reason, and a comment when the reason is Other) is shared by everyone and removes any personal snoozes for that alert. Today it also hides the same condition in later captures, unlike an automatic clear, which applies to one date only.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The UI tells users to clear an alert once it is addressed, which suggests one occurrence. The code suppresses the condition in future captures too. Product to decide in DEC-005."
+      },
+      "decisions": [
+        "DEC-005"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-066"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-066",
+          "code": "api-2d-progress:src/application/service/progress-alert-actions.service.ts#L149@406190aa76b6"
+        },
+        {
+          "type": "runtime-observation",
+          "ref": "SRC-005",
+          "title": "Demo UI pass 2026-10-28-demo-01",
+          "at": "T3D-UI-024",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-042-AC1",
+          "given": "A stalled alert manually cleared on 8 March",
+          "when": "The stage is still stalled at the 15 March capture",
+          "then": "(Current behaviour) No new stalled alert appears for that stage. Whether it should appear is disputed.",
+          "status": "disputed"
+        }
+      ]
+    }
+  ]
+}

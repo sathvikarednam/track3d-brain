@@ -1,0 +1,17 @@
+{
+  "id": "DEC-022",
+  "title": "Site hierarchy limits and zone overlap scope",
+  "status": "open",
+  "question": "How deep can the site hierarchy go, and what relationships are allowed? For \"zones must not overlap\", which zones are compared (same structure, base structures, across structures)? Does a shared edge count as overlap, and is an overlap blocked or only warned about?",
+  "context": "Both rules are confirmed in principle (PROJ-REQ-023, PROJ-REQ-024). Neither the limits nor how overlap is enforced is defined.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROJ",
+    "PROG"
+  ],
+  "requirements": [
+    "PROJ-REQ-023",
+    "PROJ-REQ-024"
+  ]
+}

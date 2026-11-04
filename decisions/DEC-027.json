@@ -1,0 +1,16 @@
+{
+  "id": "DEC-027",
+  "title": "Accepted files per upload category",
+  "status": "open",
+  "question": "For each upload category (capture media per mode, designs, schedules, attachments): which formats and sizes are accepted, what integrity check applies, and how are replacement and retention handled?",
+  "context": "No universal format or size limit is approved. Limits shown in the UI are not proof of enforcement (UPLD-REQ-008).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "UPLD"
+  ],
+  "requirements": [
+    "UPLD-REQ-008",
+    "UPLD-REQ-009"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "DEC-003",
+  "title": "Takeoff and progress after a design revision",
+  "status": "open",
+  "question": "When a revised design is activated, should existing takeoff and progress keep carrying forward?",
+  "context": "Today they carry forward (PROG-REQ-006). That is described current behaviour, not an approved target.",
+  "options": [
+    "Keep carrying forward",
+    "Start fresh against the revised design",
+    "Carry forward with review"
+  ],
+  "decision": null,
+  "capabilities": [
+    "PROG",
+    "PROJ"
+  ],
+  "requirements": [
+    "PROG-REQ-006",
+    "DSGN-REQ-030",
+    "DSGN-REQ-031"
+  ]
+}

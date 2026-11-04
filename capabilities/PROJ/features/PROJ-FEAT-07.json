@@ -1,0 +1,395 @@
+{
+  "id": "PROJ-FEAT-07",
+  "name": "Project list and details",
+  "summary": "The project list on web and mobile (badges, counts, chips, filters, search and order) and the project overview and details.",
+  "components": [
+    "svc.project-api",
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-018"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The list shows only projects the user is assigned to (directly or through a group), plus company scope for super-admins.",
+    "actions": [
+      {
+        "action": "View the project list and overview",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Edit project details",
+        "permission": "update-project-details",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROJ-NFR-007",
+      "kind": "latency",
+      "statement": "Time to load the project list for a user with many projects, on web and mobile.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What p95 is acceptable, and for how many projects (enterprise users can see hundreds)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROJ-REQ-030",
+      "type": "business-rule",
+      "title": "Construction phase and access stage are shown separately",
+      "statement": "The web list returns the construction phase, the status and the derived access stage as separate fields. The card's badge is worked out again in the web app: - an approved project with no designs shows New - an approved project with designs shows In-construction (both unless the phase is Pre-bid) - Draft and Pending approval show their status - otherwise the phase is shown, or Completed if it's missing",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-010",
+        "T3D-RULE-122"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-010",
+          "code": "project-api:src/application/services/project.service.ts#L1177@6bc5d334eaae"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-122",
+          "code": "track3d-web:src/features/project-list/utils/mapToProjectListItem.ts#L55@9d48a8362053"
+        }
+      ],
+      "open_checks": [
+        "Updating a card locally uses other defaults (a design count of 0 shows New, a count of 0 users falls back to the users list), which can briefly differ from the full list"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-030-AC1",
+          "given": "An approved project with no designs and no construction phase set",
+          "when": "It appears in the web list",
+          "then": "Its badge is New",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROJ-REQ-030-AC2",
+          "given": "A project with status Completed and no phase",
+          "when": "It appears in the web list",
+          "then": "(Current behaviour) Its badge is Completed",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-031",
+      "type": "business-rule",
+      "title": "Mobile and web have different project list contracts",
+      "statement": "Mobile and web call different list endpoints. The pinned mobile response has no construction phase, and adds role, counts and design summaries. A user has reported a newer, trimmed mobile response with only the access stage; which route and build that comes from is not identified.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-011",
+        "T3D-RULE-012"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-011",
+          "code": "constructn-api:src/routes/v4/views.routes.ts#L13@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-012",
+          "code": "constructn-api:src/views/web/viewlistv2.ts#L5104@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "Tie the reported trimmed mobile response to a specific route and app build; native mobile source was not inspected"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-031-AC1",
+          "given": "The pinned mobile project-list endpoint",
+          "when": "A mobile client requests the list",
+          "then": "Each item has status, address, role and counts, but no construction phase",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-032",
+      "type": "business-rule",
+      "title": "What a mobile project card summarises",
+      "statement": "A mobile project card shows the first five active, non-support users plus a total count. Its \"last updated\" date comes from the latest active snapshot with an active reality. \"Has progress\" means the project has categories and at least one eligible design; it doesn't mean any progress was measured.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-013",
+        "T3D-RULE-015"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-013",
+          "code": "constructn-api:src/views/web/viewlistv2.ts#L5104@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-015",
+          "code": "constructn-api:src/views/web/viewlistv2.ts#L8079@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-032-AC1",
+          "given": "A project with categories, one eligible design and no measured progress",
+          "when": "The mobile list is requested",
+          "then": "Its \"has progress\" flag is true",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-033",
+      "type": "business-rule",
+      "title": "One structure status chip, by precedence",
+      "statement": "Each structure shows at most one status chip, chosen in this order: New, Error, Processing, No Design, No Reality. A higher chip hides any lower condition that is also true.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-014"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-014",
+          "code": "constructn-api:src/views/web/viewlistv2.ts#L8061@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-033-AC1",
+          "given": "A structure with a design in error and no reality",
+          "when": "Its chip is chosen",
+          "then": "It shows Error, not No Reality",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-034",
+      "type": "business-rule",
+      "title": "Project list filters, search and order",
+      "statement": "Lifecycle filters (Draft, Pending approval, Need revision, Archived, Initiated) match the stored status, while In-construction and other filters match the construction phase. New means approved with no designs. Capture-date filters compare dates in the project's time zone and include both ends. Search matches name, stage and city. Favourites always come first.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-124",
+        "T3D-RULE-125",
+        "T3D-RULE-126"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-124",
+          "code": "track3d-web:src/features/project-list/hooks/useFilteredProjects.ts#L34@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-125",
+          "code": "track3d-web:src/features/project-list/hooks/useFilteredProjects.ts#L62@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-126",
+          "code": "track3d-web:src/features/project-list/hooks/useFilteredProjects.ts#L82@0e9dabc75e2f"
+        }
+      ],
+      "open_checks": [
+        "These are older cached-main semantics; confirm the current web release before relying on them"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-034-AC1",
+          "given": "A favourite project last updated in January and a non-favourite updated today",
+          "when": "The list is sorted by last updated",
+          "then": "The favourite is still listed first",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-035",
+      "type": "requirement",
+      "title": "Filter by Need revision and Pending approval",
+      "statement": "The project list can be filtered to projects that need revision or are pending approval.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-APPROVAL-FR-007"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-014",
+          "title": "Prior PRD - Project approval (t3d-prd-agent prd-organised)",
+          "at": "FR-007",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-035-AC1",
+          "given": "Projects in Approved, Pending approval and Need revision",
+          "when": "The user filters by Need revision",
+          "then": "Only the Need revision projects are shown",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-036",
+      "type": "requirement",
+      "title": "Edit details and open the map from the overview",
+      "statement": "Users can edit project details directly from the project overview, and open the project location map in a new window.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-014",
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-015"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-013",
+          "title": "Prior PRD - Project management (t3d-prd-agent prd-organised)",
+          "at": "FR-014, FR-015",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-036-AC1",
+          "given": "A user with update-project-details on the overview",
+          "when": "They edit and save the project details",
+          "then": "The changes are saved",
+          "status": "draft"
+        },
+        {
+          "id": "PROJ-REQ-036-AC2",
+          "given": "A user on the overview",
+          "when": "They select the map",
+          "then": "An interactive map opens in a new window",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-037",
+      "type": "business-rule",
+      "title": "User counts refresh in the background and can be stale",
+      "statement": "Project user counts are recalculated in the background after changes. A missing result becomes zero, and a failed refresh is only logged, so counts can be stale. Counts are for display and never decide access.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-121"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-121",
+          "code": "constructn-api:src/utils/project-utils.ts#L429@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-037-AC1",
+          "given": "A user is added to a project and the count refresh fails",
+          "when": "The project card is viewed",
+          "then": "(Current behaviour) The old count is shown, and the user still has access",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "SHARE",
+  "name": "Share links and public sharing",
+  "summary": "Share links that let people without a Track3D account open one project view, how those links are created, expired, disabled and deleted, and other ways content is shared inside a project.",
+  "related": [
+    "USER",
+    "PROJ",
+    "CAPT",
+    "PROG",
+    "INTG"
+  ],
+  "owner": null,
+  "feature_order": [
+    "SHARE-FEAT-01",
+    "SHARE-FEAT-02",
+    "SHARE-FEAT-03"
+  ]
+}

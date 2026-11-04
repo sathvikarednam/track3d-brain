@@ -1,0 +1,22 @@
+{
+  "id": "DEC-023",
+  "title": "Date windows that decide what a project allows",
+  "status": "open",
+  "question": "Are these date windows intended? Setup opens 30 days before the start date, construction runs to start plus duration, and the project is archived for 365 days after that. Should a Track3D-created first project be set up immediately whatever its start date?",
+  "context": "Code derives access stage from dates (PROJ-REQ-014). As a result, a deal-led first project starting more than 30 days out can't be set up yet, which conflicts with the confirmed immediate-setup rule (PROJ-REQ-002, PROJ-REQ-003).",
+  "options": [
+    "Keep the date windows",
+    "Open setup immediately for approved projects",
+    "Make the windows configurable per project"
+  ],
+  "decision": null,
+  "capabilities": [
+    "PROJ"
+  ],
+  "requirements": [
+    "PROJ-REQ-002",
+    "PROJ-REQ-003",
+    "PROJ-REQ-014",
+    "PROJ-REQ-016"
+  ]
+}

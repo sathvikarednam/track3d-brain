@@ -1,0 +1,319 @@
+{
+  "id": "AI-FEAT-02",
+  "name": "Assistant access, permissions and project scope",
+  "summary": "Who may use which assistant, how the user's project permissions and company boundary apply to every tool the assistant calls, how support users are recognised, and how a user gets signed in to the assistant.",
+  "components": [
+    "svc.ai-gateway",
+    "mod.progress-agent",
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-069",
+    "DEC-016",
+    "DEC-011"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Agent access is decided by email, not by project role: the progress assistant is open to every signed-in user, and every other agent needs an internal email (an explicit allowlist or an internal domain, both set by configuration). Project data then follows the Projects API \"View Project\" check. Support status comes from token claims (AI-REQ-011).",
+    "actions": [
+      {
+        "action": "Use the progress assistant",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "company-super-admin": "allow",
+          "support-user": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      },
+      {
+        "action": "Get project data through the assistant",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "company-super-admin": "unknown",
+          "regional-admin": "unknown",
+          "support-user": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Use internal agents (captures, observability, billing, support)",
+        "permission": null,
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "company-super-admin": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Only for internal Track3D emails; customer roles are denied whatever their project role"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "AI-NFR-003",
+      "kind": "freshness",
+      "statement": "How current the assistant's view of a user's project access is. Today the check is one Projects API call per project per conversation, cached for the life of the conversation, so a role removed mid-conversation is not seen until the conversation memory expires.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "How quickly must a removed project role stop assistant access (DEC-069)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "AI-REQ-006",
+      "type": "business-rule",
+      "title": "Every assistant request needs a verified Track3D sign-in",
+      "statement": "Each assistant request must carry a Track3D access token whose signature, issuer, audience and expiry check out, and which names a user. Without one the request is refused and the chat sends the user to sign in. The progress assistant is open to every signed-in user. Every other agent, and the gateway's tool, trace, workflow and usage listings, need an internal Track3D email.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-069"
+      ],
+      "implemented_by": [
+        "svc.ai-gateway"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "agentAuth",
+          "code": "ginee-stack:apps/ai-gateway/src/auth.ts#L108@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "introspection routes gated",
+          "code": "ginee-stack:apps/ai-gateway/src/server.ts#L349@237dcd2e8828"
+        }
+      ],
+      "open_checks": [
+        "A configuration switch (AUTH_ENFORCE off or audit) turns every one of these checks off. The production value was not checked.",
+        "Internal status is by email allowlist or email domain from configuration; the production lists were not checked."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-006-AC1",
+          "given": "A request to the progress assistant with an expired token",
+          "when": "It reaches the gateway",
+          "then": "It is refused as unauthenticated and the chat shows the sign-in prompt",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "AI-REQ-006-AC2",
+          "given": "A customer user with a valid token",
+          "when": "They call the observability agent",
+          "then": "It is refused as available to Track3D team members only",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-007",
+      "type": "business-rule",
+      "title": "Project data tools check the user's View Project access first",
+      "statement": "Before a project data tool runs (progress overview, alerts, schedule status, trends, project schedule, project details, sheet types, structure hierarchy and views, categories, report generation and report schedule creation or update), the assistant checks with the Projects API, using the user's own token, that the user may view every project the call targets. A refusal there stops the tool with no data. The same check runs for web chat and for direct tool calls from external AI clients, and covers any public tool that takes a project id.",
+      "rationale": "Some services behind these tools (for example the progress API) were found not to enforce View Project themselves, so this check is what keeps one company's data from another user.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-069"
+      ],
+      "implemented_by": [
+        "svc.ai-gateway",
+        "mod.progress-agent",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "DATA_PROJECT_TOOLS",
+          "code": "ginee-stack:agents/progress-agent/src/lib/project-access.ts#L29@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "runtime.addToolGuard",
+          "code": "ginee-stack:apps/ai-gateway/src/server.ts#L172@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "agent loop gate",
+          "code": "ginee-stack:agents/progress-agent/src/agent.ts#L423@237dcd2e8828"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-007-AC1",
+          "given": "A user with no role on project X",
+          "when": "They ask the assistant for project X's progress overview",
+          "then": "The Projects API refuses, the assistant replies that they do not have access, and no progress data is returned",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "AI-REQ-007-AC2",
+          "given": "An external AI client signed in as that same user",
+          "when": "It calls the progress overview tool directly with project X's id",
+          "then": "The call returns an error and no data",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-008",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "AI-REQ-009",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "AI-REQ-010",
+      "type": "business-rule",
+      "title": "Project names only resolve to the user's own company projects",
+      "statement": "When the user names a project, the assistant searches only the project list the user's own token can see in their company, never all projects in the database. An unknown or ambiguous name returns candidates from that list.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-069"
+      ],
+      "implemented_by": [
+        "mod.platform-tools"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "resolveNameToId",
+          "code": "ginee-stack:tools/platform-tools/src/tools/resolve-name-to-id.tool.ts#L19@237dcd2e8828"
+        }
+      ],
+      "open_checks": [
+        "The system prompt still tells the model the lookup matches 'all projects in the database'; the tool itself is company-scoped. Whether linked-company projects are included was not checked."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-010-AC1",
+          "given": "Another company has a project called \"Titan Stadium\" and the user's company does not",
+          "when": "The user asks for progress on Titan Stadium",
+          "then": "The name does not resolve and the assistant asks which of the user's own projects they mean",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-011",
+      "type": "business-rule",
+      "title": "Support status for the assistant comes from the sign-in, not a project role",
+      "statement": "The web assistant treats a user as a support user when the token says role \"support\" or carries a support flag. External AI client sessions take the support flag from the sign-in response instead. The flag is kept server-side and stripped from what the browser receives.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-016"
+      ],
+      "implemented_by": [
+        "svc.ai-gateway"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "verifyToken isSupportUser",
+          "code": "ginee-stack:apps/ai-gateway/src/auth.ts#L70@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "MCP login support flag",
+          "code": "ginee-stack:apps/ai-gateway/src/mcp/session.ts#L14@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "SCRUB_METADATA",
+          "code": "ginee-stack:packages/gateway-express/src/index.ts#L49@237dcd2e8828"
+        }
+      ],
+      "open_checks": [
+        "The MCP code notes the Track3D token carries no role claim, so web chat may never see a support user. Compare with USER-FEAT-09 (support header plus stored flag)."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-011-AC1",
+          "given": "A support user signed in through an external AI client",
+          "when": "They call a capture tool",
+          "then": "The call carries support status from the sign-in response",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-012",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "AI-REQ-013",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "AI-REQ-014",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "disputed",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

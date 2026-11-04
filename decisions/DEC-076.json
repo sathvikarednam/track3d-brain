@@ -1,0 +1,18 @@
+{
+  "id": "DEC-076",
+  "title": "How facade progress is modelled",
+  "status": "open",
+  "question": "Should facade progress use tagged zones on structural drawings or sub-structures? Can facade and interior categories be selected together on trends or progress details, what happens when the drawing changes on the details page, and which categories apply on facade sheets?",
+  "context": "The facade PRD leaves nine edge cases as REVIEW_REQUIRED and asks for the pros and cons of zones versus sub-structures. No facade implementation was found (PROG-REQ-053).",
+  "options": [
+    "Tagged facade zones on structural drawings with elevation drawings assigned (the PRD's current approach)",
+    "Facade sub-structures in the site hierarchy"
+  ],
+  "decision": null,
+  "capabilities": [
+    "PROG"
+  ],
+  "requirements": [
+    "PROG-REQ-053"
+  ]
+}

@@ -1,0 +1,362 @@
+{
+  "id": "PROJ-FEAT-02",
+  "name": "Project approval",
+  "summary": "The validity review of a submitted project: approve, return for corrections, reject and resubmit. Also covers the enterprise order-form and signing path, and what a customer may do while waiting.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-018",
+    "DEC-024"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Track3D implementation or customer success review normal projects (PROJ-REQ-007). Enterprise admins approve through the order-form path (PROJ-REQ-012). No approval permission string exists in the seed catalog.",
+    "actions": [
+      {
+        "action": "Submit a project for approval",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "company-super-admin": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Approve",
+        "permission": null,
+        "grants": {
+          "support-user": "conditional",
+          "company-super-admin": "conditional",
+          "regional-admin": "conditional",
+          "admin": "deny"
+        },
+        "note": "Who approves which projects is DEC-024"
+      },
+      {
+        "action": "View a pending project's details",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROJ-NFR-002",
+      "kind": "latency",
+      "statement": "Time from submission to an approval decision.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is there a review turnaround commitment (for example one business day), and who is alerted when it's missed?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROJ-REQ-007",
+      "type": "business-rule",
+      "title": "New projects wait for Track3D's validity review",
+      "statement": "A normal newly created project waits for a manual validity review, and approval, by Track3D implementation or customer success. User accounts never wait for approval (USER-REQ-002).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-024"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-BR-007"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-007",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-007-AC1",
+          "given": "A customer submits a new project with no auto-approval rule",
+          "when": "It is saved",
+          "then": "It waits for approval, and the review appears in Track3D's queue",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-008",
+      "type": "business-rule",
+      "title": "While pending, customers can only view project details",
+      "statement": "Project setup means onboarding users with permissions, adding 2D and 3D designs, and configuring the project and progress. While a customer-submitted project is pending approval, the customer can only view its details.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-BR-008"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-008",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-001",
+          "code": "constructn-api:src/utils/project-utils.ts#L14@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-008-AC1",
+          "given": "A customer-submitted project pending approval",
+          "when": "The customer opens it and tries to invite a user or add a design",
+          "then": "They can view the project details, but both actions are refused",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-009",
+      "type": "business-rule",
+      "title": "Approve, return for corrections, or reject, and rejected projects can be resubmitted",
+      "statement": "A review can approve the project, return it to Draft for corrections and resubmission, or reject it. Rejection isn't final: the customer can correct a rejected project and resubmit it. The stored transitions, and whether Draft and revision-requested are the same, are open (DEC-018).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-018"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-018",
+        "T3D-BR-032"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-018, T3D-BR-032",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Map approve, return, reject and resubmit, plus immediate first-project setup, onto status, construction phase, live flag and auto-approval exceptions"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-009-AC1",
+          "given": "A project under review",
+          "when": "The reviewer returns it for corrections with a note",
+          "then": "The customer sees the note, can edit the project and can resubmit it",
+          "status": "draft"
+        },
+        {
+          "id": "PROJ-REQ-009-AC2",
+          "given": "A rejected project",
+          "when": "The customer corrects it and resubmits",
+          "then": "The resubmission is accepted for review",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-010",
+      "type": "business-rule",
+      "title": "Status updates record revision notes and start approval work",
+      "statement": "Updating a project's status saves it with the date. A revision request also saves the reviewer's note and adds it to the note history. Approval also schedules the project's jobs and team work, including automatic archiving (PROJ-REQ-016). This update does not check which status changes are allowed.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-018"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-006"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-006",
+          "code": "constructn-api:src/controllersv2/project.controller.ts#L6353@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-010-AC1",
+          "given": "A pending project",
+          "when": "A reviewer sets it to NeedRevision with the note \"Wrong address\"",
+          "then": "The status is NeedRevision, and \"Wrong address\" is the current note and is in the note history",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-011",
+      "type": "requirement",
+      "title": "Enterprise approval through an order form and e-signature",
+      "statement": "In the enterprise path, submitting a project for approval generates an order form. The signing authority is emailed a DocuSign link, and signing the form sets the project to Approved.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-024"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-APPROVAL-FR-001",
+        "T3D-CAND-PROJECT-APPROVAL-FR-002",
+        "T3D-CAND-PROJECT-APPROVAL-FR-003"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-014",
+          "title": "Prior PRD - Project approval (t3d-prd-agent prd-organised)",
+          "at": "FR-001..FR-003",
+          "code": null
+        },
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-019",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-011-AC1",
+          "given": "An enterprise project submitted for approval",
+          "when": "The super-admin reviews it",
+          "then": "An order form is generated",
+          "status": "draft"
+        },
+        {
+          "id": "PROJ-REQ-011-AC2",
+          "given": "The super-admin enters the signing authority's email",
+          "when": "The project is ready for signing",
+          "then": "The signing authority is emailed a DocuSign link",
+          "status": "draft"
+        },
+        {
+          "id": "PROJ-REQ-011-AC3",
+          "given": "The signing authority signs the order form",
+          "when": "Signing completes",
+          "then": "The project status becomes Approved",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-012",
+      "type": "requirement",
+      "title": "Enterprise admins approve or reject from a details view",
+      "statement": "Company super-admins and regional admins can approve or reject projects, after seeing the project's details.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-024"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-APPROVAL-FR-004",
+        "T3D-CAND-PROJECT-APPROVAL-FR-005"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-014",
+          "title": "Prior PRD - Project approval (t3d-prd-agent prd-organised)",
+          "at": "FR-004, FR-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-012-AC1",
+          "given": "A project awaiting enterprise approval",
+          "when": "A super-admin or regional admin opens the approval screen",
+          "then": "They see the project's details and can approve or reject it",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-013",
+      "type": "requirement",
+      "title": "People are told when a project is approved or rejected",
+      "statement": "When a project is approved or rejected, its users are notified by email and push notification.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-APPROVAL-FR-006"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-014",
+          "title": "Prior PRD - Project approval (t3d-prd-agent prd-organised)",
+          "at": "FR-006",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-013-AC1",
+          "given": "A project is approved or rejected",
+          "when": "The decision is saved",
+          "then": "Its users get an email and a push notification",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

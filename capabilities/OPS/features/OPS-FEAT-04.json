@@ -1,0 +1,143 @@
+{
+  "id": "OPS-FEAT-04",
+  "name": "Data migration and archival",
+  "summary": "Staff-run data movement: importing a customer's images and videos from another site-capture product, and exporting completed projects' data for external storage with role-based access to archives. Both are PRD-only today.",
+  "components": [
+    "svc.constructn-api",
+    "svc.capture-api"
+  ],
+  "decisions": [
+    "DEC-019",
+    "DEC-074"
+  ],
+  "roles": {
+    "status": "draft",
+    "note": "The migration adapter found locally is not a git repository, so no code-backed roles are recorded.",
+    "actions": [
+      {
+        "action": "Run a data migration import",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "deny",
+          "admin": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Export a completed project's data",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "company-super-admin": "unknown",
+          "support-user": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Read archived project data",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "company-super-admin": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "OPS-NFR-005",
+      "kind": "retention",
+      "statement": "How long archived project data is kept, and in what form, after a project completes.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Which data-retention regulations apply, and how often is the policy reviewed?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "OPS-REQ-017",
+      "type": "requirement",
+      "title": "Staff import images and videos from another capture product",
+      "statement": "The Track3D team can migrate a customer's 360° images, phone images and 360° videos from StructionSite into Track3D. The customer provides a ZIP file (through a file-sharing link or otherwise). Its structure and contents are checked before import.",
+      "rationale": "PRD-only. A local adapter folder exists but is not a git repository, so it can't be pinned or cited.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.capture-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-056",
+          "title": "Prior PRDs - Track3D internal tools (control panel, performance monitoring, client discovery, internal notifications, release updates, data migration)",
+          "at": "data-migration.md FR-001, FR-002, FR-003, AC-001",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-017-AC1",
+          "given": "A correctly prepared ZIP of 360° images for one project",
+          "when": "The Track3D team imports it",
+          "then": "The images appear as captures in the project without errors",
+          "status": "draft"
+        },
+        {
+          "id": "OPS-REQ-017-AC2",
+          "given": "A ZIP whose folder structure is wrong",
+          "when": "It is checked",
+          "then": "The import stops and reports what is wrong",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-018",
+      "type": "requirement",
+      "title": "Completed projects can be exported and archives are role-protected",
+      "statement": "Users can export a completed project's data for storage outside Track3D. Archived project data is readable only by users whose role allows it. Requests made while the system is down are queued.",
+      "rationale": "PRD-only. The source file is titled client discovery but describes archival. Archiving and restoring projects is bounded by DEC-019.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-019"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-056",
+          "title": "Prior PRDs - Track3D internal tools (control panel, performance monitoring, client discovery, internal notifications, release updates, data migration)",
+          "at": "client-discovery.md FR-001, FR-002, AC-001, AC-002, EC-001",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-018-AC1",
+          "given": "A completed project",
+          "when": "An authorised user exports its data",
+          "then": "A package of the project's data is produced for external storage",
+          "status": "draft"
+        },
+        {
+          "id": "OPS-REQ-018-AC2",
+          "given": "An archived project",
+          "when": "A user without an archive-reading role tries to open its data",
+          "then": "Access is refused",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

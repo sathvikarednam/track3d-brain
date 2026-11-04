@@ -1,0 +1,28 @@
+{
+  "id": "PROG",
+  "name": "Progress management",
+  "summary": "Planned quantities, measured work, configuration and time combined to explain construction completion.",
+  "related": [
+    "PROJ",
+    "CAPT",
+    "SCHD",
+    "RPT"
+  ],
+  "owner": null,
+  "feature_order": [
+    "PROG-FEAT-01",
+    "PROG-FEAT-02",
+    "PROG-FEAT-03",
+    "PROG-FEAT-04",
+    "PROG-FEAT-05",
+    "PROG-FEAT-06",
+    "PROG-FEAT-07",
+    "PROG-FEAT-08",
+    "PROG-FEAT-09",
+    "PROG-FEAT-10",
+    "PROG-FEAT-11",
+    "PROG-FEAT-12",
+    "PROG-FEAT-13",
+    "PROG-FEAT-14"
+  ]
+}

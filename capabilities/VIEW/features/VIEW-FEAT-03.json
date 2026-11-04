@@ -1,0 +1,466 @@
+{
+  "id": "VIEW-FEAT-03",
+  "name": "Overlays, layers and heat maps",
+  "summary": "What can be laid over a view: capture, note, progress and zone layers on the sheet, the zone heat map, designs over the drone map, and BIM over a reality.",
+  "components": [
+    "web.track3d-web",
+    "svc.api-2d-progress"
+  ],
+  "decisions": [
+    "DEC-036",
+    "DEC-035",
+    "DEC-038",
+    "DEC-008"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The seed has bim-overlay and design-overlay-map permissions, but the web app checks view-bim-type for BIM overlay and nothing for the drone-map design overlay. The overlay matrix rows below reflect what the web app checks.",
+    "actions": [
+      {
+        "action": "See the progress layer and heat map",
+        "permission": "view-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "See the zones layer",
+        "permission": "view-zones",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Only on projects flagged for zone progress (mlOps)"
+      },
+      {
+        "action": "Overlay BIM on a reality",
+        "permission": "view-bim-type",
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "conditional"
+        },
+        "note": "Support users only"
+      },
+      {
+        "action": "Overlay designs on the drone map",
+        "permission": "design-overlay-map",
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "The web button has no permission check"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "VIEW-NFR-004",
+      "kind": "volume",
+      "statement": "Overlays and the heat map stay responsive on large datasets.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How many zones, assets and overlay shapes per sheet must render smoothly, and at what frame time?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "VIEW-REQ-013",
+      "type": "business-rule",
+      "title": "Viewer layers and their defaults",
+      "statement": "The viewer has toggleable layers. On by default: 360 video walks, pinpoints, 360 images, phone images, drone panoramas, zones, asset names, notes, drone images, laser and phone video walks. Off by default: capture coverage, progress, heat maps, daily notes and annotations. The progress layer shows only to users with view-asset (or prime users). Zones show only on projects flagged for zone progress.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer.store layer defaults",
+          "code": "track3d-web:src/adapter/store/viewer.store.ts#L300@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer.store shouldShowProgress",
+          "code": "track3d-web:src/adapter/store/viewer.store.ts#L261@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer.store shouldShowZones",
+          "code": "track3d-web:src/adapter/store/viewer.store.ts#L281@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-013-AC1",
+          "given": "A user with view-asset opens a sheet for the first time in a session",
+          "when": "They open the layers panel",
+          "then": "Pinpoints and notes are on, and progress and heat maps are off",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-013-AC2",
+          "given": "A user without view-asset who is not a prime user",
+          "when": "They open the layers panel",
+          "then": "There is no progress layer",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-014",
+      "type": "business-rule",
+      "title": "When the zone heat map can be turned on",
+      "statement": "The PRD allows the heat map only in the sheet (design) view, only in Delta mode, only when zones are shown, and disables it when any selected stage has no takeoff. The code offers it in sheet and sheet-sheet views to users who can see progress on zone-progress projects, without checking Delta mode or missing takeoff.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The PRD disables the heat map outside Delta mode and when a stage lacks takeoff. The code checks neither; a missing takeoff counts as 0% and colours the zone red. Product must set the rules (DEC-036, DEC-008)."
+      },
+      "decisions": [
+        "DEC-036",
+        "DEC-008"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-022",
+          "title": "Prior PRD - Heat maps and indicators (t3d-prd-agent prd-organised)",
+          "at": "FR-001, AC-001..AC-003, AC-008, EC-001, EC-003",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer.store shouldShowHeatmap",
+          "code": "track3d-web:src/adapter/store/viewer.store.ts#L287@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "zone.utils missing takeoff is 0%",
+          "code": "track3d-web:src/adapter/utils/zone.utils.ts#L39@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-014-AC1",
+          "given": "Cumulative mode is active on a sheet with zones shown",
+          "when": "The user looks at the heat map toggle",
+          "then": "The heat map is inactive and helper text says it works only in Delta mode",
+          "status": "disputed"
+        },
+        {
+          "id": "VIEW-REQ-014-AC2",
+          "given": "A selected stage has no takeoff",
+          "when": "The user looks at the heat map controls",
+          "then": "The heat map is disabled and an inline notice explains why",
+          "status": "disputed"
+        },
+        {
+          "id": "VIEW-REQ-014-AC3",
+          "given": "No zones are displayed",
+          "when": "The user tries to turn the heat map on",
+          "then": "The toggle is disabled and a tooltip says to turn on Zones",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-015",
+      "type": "business-rule",
+      "title": "How the heat map colours zones",
+      "statement": "Each zone's value is the average percent complete across the selected stages. Colours run from red (lowest) to green (highest), rescaled to the lowest and highest values among the zones shown. A zone with no progress that has never started is grey and is left out of the scale. A started zone at 0% is red. A zone at 100% or more is green. If all zones have the same value, all are green.",
+      "rationale": "The PRD (AC-005, AC-006) also normalises across the shown zones and greys out zones with no data, so the base rule agrees.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-036"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "zone.utils getZoneColors",
+          "code": "track3d-web:src/adapter/utils/zone.utils.ts#L63@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "grey for not started",
+          "code": "track3d-web:src/adapter/utils/zone.utils.ts#L130@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "equal values all green",
+          "code": "track3d-web:src/adapter/utils/zone.utils.ts#L95@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-015-AC1",
+          "given": "Three shown zones at 20%, 50% and 80%, all started",
+          "when": "The heat map is on",
+          "then": "The 20% zone is red, the 80% zone is green and the 50% zone is in between",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-015-AC2",
+          "given": "A shown zone that has no progress and has never started",
+          "when": "The heat map is on",
+          "then": "It is grey and does not affect the other zones' colours",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-015-AC3",
+          "given": "Two shown zones, both at 40%",
+          "when": "The heat map is on",
+          "then": "(Current behaviour) Both are green",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-016",
+      "type": "requirement",
+      "title": "Heat map tooltip, legend and stalled zones",
+      "statement": "With the heat map on, a legend shows bottom-right. Hovering a zone shows its name and percent progress for the selected date range. A zone with 0 progress across all categories and stages is tagged \"Stalled\" in the deepest red, distinct from the least-progressed active zone. With exactly one zone selected, it keeps its default colour.",
+      "rationale": "PRD-only for the \"Stalled\" tag and single-zone rule; neither was found in the heat map code.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-036"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-022",
+          "title": "Prior PRD - Heat maps and indicators (t3d-prd-agent prd-organised)",
+          "at": "FR-002, FR-003, AC-004..AC-007, AC-009, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-016-AC1",
+          "given": "Delta mode, heat map on, and a zone with 0 progress across all categories and stages",
+          "when": "The user views that zone",
+          "then": "It is tagged \"Stalled\" and shown in the deepest red",
+          "status": "draft"
+        },
+        {
+          "id": "VIEW-REQ-016-AC2",
+          "given": "Heat map on with a date range of 1 to 31 March selected",
+          "when": "The user hovers a zone",
+          "then": "The tooltip shows the zone name and its percent progress for 1 to 31 March",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-017",
+      "type": "requirement",
+      "title": "Overlay BIM on a reality",
+      "statement": "The PRDs ask that users can overlay the BIM model on the reality view, toggle it and adjust its opacity. Today the BIM overlay button is shown only to support users, only on the left side, and never in production.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "visualization-overlays FR-003 and gaussian-splat FR-005 are must-haves for users. The code limits BIM overlay to support users outside production, and checks view-bim-type rather than the seeded bim-overlay permission. Product must say whether BIM overlay ships to customers (DEC-035)."
+      },
+      "decisions": [
+        "DEC-035"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-020",
+          "title": "Prior PRD - Visualization overlays (t3d-prd-agent prd-organised)",
+          "at": "FR-003, AC-003",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-019",
+          "title": "Prior PRD - Gaussian splat viewer (t3d-prd-agent prd-organised)",
+          "at": "FR-005, AC-005, EC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer-toolbars BIM overlay",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-toolbars.tsx#L2898@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-017-AC1",
+          "given": "A customer with BIM access viewing a 360 video reality in production",
+          "when": "They turn on the BIM overlay",
+          "then": "The BIM model is drawn over the reality",
+          "status": "disputed"
+        },
+        {
+          "id": "VIEW-REQ-017-AC2",
+          "given": "The BIM overlay is on",
+          "when": "The user lowers its opacity",
+          "then": "The reality shows through the BIM model",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-018",
+      "type": "requirement",
+      "title": "Overlay floor plans on the drone map, with opacity",
+      "statement": "On the drone map, users can turn on a design overlay, pick which designs to show, and set their opacity. The opacity control is disabled until a design is selected.",
+      "rationale": "The PRD asks for uploaded PDF floor plans picked from a dropdown. The code reads one prepared design-overlays.json per structure; how PDFs become that file was not traced.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-038"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-020",
+          "title": "Prior PRD - Visualization overlays (t3d-prd-agent prd-organised)",
+          "at": "FR-001, AC-001, US-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "viewer-toolbars Design Overlay button",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-toolbars.tsx#L3001@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "opacity disabled until a design is selected",
+          "code": "track3d-web:src/components/rahman/core/playground/viewer-toolbars.tsx#L2785@4a87277b3101"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "per-structure overlay file",
+          "code": "track3d-web:src/adapter/utils/mapbox-utils.ts#L62@4a87277b3101"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-018-AC1",
+          "given": "A structure with a drone capture and a floor plan prepared as an overlay",
+          "when": "The user turns on Design Overlay in Map View and selects the floor plan",
+          "then": "The floor plan is drawn over the orthophoto",
+          "status": "draft"
+        },
+        {
+          "id": "VIEW-REQ-018-AC2",
+          "given": "Design Overlay is on but no design is selected",
+          "when": "The user tries the opacity slider",
+          "then": "It is disabled and says \"Select a design to enable opacity control\"",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-019",
+      "type": "requirement",
+      "title": "Overlay shapefiles and DXF files",
+      "statement": "Users can upload a shapefile floor plan and overlay it on the drone orthophoto, and upload a DXF file and overlay it on the selected sheet.",
+      "rationale": "PRD-only. No shapefile or DXF overlay handling, and no /api/v1/upload/dxf endpoint, was found in the code read.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-038"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-020",
+          "title": "Prior PRD - Visualization overlays (t3d-prd-agent prd-organised)",
+          "at": "FR-002, FR-004, AC-002, AC-004, API-001",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-019-AC1",
+          "given": "A user has uploaded a DXF file for floor 3",
+          "when": "They choose it during the overlay step on floor 3's sheet",
+          "then": "The DXF drawing is overlaid on the sheet",
+          "status": "draft"
+        },
+        {
+          "id": "VIEW-REQ-019-AC2",
+          "given": "A user has uploaded a shapefile floor plan",
+          "when": "They select it from the dropdown in the map view",
+          "then": "It is overlaid on the orthophoto",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

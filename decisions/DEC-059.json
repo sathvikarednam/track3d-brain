@@ -1,0 +1,14 @@
+{
+  "id": "DEC-059",
+  "title": "Who may operate the processing pipeline",
+  "status": "open",
+  "question": "Which people and services may change a job's status, a reality's status, or a review outcome? How is an operator's identity proven to Antman, and which internal pipeline views may be reached without signing in?",
+  "context": "Access details for this item are handled with engineering separately.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROC",
+    "USER"
+  ],
+  "requirements": []
+}

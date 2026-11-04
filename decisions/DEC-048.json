@@ -1,0 +1,18 @@
+{
+  "id": "DEC-048",
+  "title": "Who controls share links, and is disabling permanent",
+  "status": "open",
+  "question": "Who may create, disable, re-enable, edit and delete share links, one at a time and in bulk? Is disabling permanent or reversible? Should a project-level \"public sharing off\" switch exist that revokes all links and blocks new ones?",
+  "context": "shared-content FR-007 says disabling is permanent while public-sharing FR-002 makes it reversible (SHARE-REQ-008).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "SHARE"
+  ],
+  "requirements": [
+    "SHARE-REQ-001",
+    "SHARE-REQ-006",
+    "SHARE-REQ-008",
+    "SHARE-REQ-014"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "DEC-043",
+  "title": "Who is reminded when a location has no design",
+  "status": "open",
+  "question": "Who should receive missing-design reminders, on which days, and for which locations (only the top level, or every level that needs a sheet)?",
+  "context": "Reminders are scheduled at 7, 14 and 30 days for project admins and 14 and 30 days for the Track3D team, but every caller passes an empty admin list and the sender is outside constructn-api (DSGN-REQ-023).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "DSGN",
+    "NOTIF"
+  ],
+  "requirements": [
+    "DSGN-REQ-023"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "DEC-074",
+  "title": "How Track3D's internal tools are protected",
+  "status": "open",
+  "question": "Which internal tools must only Track3D staff reach, and how is that enforced: support-user flag, a staff role, a separate identity provider or network restriction? What may internal tools log, and may internal dashboard data be cached across users?",
+  "context": "Per-company TechOps email routing is written into code (OPS-REQ-010). The control-panel PRD restricts exports to support users.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "OPS",
+    "ENT",
+    "USER"
+  ],
+  "requirements": [
+    "OPS-REQ-006",
+    "OPS-REQ-007",
+    "OPS-REQ-008",
+    "OPS-REQ-010"
+  ]
+}

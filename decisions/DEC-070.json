@@ -1,0 +1,20 @@
+{
+  "id": "DEC-070",
+  "title": "Who may use the enterprise workspace, and what each admin level sees",
+  "status": "open",
+  "question": "Which roles may open the enterprise workspace and its overview, user lists, invitations and activity log? Should a regional admin or project admin see only their own projects' activity and counts, or the whole company's, and may they see other users' sign-ins?",
+  "context": "The activity-log PRD names internal users with View Progress and excludes external users.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "ENT",
+    "USER"
+  ],
+  "requirements": [
+    "ENT-REQ-001",
+    "ENT-REQ-002",
+    "ENT-REQ-005",
+    "ENT-REQ-012",
+    "ENT-REQ-014"
+  ]
+}

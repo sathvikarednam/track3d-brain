@@ -1,0 +1,20 @@
+{
+  "id": "DEC-008",
+  "title": "Stages or locations with no takeoff",
+  "status": "open",
+  "question": "When a stage or location has no planned quantity in a takeoff project, what should users see?",
+  "context": "The historical PRD says to show a notice and let users enter the missing value (PROG-REQ-009). The code falls back to using the measured value as its own denominator, so the item looks 100% complete (PROG-REQ-008).",
+  "options": [
+    "Show \"no takeoff\" and exclude it from percentages",
+    "Show the notice and prompt for entry",
+    "Keep the current fallback"
+  ],
+  "decision": null,
+  "capabilities": [
+    "PROG"
+  ],
+  "requirements": [
+    "PROG-REQ-008",
+    "PROG-REQ-009"
+  ]
+}

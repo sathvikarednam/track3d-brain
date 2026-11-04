@@ -1,0 +1,455 @@
+{
+  "id": "USER-FEAT-06",
+  "name": "Project users and invitations",
+  "summary": "Inviting people to a project (one at a time or in bulk), managing pending invitations, and the project users list.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-013",
+    "DEC-017"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Invite or assign a user to the project",
+        "permission": "assign-project-user",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Remove a user from the project",
+        "permission": "deassign-project-user",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Change a pending invitation's role",
+        "permission": "update-project-user",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "View project users and invitations",
+        "permission": "view-project-user",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "USER-NFR-007",
+      "kind": "volume",
+      "statement": "Largest bulk invitation (rows per CSV) that must succeed.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How many users do customers invite at once, and is a partial-success report acceptable?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "USER-REQ-032",
+      "type": "requirement",
+      "title": "Invite people to a project by email",
+      "statement": "A user with permission to assign project users can invite someone by email. If the invitee has no account, the invitation is applied once they register and verify (USER-REQ-003).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-017"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-ROLES-PERMISSIONS-FR-006",
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-001"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-008",
+          "title": "Prior PRD - Roles and permissions (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-006",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-013",
+          "title": "Prior PRD - Project management (t3d-prd-agent prd-organised)",
+          "at": "FR-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-016",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-032-AC1",
+          "given": "A user with assign-project-user on the Users page",
+          "when": "They enter a valid email and select Invite",
+          "then": "The invitee receives an invitation email",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-033",
+      "type": "requirement",
+      "title": "Bulk invitations from a CSV file",
+      "statement": "Users can invite many people at once by uploading a CSV. Every valid row is invited and the result is logged.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-ROLES-PERMISSIONS-FR-007"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-008",
+          "title": "Prior PRD - Roles and permissions (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-007",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "constructn-api routes/v4/project.routes.ts getUserStatusFromCsv",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-033-AC1",
+          "given": "A CSV with five valid rows and one invalid email",
+          "when": "It is uploaded and processed",
+          "then": "The five valid users are invited, and the invalid row is reported",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-034",
+      "type": "requirement",
+      "title": "Search and filter project users",
+      "statement": "The Users page lets people search by name or email and filter by project, group and job title.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-ROLES-PERMISSIONS-FR-009",
+        "T3D-CAND-ROLES-PERMISSIONS-FR-010"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-008",
+          "title": "Prior PRD - Roles and permissions (t3d-prd-agent prd-tech-docs)",
+          "at": "FR-009, FR-010",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-034-AC1",
+          "given": "A user on the Users page",
+          "when": "They type part of a name or email",
+          "then": "Matching users are shown as they type",
+          "status": "draft"
+        },
+        {
+          "id": "USER-REQ-034-AC2",
+          "given": "A user on the Users page",
+          "when": "They filter by group and job title",
+          "then": "Only users matching both filters are shown",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-035",
+      "type": "requirement",
+      "title": "Unverified users are labelled",
+      "statement": "Users who haven't verified their email appear with an \"(unverified)\" tag beside their name.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-USER-MANAGEMENT-FR-011"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-010",
+          "title": "Prior PRD - User management / user profile (t3d-prd-agent prd-organised)",
+          "at": "FR-011",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-035-AC1",
+          "given": "A project member who hasn't verified their email",
+          "when": "The users list is shown",
+          "then": "Their name has an \"(unverified)\" tag",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-036",
+      "type": "requirement",
+      "title": "User counts include verified and unverified active users",
+      "statement": "User counts on the project card and the Manage Users page count active users, both verified and unverified. Today the code counts active users with a direct or group role on the project, and keeps a separate count without support users.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-USER-MANAGEMENT-FR-009",
+        "T3D-CAND-USER-MANAGEMENT-FR-010",
+        "T3D-RULE-120"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-010",
+          "title": "Prior PRD - User management / user profile (t3d-prd-agent prd-organised)",
+          "at": "FR-009, FR-010",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-120",
+          "code": "constructn-api:src/utils/project-utils.ts#L398@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "Users with no isSupportUser value aren't counted as non-support; counts refresh asynchronously and can be stale"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-036-AC1",
+          "given": "A project with two verified members, one unverified member and one support user",
+          "when": "A customer views the project card and the Manage Users page",
+          "then": "Both show 3 users",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-037",
+      "type": "requirement",
+      "title": "Pending invitations can be re-roled, resent or withdrawn",
+      "statement": "Before an invitation is accepted, a user with the permission can change its role, resend it or withdraw it. The web app keeps active users, pending invitations and registration status as separate lists.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-017"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-130",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "track3d-web src/constants/api.ts CHANGE_INVITED_USER_ROLE, RESEND_PROJECT_INVITE, DEASSIGN_INVITED_USER",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-037-AC1",
+          "given": "A pending invitation as viewer",
+          "when": "A user with update-project-user changes it to collaborator and resends it",
+          "then": "The invitee gets a new email, and accepting it makes them a collaborator",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-055",
+      "type": "business-rule",
+      "title": "The project users list shows every role source",
+      "statement": "Each row in a project's user list shows the user's direct role and the roles they get through groups, with status and activity. A single role title may not describe all of someone's access.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-027"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-027",
+          "code": "project-api:src/application/services/project.service.ts#L480@6bc5d334eaae"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-055-AC1",
+          "given": "A user who is a viewer directly and a collaborator through group G on project P",
+          "when": "P's users list is shown",
+          "then": "Their row shows both the viewer role and the collaborator role from G",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-056",
+      "type": "requirement",
+      "title": "Add existing users to a project directly",
+      "statement": "Users who already have an account can be added to a project directly, without an invitation. Trying to add someone who is already a member tells the person adding them.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-002",
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-005"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-013",
+          "title": "Prior PRD - Project management (t3d-prd-agent prd-organised)",
+          "at": "FR-002, FR-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-056-AC1",
+          "given": "A registered user who isn't on project P",
+          "when": "A user with assign-project-user adds them to P",
+          "then": "They are a member immediately, with no invitation step",
+          "status": "draft"
+        },
+        {
+          "id": "USER-REQ-056-AC2",
+          "given": "A user who is already a member of P",
+          "when": "Someone tries to add them again",
+          "then": "The person adding them is told they're already a member",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-057",
+      "type": "requirement",
+      "title": "Reminders for unaccepted project invitations",
+      "statement": "If a project invitation isn't accepted, the invitee is reminded automatically after 7, 14 and 30 days. Each reminder includes the original invitation link.",
+      "rationale": "This conflicts in spirit with the 2-day default lifetime of enterprise invitations (USER-REQ-045). The two may be different invitation types; DEC-017 decides.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-017"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-003",
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-004"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-013",
+          "title": "Prior PRD - Project management (t3d-prd-agent prd-organised)",
+          "at": "FR-003, FR-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-057-AC1",
+          "given": "A project invitation sent on 1 March and not accepted",
+          "when": "8, 15 and 31 March arrive",
+          "then": "A reminder with the original invitation link is sent on each date",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

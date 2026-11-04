@@ -1,0 +1,236 @@
+{
+  "id": "ENT-FEAT-04",
+  "name": "Engagement and consolidated emails",
+  "summary": "Features that keep field teams engaged and keep email volume down: capture gamification and leaderboards (PRD-only), and consolidated emails for mobile uploads and design uploads. Email delivery and preferences are NOTIF-FEAT-01.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-073"
+  ],
+  "roles": {
+    "status": "draft",
+    "note": "No gamification code exists. Consolidated upload emails go to the uploading user; recipients for design emails are not defined.",
+    "actions": [
+      {
+        "action": "Earn points and appear on a leaderboard after opting in",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "View team scores on a dashboard",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "unknown",
+          "regional-admin": "unknown",
+          "admin": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Receive the consolidated mobile upload email",
+        "permission": "capture",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": "Sent to the user who uploaded"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "ENT-NFR-006",
+      "kind": "latency",
+      "statement": "How soon a consolidated upload email arrives after the last capture in a session finishes uploading.",
+      "target": null,
+      "status": "draft",
+      "open_question": "The PRD says one hour or when all uploads finish. Is that a commitment, and what about uploads still running at 6 pm?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "ENT-REQ-018",
+      "type": "requirement",
+      "title": "Capture gamification with opt-in leaderboards",
+      "statement": "Users earn points for capture streaks, coverage and quality, and get immediate feedback when a capture task completes. Team and individual leaderboards show only users who opted in. Managers see team progress and safety scores.",
+      "rationale": "PRD-only. No gamification, scoring or leaderboard code was found in the services or web app read.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-073"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "gamification.md FR-001..FR-004, AC-001, AC-002, EC-001, NFR-001",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-018-AC1",
+          "given": "A field user completes a capture successfully",
+          "when": "The capture is accepted",
+          "then": "They see feedback and the points earned straight away",
+          "status": "draft"
+        },
+        {
+          "id": "ENT-REQ-018-AC2",
+          "given": "A user who has not opted into leaderboards",
+          "when": "Anyone views a leaderboard",
+          "then": "That user doesn't appear in any ranking",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-019",
+      "type": "business-rule",
+      "title": "Mobile uploads from one device send one consolidated email",
+      "statement": "Today captures uploaded together from one user's device form a group. When every capture in the group has uploaded, the user gets one email. If the group is still incomplete, the service checks again one hour later and at 6 pm in the project's time zone, and emails the pending list.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "all uploaded sends one email",
+          "code": "constructn-api:src/controllers/capture.controller.ts#L3516@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "createCronJobsV2 one hour and 6 pm",
+          "code": "constructn-api:src/controllers/capture.controller.ts#L678@06132d2a6f1f"
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "email-management.md FR-001..FR-003, AC-001, AC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The one-hour and 6 pm checks are in-process timers"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-019-AC1",
+          "given": "A user uploads four captures from one phone and all four finish",
+          "when": "The last upload completes",
+          "then": "One email lists the project, capture type, capture time, structure and status of all four",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "ENT-REQ-019-AC2",
+          "given": "Two of four uploads are still running at 6 pm project time",
+          "when": "The 6 pm check runs",
+          "then": "An email lists the pending uploads",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-020",
+      "type": "business-rule",
+      "title": "A consolidated upload email is sent only once",
+      "statement": "The PRD says completed uploads must not produce duplicate emails. Today the one-hour and 6 pm checks send the email without marking the group as emailed, so the same group can be emailed by both checks and again on completion.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "PRD EC-002 asks for no duplicates, and EC-001 allows several emails for slow uploads. The scheduled checks leave the \"email sent\" flag unset (the update is commented out). Product to say how many emails one group may produce."
+      },
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "email-management.md EC-001, EC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "checkGroupCompletionAndSendEmailV2",
+          "code": "constructn-api:src/controllers/capture.controller.ts#L737@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-020-AC1",
+          "given": "A group still incomplete one hour after upload starts, and still incomplete at 6 pm",
+          "when": "Both checks run",
+          "then": "(Current behaviour) The user can receive two pending-upload emails for the same group",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-021",
+      "type": "requirement",
+      "title": "Design upload notifications are consolidated",
+      "statement": "Design upload notifications sent within a 30-minute window are combined into one email.",
+      "rationale": "PRD-only. The consolidated email found in code is for snapshots, not design uploads.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "email-management.md FR-004, US-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-021-AC1",
+          "given": "Five designs are uploaded to a project within 20 minutes",
+          "when": "Design notifications are sent",
+          "then": "Each recipient gets one email covering all five",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

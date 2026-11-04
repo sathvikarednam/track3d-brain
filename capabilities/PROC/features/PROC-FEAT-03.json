@@ -1,0 +1,382 @@
+{
+  "id": "PROC-FEAT-03",
+  "name": "Operator review and sign-off",
+  "summary": "Track3D operations' quality control after processing: point-cloud verification, registration and sign-off in Antman, one reviewer at a time, the manual outcome tools in the TechOps view, and how a signed-off result reaches the customer.",
+  "components": [
+    "worker.antman",
+    "svc.constructn-api"
+  ],
+  "decisions": [
+    "DEC-057",
+    "DEC-025",
+    "DEC-055",
+    "DEC-059"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Review is done by Track3D staff in Antman, identified by email. Antman has no product roles of its own in the traced code, so grants for project roles are deny or unknown. Who may sign off is DEC-057; identity is DEC-059.",
+    "actions": [
+      {
+        "action": "Claim and submit point-cloud verification",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      },
+      {
+        "action": "Set a job's processing outcome and error tags",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      },
+      {
+        "action": "Cancel a run or escalate it to the ML team",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROC-NFR-004",
+      "kind": "latency",
+      "statement": "A claimed review session that stops sending heartbeats for five minutes is abandoned and the run returns to the queue. The expiry job runs every two minutes.",
+      "target": {
+        "session_timeout_minutes": 5,
+        "expiry_check_seconds": 120
+      },
+      "status": "inferred-from-code",
+      "open_question": null
+    },
+    {
+      "id": "PROC-NFR-005",
+      "kind": "throughput",
+      "statement": "How many runs Track3D operations can verify, register and sign off per day.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What review capacity is planned, and what is the maximum time a run may wait in a review queue?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROC-REQ-014",
+      "type": "business-rule",
+      "title": "Non-image runs pass verification, registration and sign-off; image runs stop at processing complete",
+      "statement": "When a non-image processing run succeeds it waits for point-cloud verification. Passing verification moves it to registration, or straight to sign-off when the run is set to register automatically. Registration complete leads to sign-off, which is approved or rejected. 360 image and phone image runs end at processing complete with no operator review. Antman refuses any other status change, and refuses all changes from a final state.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-057"
+      ],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-041",
+          "title": "Processing review, publication and recovery trace - Antman lifecycle, sessions, recovery (2026-10-27)",
+          "at": "E147",
+          "code": "ant-man:app/utils/capture_run_fsm.py#L40@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E132",
+          "code": "ant-man:app/services/task_run_service.py#L173@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E133",
+          "code": "ant-man:app/services/capture_lifecycle_service.py#L363@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Submit schemas accept free-form decisions and optional checklists; the quality criteria per mode aren't defined"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-014-AC1",
+          "given": "A 360 video processing run set to register automatically",
+          "when": "The reviewer approves point-cloud verification",
+          "then": "The run moves to ready for sign-off, skipping registration",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-014-AC2",
+          "given": "A 360 image processing run",
+          "when": "Its pipeline finishes successfully",
+          "then": "The run is processing complete and no verification is queued",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-014-AC3",
+          "given": "A run whose sign-off was rejected",
+          "when": "Anyone tries to move it to ready for sign-off",
+          "then": "The change is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-015",
+      "type": "business-rule",
+      "title": "One reviewer at a time, and an abandoned review returns to the queue",
+      "statement": "Each review step is claimed by one reviewer. A run can have only one active verification, registration or sign-off session, and only the claiming reviewer can send heartbeats or submit it. A session with no heartbeat for five minutes is marked abandoned and the run goes back to ready for that step. Status updates check the previous status, so two competing changes can't both win.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-057"
+      ],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-041",
+          "title": "Processing review, publication and recovery trace - Antman lifecycle, sessions, recovery (2026-10-27)",
+          "at": "E157",
+          "code": "ant-man:app/models/capture_run_model.py#L53@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-041",
+          "title": "Processing review, publication and recovery trace - Antman lifecycle, sessions, recovery (2026-10-27)",
+          "at": "E156",
+          "code": "ant-man:app/repositories/session_repository.py#L101@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-041",
+          "title": "Processing review, publication and recovery trace - Antman lifecycle, sessions, recovery (2026-10-27)",
+          "at": "E151",
+          "code": "ant-man:app/tasks/scheduler.py#L267@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Production indexes, beat uptime and a submit racing the expiry were not checked (verification case PROC-04)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-015-AC1",
+          "given": "Reviewer A has claimed sign-off for a run",
+          "when": "Reviewer B tries to claim the same sign-off",
+          "then": "B's claim is refused",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-015-AC2",
+          "given": "Reviewer A claimed point-cloud verification and closed the browser",
+          "when": "Five minutes pass without a heartbeat and the expiry job runs",
+          "then": "A's session is abandoned and the run is ready for point-cloud verification again",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-016",
+      "type": "requirement",
+      "title": "TechOps can set a capture's processing outcome by hand",
+      "statement": "Track3D TechOps can set a capture's processing outcome to success, partial success or failure, record the percentage processed for a partial result, and add error tags.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-055"
+      ],
+      "implemented_by": [
+        "worker.antman",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-043",
+          "title": "Prior PRDs - TechOps dashboard, 360 image automation and issue emails (t3d-prd-agent prd-organised)",
+          "at": "techops-dashboard.md FR-003, FR-005, AC-005, EC-003",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "Antman update-processing-status",
+          "code": "ant-man:app/routers/jarvis_ops_router.py#L198@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "partial percentage field",
+          "code": "db-models:src/definitions/job.ts#L149@1cabc8a1de8d"
+        }
+      ],
+      "open_checks": [
+        "The PRD also asks to set different processing times per capture (FR-004); no matching code was traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-016-AC1",
+          "given": "A capture is selected",
+          "when": "TechOps updates its status",
+          "then": "The system shows the updated status as success, partial success or failure",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-016-AC2",
+          "given": "A partly processed capture",
+          "when": "TechOps enters 105 as the processed percentage",
+          "then": "The value is refused and a valid percentage is asked for",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-017",
+      "type": "business-rule",
+      "title": "(Current behaviour) Sign-off publishes by writing the reality status directly",
+      "statement": "Approving sign-off asks the platform to set the reality active; rejecting sets it inactive. This call writes only the status field. It skips the required-file check and the snapshot, zone coverage and turnaround updates that normal activation does (PROC-REQ-011). Antman records sign-off first and only logs a failed platform call, so signed off doesn't prove the customer can see the result. Antman's ops view also offers the full activation.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-057",
+        "DEC-025"
+      ],
+      "implemented_by": [
+        "worker.antman",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E135",
+          "code": "ant-man:app/services/capture_lifecycle_service.py#L606@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E145",
+          "code": "ant-man:app/repositories/mongo_api_client.py#L124@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "field-only status write",
+          "code": "constructn-api:src/controllers/ant-man.controller.ts#L418@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "full activation from ops view",
+          "code": "ant-man:app/routers/jarvis_ops_router.py#L231@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Check whether operators routinely re-activate through the ops view after sign-off, and what a platform outage leaves behind (verification case PROC-06)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-017-AC1",
+          "given": "A 360 video run in sign-off whose reality folder has no point-cloud files",
+          "when": "The reviewer approves sign-off",
+          "then": "(Current behaviour) The reality is set active without any file check, and the snapshot is not refreshed",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-017-AC2",
+          "given": "The platform is unreachable",
+          "when": "The reviewer approves sign-off",
+          "then": "(Current behaviour) The run is signed off in Antman and the reality keeps its old status",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-018",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "PROC-REQ-019",
+      "type": "requirement",
+      "title": "Successful 360 image automation updates the reality, and failures alert the review team",
+      "statement": "When a 360 image capture is processed successfully, the system updates the reality status without manual steps. When automation fails and the reality is left in review, the review team is notified so they can act.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-057",
+        "DEC-025"
+      ],
+      "implemented_by": [
+        "worker.antman",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-043",
+          "title": "Prior PRDs - TechOps dashboard, 360 image automation and issue emails (t3d-prd-agent prd-organised)",
+          "at": "image-automation.md FR-001, FR-002, AC-001, AC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Antman image runs end at processing complete (PROC-REQ-014); what then activates the reality, and whether anyone is alerted, wasn't traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-019-AC1",
+          "given": "A successful 360 image capture",
+          "when": "Processing completes",
+          "then": "The system updates the reality status automatically",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-019-AC2",
+          "given": "The automation process fails",
+          "when": "The reality status is in review",
+          "then": "The review team is notified",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

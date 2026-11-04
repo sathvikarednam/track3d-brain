@@ -1,0 +1,20 @@
+{
+  "id": "DEC-075",
+  "title": "How web performance is measured and what the targets are",
+  "status": "open",
+  "question": "Do we measure page performance with synthetic tests (PageSpeed Insights, as the PRD proposes), with real-user monitoring (as built), or both? Which pages are monitored, what are the agreed targets, and who owns the alerts?",
+  "context": "The PRD proposes PageSpeed Insights with FCP, LCP and TTI. The running service collects real-user vitals and alerts Slack on code thresholds (LCP 4 s, INP 500 ms, TTFB 1.8 s, CLS 0.25; viewer pages LCP 6 s) (OPS-REQ-012, OPS-REQ-013).",
+  "options": [
+    "Real-user monitoring only (today)",
+    "Synthetic tests only",
+    "Both, with targets agreed per page group"
+  ],
+  "decision": null,
+  "capabilities": [
+    "OPS"
+  ],
+  "requirements": [
+    "OPS-REQ-012",
+    "OPS-REQ-013"
+  ]
+}

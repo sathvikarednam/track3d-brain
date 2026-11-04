@@ -1,0 +1,430 @@
+{
+  "id": "PROC-FEAT-01",
+  "name": "Processing triggering and orchestration",
+  "summary": "How an uploaded capture starts processing: a job status change notifies Antman, Antman picks a route from the project's pipeline configuration, queues the work and submits it to a virtual machine or an Airflow DAG.",
+  "components": [
+    "svc.capture-api",
+    "worker.capture-api-job-status",
+    "worker.antman",
+    "job.airflow-dags"
+  ],
+  "decisions": [
+    "DEC-058",
+    "DEC-025"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Triggering is automatic and service-to-service, protected by a shared secret. No customer role takes part. Who may edit pipeline configuration in Antman wasn't traced. Access questions are DEC-059.",
+    "actions": [
+      {
+        "action": "Start processing for an uploaded capture",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "support-user": "unknown"
+        },
+        "note": "Automatic on job status change (PROC-REQ-001); no person triggers it in the traced path"
+      },
+      {
+        "action": "Edit a project's pipeline configuration and routes",
+        "permission": null,
+        "grants": {
+          "support-user": "unknown",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "Antman configuration API; its access rules were not traced"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROC-NFR-001",
+      "kind": "throughput",
+      "statement": "Queued pipeline work is drained every five minutes, and each drain submits only as many runs as the DAG or VM capacity allows. The capacity numbers live in Antman settings and were not read.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "How many captures per hour must the pipeline absorb at peak, and what queue wait is acceptable before processing starts?"
+    },
+    {
+      "id": "PROC-NFR-002",
+      "kind": "availability",
+      "statement": "Every capture that is ready for processing starts processing, even when a notification or submission fails.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is exactly-once start a requirement, and how fast must a missed start be detected and repaired (DEC-058)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROC-REQ-001",
+      "type": "business-rule",
+      "title": "A job becoming ready for stitching or processing notifies the pipeline",
+      "statement": "When a job's status is written as readyForStitching or readyForProcessing, a capture-api worker sends Antman an event with the job, capture, structure, project, status and capture mode. Other statuses send nothing. The worker reads the job's current state and doesn't compare it with the previous status, so a repeated write sends the event again.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-058"
+      ],
+      "implemented_by": [
+        "worker.capture-api-job-status"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E112",
+          "code": "capture-api:src/workers/jobStatusWebhook/constants.ts#L3@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E109",
+          "code": "capture-api:src/workers/jobStatusWebhook/changeStreamWatcher.ts#L66@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E110",
+          "code": "capture-api:src/workers/jobStatusWebhook/buildPayload.ts#L32@ac5726e820f2"
+        }
+      ],
+      "open_checks": [
+        "Jobs inserted directly in a trigger status are not watched (only updates and replaces); confirm no upload path does that",
+        "The event uses only the job's first capture; confirm jobs at these statuses always have exactly one"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-001-AC1",
+          "given": "A 360 video job with status uploaded",
+          "when": "Its status is updated to readyForStitching",
+          "then": "Antman receives one event with that job's ID, its capture, status readyForStitching and mode 360 Video",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-001-AC2",
+          "given": "A job",
+          "when": "Its status is updated to geoSpatialMapping",
+          "then": "No pipeline event is sent",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-002",
+      "type": "business-rule",
+      "title": "(Current behaviour) The trigger event is dropped after three failed attempts",
+      "statement": "The worker tries to deliver each event three times, with a 30-second timeout and growing waits between tries. After the third failure it logs the event and drops it, and still records the event as handled. Nothing replays it, so that capture doesn't start processing until someone notices. A missing receiver URL skips delivery.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-058"
+      ],
+      "implemented_by": [
+        "worker.capture-api-job-status"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E111",
+          "code": "capture-api:src/workers/jobStatusWebhook/webhookClient.ts#L60@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E112",
+          "code": "capture-api:src/workers/jobStatusWebhook/constants.ts#L9@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E109",
+          "code": "capture-api:src/workers/jobStatusWebhook/changeStreamWatcher.ts#L78@ac5726e820f2"
+        }
+      ],
+      "open_checks": [
+        "Check whether any reconciler or operator replay exists outside the inspected worker (verification case PROC-02)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-002-AC1",
+          "given": "Antman is unreachable",
+          "when": "A job becomes readyForProcessing",
+          "then": "The worker makes three attempts, logs a drop, and the event is not retried later",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-003",
+      "type": "business-rule",
+      "title": "Antman accepts the event before saving it, and routes it by status and mode",
+      "statement": "Antman checks the shared secret, replies success at once and queues the work in the background. A success reply means only that the event was received. readyForStitching goes to stitching. readyForProcessing is queued only for 360 Image and Phone Image captures, on the configured image DAG. Every other combination is ignored by this path.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-058"
+      ],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E120",
+          "code": "ant-man:app/routers/webhooks_router.py#L73@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E122",
+          "code": "ant-man:app/services/jarvis_service.py#L883@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E123",
+          "code": "ant-man:app/services/jarvis_service.py#L886@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Find what starts processing for 360 video, drone and laser after stitching (a v9 continuation exists, E140/E141); this path ignores them",
+        "A crash between the reply and saving the queue row loses the event (verification case PROC-02)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-003-AC1",
+          "given": "A readyForProcessing event for a Phone Image capture",
+          "when": "Antman receives it",
+          "then": "It replies success and adds the job to the image DAG queue",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-003-AC2",
+          "given": "A readyForProcessing event for a 360 Video capture",
+          "when": "Antman receives it",
+          "then": "It replies success and queues nothing on this path",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-004",
+      "type": "business-rule",
+      "title": "The project's pipeline configuration chooses where stitching runs",
+      "statement": "Stitching runs on a virtual machine or an Airflow DAG, chosen from the project's pipeline configuration. A route set for the structure wins over the project default, and if both kinds are enabled, the virtual machine wins. A stitching job with no route of its own falls back to a default project's route; with no route at all it is skipped. (Current behaviour) Airflow stitching is then switched to the v9 stitching DAG whatever DAG the route names.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E124",
+          "code": "ant-man:app/repositories/jarvis_config_repository.py#L614@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E124",
+          "code": "ant-man:app/repositories/jarvis_config_repository.py#L618@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E122",
+          "code": "ant-man:app/services/jarvis_service.py#L912@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E122",
+          "code": "ant-man:app/services/jarvis_service.py#L938@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Actual project routes, enabled flags and v9 settings in production were not read"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-004-AC1",
+          "given": "A project whose default stitching route is Airflow, and a structure with its own VM route",
+          "when": "A job on that structure becomes readyForStitching",
+          "then": "The job is routed to a virtual machine",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-004-AC2",
+          "given": "An Airflow stitching route that names DAG \"stitch-a\"",
+          "when": "A job is queued on it",
+          "then": "(Current behaviour) The queued run uses the v9 stitching DAG and its run ID ends in _V9",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-005",
+      "type": "business-rule",
+      "title": "Queued work is de-duplicated and drained by capacity",
+      "statement": "Antman won't add a queue row if an active one (pending, dispatched or running) exists for the same run and queue. Every five minutes it drains the queues within DAG and VM capacity, claiming each pending row before submitting it so two drains can't submit the same row.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-058"
+      ],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E126",
+          "code": "ant-man:app/repositories/job_queue_repository.py#L32@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E128",
+          "code": "ant-man:app/services/jarvis_service.py#L1701@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E144",
+          "code": "ant-man:app/celery_worker.py#L34@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Dedup ignores the event ID and isn't backed by a proven unique constraint; test concurrent duplicate events (verification case PROC-01)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-005-AC1",
+          "given": "A job already has a pending row in the stitch queue",
+          "when": "The same job's readyForStitching event arrives again",
+          "then": "No second row is added",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-006",
+      "type": "business-rule",
+      "title": "(Current behaviour) A failed Airflow submission can be recorded as running",
+      "statement": "When Airflow rejects a run, the client returns a failure result instead of raising an error. The queue drain doesn't check that result and marks the row running. Only raised errors put the row back to pending. The job then waits as if running, with no DAG run behind it.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-058"
+      ],
+      "implemented_by": [
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E130",
+          "code": "ant-man:app/repositories/pipeline_repository.py#L188@6ac4185b7031"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E128",
+          "code": "ant-man:app/services/jarvis_service.py#L1713@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Confirm deployed Antman matches prod 6ac4185b7031 and whether any repair job resets such rows (verification case PROC-03)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-006-AC1",
+          "given": "A pending stitch queue row and an Airflow API that rejects the run",
+          "when": "The queue is drained",
+          "then": "(Current behaviour) The row is marked running and no Airflow run exists",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-007",
+      "type": "business-rule",
+      "title": "The Airflow stitching DAG retries steps and emails on failure",
+      "statement": "The inspected stitching DAG downloads the data, stitches, uploads and sends a success email. Download and upload are retried three times; stitching is retried twice and stopped after two hours. A failure in any of them sends a failure email. Each step runs a container image whose tag comes from an Airflow variable.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "job.airflow-dags"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E142",
+          "code": "jarvis-pipeline:airflow/dags/t3d-gcp-stitching.py#L254@f059959e780a"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E142",
+          "code": "jarvis-pipeline:airflow/dags/t3d-gcp-stitching.py#L172@f059959e780a"
+        }
+      ],
+      "open_checks": [
+        "The deployed DAG set, the v9 and image DAGs, and container image versions were not found in main; who receives the emails is unknown"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-007-AC1",
+          "given": "The stitching step has been running for two hours",
+          "when": "The timeout is reached",
+          "then": "The step is stopped, retried up to twice, and a failure email is sent if it still fails",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

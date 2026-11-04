@@ -1,0 +1,19 @@
+{
+  "id": "DEC-029",
+  "title": "Schedule status thresholds and the date they're measured on",
+  "status": "open",
+  "question": "When is a scheduled item on track, ahead, behind or late? Measured against what date (today or the latest capture), in which time zone, and with what tolerance? How is an item with no takeoff or no measurements shown?",
+  "context": "The schedule timeline uses a 5-point tolerance against today (SCHD-REQ-008). Progress alerts use 15 points against the latest capture (PROG-REQ-040). The web app then relabels the backend's verdicts using the browser's day (SCHD-REQ-010).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "SCHD",
+    "PROG"
+  ],
+  "requirements": [
+    "SCHD-REQ-007",
+    "SCHD-REQ-008",
+    "SCHD-REQ-010",
+    "PROG-REQ-040"
+  ]
+}

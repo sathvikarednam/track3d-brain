@@ -1,0 +1,356 @@
+{
+  "id": "PROG-FEAT-06",
+  "name": "Trends and forecast",
+  "summary": "How progress changes across captures: interval and cumulative charts, weekly deltas, planned-versus-actual timelines, and forecast completion and delay.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-009"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "View progress trends",
+        "permission": "view-progress-trends",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Download progress trends",
+        "permission": "download-progress-trends",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-008",
+      "kind": "latency",
+      "statement": "Time to render trend charts for the selected locations and stage across a project's full capture history.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What p95 is acceptable, and for how many captures and locations?"
+    },
+    {
+      "id": "PROG-NFR-009",
+      "kind": "freshness",
+      "statement": "How soon after a capture is processed, or a correction is saved, trends must reflect it.",
+      "target": null,
+      "status": "draft",
+      "open_question": "PRD AC-012 says \"real-time\". Is that a firm requirement, and what does it mean in seconds?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-030",
+      "type": "business-rule",
+      "title": "Trend intervals can be negative",
+      "statement": "A trend interval is the measured quantity on one date minus the quantity on the previous date, so it can be negative. A negative interval may be a correction or physical loss, not necessarily bad data.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-009"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-058"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-058",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L3785@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-030-AC1",
+          "given": "Measured totals of 100 on 1 March and 70 on 8 March",
+          "when": "Trends are shown for that period",
+          "then": "The 8 March interval is -30",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-031",
+      "type": "business-rule",
+      "title": "Potential delay forecast",
+      "statement": "For a stage with a planned start and end, takeoff and some progress, the forecast uses the average rate per working day so far to estimate the completion date. The stage is a potential delay only if that estimate is more than 14 calendar days after the planned end. Completed work, missing inputs and zero progress or takeoff are not forecast.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-009"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-061"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-061",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L13569@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Date overflow"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-031-AC1",
+          "given": "A stage planned to end 31 May, with progress so far implying an estimated finish of 20 June",
+          "when": "Delay metrics are calculated",
+          "then": "The stage is flagged as a potential delay, with an estimated completion date of 20 June",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-031-AC2",
+          "given": "The same stage with an estimated finish of 10 June",
+          "when": "Delay metrics are calculated",
+          "then": "It is not flagged, because 10 days is within the 14-day tolerance",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-032",
+      "type": "business-rule",
+      "title": "Working days follow the project calendar",
+      "statement": "Working-day counts include both ends of the range and exclude configured weekend days and holidays. Dates marked as extra working days count even if they fall on a weekend or holiday.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-062"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-062",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L13642@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Callers may not pass holidays, and this helper differs from the schedule tree's day loop; don't assume holidays are applied everywhere"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-032-AC1",
+          "given": "A Monday–Sunday range, Saturday and Sunday as weekend days, and Saturday marked as an extra working day",
+          "when": "Working days are counted",
+          "then": "The count is 6",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-033",
+      "type": "requirement",
+      "title": "A failed trend calculation looks like no data",
+      "statement": "Today, when a trend can't be calculated, or no locations are selected, the chart is empty. Users can't tell an error from an absence of data.",
+      "rationale": "Recorded so product can decide how errors and missing data should look (DEC-009).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-009"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-059"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-059",
+          "code": "track3d-web:src/features/progress-overview/services/trends.service.ts#L19@0e9dabc75e2f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-033-AC1",
+          "given": "The trends request fails on the server",
+          "when": "The user opens trends",
+          "then": "An empty chart is shown, the same as for a period with no data",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-034",
+      "type": "requirement",
+      "title": "Progress over time chart",
+      "statement": "A line or area chart shows progress over time by category, stage or activity.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-009"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-012"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-012",
+          "code": null
+        },
+        {
+          "type": "runtime-observation",
+          "ref": "SRC-005",
+          "title": "Demo UI pass 2026-10-28-demo-01",
+          "at": "T3D-UI-022",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-034-AC1",
+          "given": "New progress data is available",
+          "when": "The user views the chart",
+          "then": "The chart includes the new data",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-035",
+      "type": "requirement",
+      "title": "Weekly progress delta chart",
+      "statement": "A bar chart shows the change in progress for each week.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-015"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-015",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-035-AC1",
+          "given": "Progress recorded across four weeks, with one week decreasing",
+          "when": "The user views the weekly delta chart",
+          "then": "There is one bar per week, and the decreasing week is shown below zero",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-036",
+      "type": "requirement",
+      "title": "Planned versus actual timeline",
+      "statement": "A Gantt-style bar chart compares planned and actual timelines.",
+      "rationale": "It overlaps the Schedule capability (SCHD). Review where it belongs when SCHD is migrated.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-014"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-014",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-036-AC1",
+          "given": "A stage with planned dates and recorded progress",
+          "when": "The user views the timeline",
+          "then": "The planned and actual bars are shown side by side for that stage",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-037",
+      "type": "requirement",
+      "title": "Generated insights from progress data",
+      "statement": "The system generates insights from progress data.",
+      "rationale": "The PRD row is too vague to test. Product needs to say which insights, for whom, and from what data.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-016"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-016",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": []
+    }
+  ]
+}

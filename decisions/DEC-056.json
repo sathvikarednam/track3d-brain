@@ -1,0 +1,19 @@
+{
+  "id": "DEC-056",
+  "title": "Processing turnaround commitments and how they are measured",
+  "status": "open",
+  "question": "What turnaround does Track3D commit to for each capture mode, separately for visual documentation and progress? Does the clock stop when results become LIVE, when processing ends, or when the snapshot is active? Does a failed job stop the clock, and can operators change a capture's deadline?",
+  "context": "A historical PRD names 24 hours for 360 video and laser and 1 hour for 360 and phone images (PROC-REQ-026). The code takes deadline hours from environment settings (CAPT-REQ-008) and stops the clock at different events per mode, including on failure (PROC-REQ-027).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROC",
+    "CAPT"
+  ],
+  "requirements": [
+    "PROC-REQ-026",
+    "PROC-REQ-027",
+    "PROC-REQ-028",
+    "CAPT-REQ-008"
+  ]
+}

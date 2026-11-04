@@ -1,0 +1,418 @@
+{
+  "id": "SHARE-FEAT-01",
+  "name": "Share link management",
+  "summary": "Creating a share link for the current project view, and listing, expiring, disabling, re-enabling and deleting share links.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-046",
+    "DEC-048"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Grants follow SRC-004. Delete also needs the admin role by name, unless the user holds a grant on that share key (SHARE-REQ-006).",
+    "actions": [
+      {
+        "action": "Create a share link",
+        "permission": "create-share-links",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "List a project's share links",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Disable or re-enable one share link",
+        "permission": "delete-share-links",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Disable or re-enable all share links of a project",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      },
+      {
+        "action": "Delete a share link",
+        "permission": "delete-share-links",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "A custom role with the permission may delete only links its user created (SHARE-REQ-006)"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "SHARE-NFR-001",
+      "kind": "freshness",
+      "statement": "Time between a share link's expiry or disabling and the moment it stops opening.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How quickly must an expired, disabled or revoked link stop working, including already-issued anonymous tokens?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "SHARE-REQ-001",
+      "type": "requirement",
+      "title": "Generate and copy a share link for the current view",
+      "statement": "From the Share icon in a project view, a user opens a pop-up where they generate a link to that view and copy it. No link is created until the user confirms.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-048"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-038",
+          "title": "Prior PRDs - Public sharing, shared content, and permissions and sharing (t3d-prd-agent prd-organised)",
+          "at": "shared-content FR-005, FR-006, AC-004, AC-005, EC-006",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "share pop-up",
+          "code": "track3d-web:src/components/rahman/core/share-link-popup.tsx#L121@2fd5bdd22190"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-001-AC1",
+          "given": "A user with create-share-links in a project view",
+          "when": "They choose Share and then copy the link",
+          "then": "A link to that view is created and copied to the clipboard",
+          "status": "draft"
+        },
+        {
+          "id": "SHARE-REQ-001-AC2",
+          "given": "The share pop-up is open",
+          "when": "The user leaves without copying",
+          "then": "No link is created",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "SHARE-REQ-002",
+      "type": "business-rule",
+      "title": "A share link records one project view",
+      "statement": "Creating a share link needs create-share-links. The link records the project, its type (Structure by default, or Snapshot), the structure, the date and matching snapshot (each found from the other when only one is given), the viewer state, and who created it. The creator gets their own grant on the new link.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "createSharelink",
+          "code": "constructn-api:src/controllersv2/sharelink.controller.ts#L62@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "creator grant",
+          "code": "constructn-api:src/controllersv2/sharelink.controller.ts#L90@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "sharelinks.md §Schema",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-002-AC1",
+          "given": "A user creating a link with a structure and a date but no snapshot",
+          "when": "The link is saved",
+          "then": "It records the snapshot of that structure taken on that date in the project's time zone",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "SHARE-REQ-002-AC2",
+          "given": "A user without create-share-links",
+          "when": "They try to create a share link",
+          "then": "The request is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "SHARE-REQ-003",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "SHARE-REQ-004",
+      "type": "requirement",
+      "title": "Share links can expire",
+      "statement": "Users can set and change an expiry date on a share link. An expired link no longer opens, even if expiry fell while the system was down, and users are notified before their links expire. The link list shows each link's type and expiry.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-046"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-038",
+          "title": "Prior PRDs - Public sharing, shared content, and permissions and sharing (t3d-prd-agent prd-organised)",
+          "at": "public-sharing FR-001, FR-003, FR-004, AC-001, AC-003, EC-001",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The default expiry and time zone handling are open PRD questions (DEC-046)."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-004-AC1",
+          "given": "A share link with an expiry date",
+          "when": "Someone opens it after that date",
+          "then": "It does not open",
+          "status": "draft"
+        },
+        {
+          "id": "SHARE-REQ-004-AC2",
+          "given": "A share link close to its expiry date",
+          "when": "The notice period starts",
+          "then": "Its creator is notified",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "SHARE-REQ-005",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "SHARE-REQ-006",
+      "type": "business-rule",
+      "title": "Disabling is reversible; deleting is a soft delete with a narrower rule",
+      "statement": "Disabling a link switches it to inactive and can be undone. Deleting marks it deleted. Both need delete-share-links on the project. Delete then also needs one of the user's project roles (direct or through a group) to be named admin and hold delete-share-links, or a grant on that share key, which the creator gets.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-048"
+      ],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-095"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-095",
+          "code": "project-api:src/application/services/shareLinksV1.service.ts#L333@0d3ad660d655"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "disableShareLinkById",
+          "code": "project-api:src/application/services/shareLinksV1.service.ts#L258@0d3ad660d655"
+        }
+      ],
+      "open_checks": [
+        "The admin check uses the role name, not only the permission, so a custom role with delete-share-links can't delete. How fast a disabled or deleted link stops working for open viewers needs a test"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-006-AC1",
+          "given": "A disabled share link",
+          "when": "An authorised user re-enables it",
+          "then": "It opens again",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "SHARE-REQ-006-AC2",
+          "given": "A user in a custom role with delete-share-links who created the link",
+          "when": "They delete it",
+          "then": "It is marked deleted",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "SHARE-REQ-006-AC3",
+          "given": "A user in a custom role with delete-share-links who didn't create the link",
+          "when": "They delete it",
+          "then": "(Current behaviour) The delete is refused because the role isn't named admin",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "SHARE-REQ-007",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "SHARE-REQ-008",
+      "type": "requirement",
+      "title": "Disable, reactivate and revoke share links",
+      "statement": "Users can disable a share link so it can't be opened until it is reactivated. Turning off public sharing for a project revokes every existing link at once and blocks new ones, and anyone opening a revoked link is told it is no longer valid.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-048"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-038",
+          "title": "Prior PRDs - Public sharing, shared content, and permissions and sharing (t3d-prd-agent prd-organised)",
+          "at": "public-sharing FR-002, AC-002, US-003; shared-content FR-007, FR-008, AC-006, AC-007, EC-004, EC-005",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "shared-content FR-007 says disabling is permanent while public-sharing FR-002 makes it reversible (DEC-048). The code has a bulk disable but no project switch that blocks new links"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-008-AC1",
+          "given": "A disabled share link",
+          "when": "Someone opens it",
+          "then": "It doesn't open until it is reactivated",
+          "status": "draft"
+        },
+        {
+          "id": "SHARE-REQ-008-AC2",
+          "given": "A project with public sharing turned off",
+          "when": "A user tries to generate a new share link",
+          "then": "Generation is blocked and the user is told why",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "SHARE-REQ-009",
+      "type": "business-rule",
+      "title": "Share link list, with Track3D staff shown as TRACK3D",
+      "statement": "The list shows a project's links that aren't deleted, searchable by breadcrumb or creator name, sortable and paged. Links made by Track3D support users show the creator as TRACK3D to anyone not in support mode.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-016"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getShareLinks",
+          "code": "project-api:src/application/services/shareLinksV1.service.ts#L55@0d3ad660d655"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "support masking",
+          "code": "project-api:src/application/services/shareLinksV1.service.ts#L199@0d3ad660d655"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-009-AC1",
+          "given": "A link created by a support user",
+          "when": "A customer admin lists the project's links",
+          "then": "The creator shows as TRACK3D with no name or email",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "SHARE-REQ-009-AC2",
+          "given": "A deleted link",
+          "when": "The project's links are listed",
+          "then": "It is not shown",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

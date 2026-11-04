@@ -1,0 +1,362 @@
+{
+  "id": "PROG-FEAT-11",
+  "name": "Alert management",
+  "summary": "Working through progress alerts as a team: one place listing every alert with filters, sorting and export, assigning alerts to people with notifications, and the history of each alert across captures.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-005",
+    "DEC-080"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Every alert route, including assigning, snoozing and clearing, checks only view-progress-overview; edits are also refused on archived projects. Who should be able to assign is open (DEC-080).",
+    "actions": [
+      {
+        "action": "View the alerts list and an alert's timeline",
+        "permission": "view-progress-overview",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Assign or unassign people on alerts",
+        "permission": "view-progress-overview",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Enforced with the view permission only"
+      },
+      {
+        "action": "Refresh alerts for a project",
+        "permission": "view-progress-overview",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Export alerts",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "PRD only"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-015",
+      "kind": "latency",
+      "statement": "Time for the alerts page to load.",
+      "target": {
+        "p95_ms": 2000
+      },
+      "status": "draft",
+      "open_question": "The PRD says under 2 seconds without saying which percentile or project size; p95 is assumed here."
+    },
+    {
+      "id": "PROG-NFR-016",
+      "kind": "retention",
+      "statement": "How long resolved and cleared alerts stay available for analysis.",
+      "target": {
+        "min_days": 365
+      },
+      "status": "draft",
+      "open_question": null
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-062",
+      "type": "requirement",
+      "title": "Assigning people to alerts notifies them",
+      "statement": "Users assign people to an alert group, one at a time or several groups in one action. The new list replaces the old one. Newly added people get an \"Assigned\" push notification and removed people an \"Unassigned\" one; in bulk the notifications are sent one after another after all updates, and the response says which groups failed.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-080"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-064",
+          "title": "Prior PRDs - Progress alerts V1 and alerts management (t3d-prd-agent prd-organised)",
+          "at": "alerts-management.md FR-002, FR-003, AC-002, AC-003, API-001, API-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "bulkUpdateAlertGroups",
+          "code": "api-2d-progress:src/application/service/progress-alerts.service.ts#L1613@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "Unassigned notification",
+          "code": "api-2d-progress:src/application/service/progress-alerts.service.ts#L1672@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-062-AC1",
+          "given": "An alert group assigned to A and B",
+          "when": "A user saves the assignees as B and C",
+          "then": "C gets an Assigned notification and A gets an Unassigned one; B gets nothing",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-062-AC2",
+          "given": "A bulk assignment of three groups where one group ID does not exist",
+          "when": "It is submitted",
+          "then": "Two groups are updated and the response lists the missing one as failed",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-063",
+      "type": "business-rule",
+      "title": "Alert assignees are not checked against the project team",
+      "statement": "Any user ID is accepted as an assignee. When the list is shown, unknown IDs appear as \"Deleted User\", and support users appear to customers as a generic Track3D user. The PRD says assigning someone who is not a team member must be refused with an error.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "alerts-management.md EC-001 says assignment to a non-existent team member is prevented. The code stores any string and later renders unknown IDs as \"Deleted User\"."
+      },
+      "decisions": [
+        "DEC-080"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-064",
+          "title": "Prior PRDs - Progress alerts V1 and alerts management (t3d-prd-agent prd-organised)",
+          "at": "alerts-management.md EC-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "support masking",
+          "code": "api-2d-progress:src/application/service/progress-alerts.service.ts#L1693@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "Deleted User",
+          "code": "api-2d-progress:src/application/service/progress-alerts.service.ts#L1705@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-063-AC1",
+          "given": "An assignee ID that matches no user",
+          "when": "A customer views the alert's assignees",
+          "then": "Today it appears as \"Deleted User\" (current behaviour)",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-064",
+      "type": "business-rule",
+      "title": "Each alert keeps a per-capture history",
+      "statement": "An alert group keeps one entry per capture date with a status of new, auto-cleared or resolved. When a condition stops holding on a new capture, that type is removed from the group and the entry is marked auto-cleared. The previous capture's alert is recorded as cleared even if nobody acted on it, so it appears among cleared alerts, and each group has a timeline.",
+      "rationale": "Gives the historical view of resolved alerts that alerts-management.md FR-004 asks for. Extends PROG-REQ-041 and PROG-REQ-042.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-005"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-064",
+          "title": "Prior PRDs - Progress alerts V1 and alerts management (t3d-prd-agent prd-organised)",
+          "at": "alerts-management.md FR-004, AC-004",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "status enum",
+          "code": "api-2d-progress:src/adapters/repositories/mongodb/models/progress-alerts.model.ts#L10@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "deactivateGroupedType",
+          "code": "api-2d-progress:src/application/service/progress-alerts.service.ts#L749@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "cleared without interaction",
+          "code": "api-2d-progress:src/application/service/progress-alert-actions.service.ts#L344@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getAlertTimeline",
+          "code": "api-2d-progress:src/application/service/progress-alert-actions.service.ts#L623@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-064-AC1",
+          "given": "A stage stalled on the 1 March capture",
+          "when": "The 8 March capture shows progress again",
+          "then": "The stalled type is removed and the 1 March entry is listed among cleared alerts as auto-cleared",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-065",
+      "type": "requirement",
+      "title": "All project alerts in one list",
+      "statement": "A single alerts page lists every alert in the project. Users filter by level, category, alert type, date and assignee, sort, save filtered views, refresh, and export to the provided Excel template. Low-confidence alerts are grouped and counted per hierarchy level.",
+      "rationale": "Refresh, assignee filters and saved alert views exist in code (refresh runs in the background; saved views in PROG-REQ-068). Excel export and low-confidence grouping were not traced. Notifications by email and forcing users to clear alerts are out of scope in the PRDs.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-080"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-064",
+          "title": "Prior PRDs - Progress alerts V1 and alerts management (t3d-prd-agent prd-organised)",
+          "at": "progress-alerts.md FR-001..FR-006, AC-001..AC-004, EC-002; alerts-management.md FR-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "refreshAlerts",
+          "code": "api-2d-progress:src/adapters/controllers/alertsV1.controller.ts#L36@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-065-AC1",
+          "given": "A project with stalled alerts on two levels",
+          "when": "A user filters the alerts page by one level",
+          "then": "Only that level's alerts are listed",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-065-AC2",
+          "given": "A filtered alerts list",
+          "when": "The user exports it",
+          "then": "The file follows the provided Excel template",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-066",
+      "type": "business-rule",
+      "title": "Ahead-of-schedule alerts are shown to customers",
+      "statement": "In takeoff projects customers see ahead-of-schedule alerts when a stage is 15 points or more ahead. The alerts V1 PRD says stages ahead of schedule by at least 10% should not be shown as alerts.",
+      "rationale": "The 15-point rule itself is PROG-REQ-040 and the audiences are PROG-REQ-038.",
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "progress-alerts.md EC-001 excludes ahead-of-schedule alerts; the code includes aheadSchedule for customers of takeoff projects."
+      },
+      "decisions": [
+        "DEC-005",
+        "DEC-080"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-064",
+          "title": "Prior PRDs - Progress alerts V1 and alerts management (t3d-prd-agent prd-organised)",
+          "at": "progress-alerts.md EC-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "customer alert types",
+          "code": "api-2d-progress:src/application/service/progress-alerts.service.ts#L251@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-066-AC1",
+          "given": "A takeoff project with a stage 20 points ahead at the latest capture",
+          "when": "A customer opens alerts",
+          "then": "Today an ahead-of-schedule alert is listed (current behaviour)",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-067",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

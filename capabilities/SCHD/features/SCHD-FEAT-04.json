@@ -1,0 +1,128 @@
+{
+  "id": "SCHD-FEAT-04",
+  "name": "Schedule adherence and trends",
+  "summary": "An adherence score per stage and its roll-ups, scheduled trend lines on progress charts, and exporting actual trends.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-029"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The seed catalog has no schedule-specific permission strings. Who may upload or edit schedules is unknown (DEC-010 covers related edit rights).",
+    "actions": [
+      {
+        "action": "Download progress trends",
+        "permission": "download-progress-trends",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "SCHD-NFR-004",
+      "kind": "freshness",
+      "statement": "How current adherence scores must be after new progress or a schedule change.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Are scores recalculated on every change, or nightly?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "SCHD-REQ-013",
+      "type": "requirement",
+      "title": "Schedule adherence score",
+      "statement": "Each project stage gets an adherence score from its available data points. Scores are normalised and averaged up to category, hierarchy, project and global levels, and each score maps to a status and colour.",
+      "rationale": "No adherence-score code was found on api-2d-progress origin/track-3d (2026-10-29). This is a PRD candidate, not current behaviour.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-029"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-012",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-013",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-014"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-018",
+          "title": "Prior PRD - Schedule management (t3d-prd-agent prd-organised)",
+          "at": "FR-012..FR-014",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-013-AC1",
+          "given": "Stage data is available",
+          "when": "The adherence score is calculated",
+          "then": "It follows the PRD's scoring logic",
+          "status": "draft"
+        },
+        {
+          "id": "SCHD-REQ-013-AC2",
+          "given": "Final scores are available",
+          "when": "They are mapped",
+          "then": "Each score shows its status and colour",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-014",
+      "type": "requirement",
+      "title": "Scheduled trend lines and actual-trend export",
+      "statement": "Users can turn scheduled trend lines on or off on progress charts, and export actual progress trends to Excel. The export leaves out scheduled trends.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-015",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-016"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-018",
+          "title": "Prior PRD - Schedule management (t3d-prd-agent prd-organised)",
+          "at": "FR-015, FR-016",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-014-AC1",
+          "given": "A stage with planned start and end dates",
+          "when": "The user turns on scheduled trends",
+          "then": "The scheduled trend line appears on the chart",
+          "status": "draft"
+        },
+        {
+          "id": "SCHD-REQ-014-AC2",
+          "given": "The user exports actual progress trends",
+          "when": "The export finishes",
+          "then": "They get an Excel file with actual trends only",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

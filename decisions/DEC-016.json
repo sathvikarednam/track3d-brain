@@ -1,0 +1,19 @@
+{
+  "id": "DEC-016",
+  "title": "Support users' visibility, attribution and extra capabilities",
+  "status": "open",
+  "question": "Where must Track3D support users be hidden from customers? How are their actions attributed in notifications and history, and which extra capabilities do they get?",
+  "context": "The historical PRD asks for hidden support users, anonymised \"ConstructN\" attribution and extra capabilities (USER-REQ-052..054). The code hides them in some lists and counts only. The scope of support access is unconfirmed.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "USER",
+    "PROG"
+  ],
+  "requirements": [
+    "USER-REQ-051",
+    "USER-REQ-052",
+    "USER-REQ-053",
+    "USER-REQ-054"
+  ]
+}

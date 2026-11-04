@@ -1,0 +1,734 @@
+[
+  {
+    "id": "home-company",
+    "term": "Home company",
+    "definition": "The company matched to a user's work-email domain. Access through a linked company is a separate relationship.",
+    "status": "draft"
+  },
+  {
+    "id": "company-super-admin",
+    "term": "Company-wide super-admin",
+    "definition": "Company-wide administration, as the user confirmed it. Distinct from regional or project administration.",
+    "status": "draft"
+  },
+  {
+    "id": "project-role",
+    "term": "Project role and permission",
+    "definition": "Authority to act within a project. An admin title alone does not decide invitation or role-management rights; the relevant permissions do.",
+    "status": "draft"
+  },
+  {
+    "id": "support-user",
+    "term": "Support user",
+    "definition": "Track3D staff acting inside a customer project. Not a customer role. Some data (inactive progress snapshots, some alert types) is visible only to support users.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "verified-user",
+    "term": "Verified user",
+    "definition": "A user who has confirmed their email through a verification link. Only verified users can act in projects.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "linked-company",
+    "term": "Linked company",
+    "definition": "A company connected to another so their users can work across both. A link never changes a user's home company.",
+    "status": "draft"
+  },
+  {
+    "id": "region",
+    "term": "Region",
+    "definition": "A company-defined grouping of projects, often by geography, that carries regional-admin authority.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "regional-admin",
+    "term": "Regional admin",
+    "definition": "Administration over the projects in one region of a company. Distinct from company-wide super-admin and from project admin.",
+    "status": "draft"
+  },
+  {
+    "id": "group",
+    "term": "Group",
+    "definition": "A company-scoped set of users that grants project roles to all its members at once, alongside their direct roles.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "custom-role",
+    "term": "Custom role",
+    "definition": "A project-scoped role with a chosen set of permissions, in addition to the system roles admin, collaborator and viewer.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "session",
+    "term": "Session",
+    "definition": "One signed-in device or browser, with its own absolute end. Access and refresh tokens are issued within it, and logout ends it.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "project-invitation",
+    "term": "Project invitation",
+    "definition": "An offer of a project role sent to an email address. It is applied when the person accepts, or when they register and verify.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "project-approval",
+    "term": "Project approval",
+    "definition": "Validity review of an ordinary submitted project. User accounts never wait for this approval.",
+    "status": "draft"
+  },
+  {
+    "id": "first-project-onboarding",
+    "term": "First-project onboarding",
+    "definition": "The usual deal-led project that Track3D creates, giving the customer immediate setup access.",
+    "status": "draft"
+  },
+  {
+    "id": "independent-clone",
+    "term": "Independent clone",
+    "definition": "A company's own copy of a shared project. It stays independent of the original after creation.",
+    "status": "draft"
+  },
+  {
+    "id": "project-status",
+    "term": "Project status",
+    "definition": "The project's approval and lifecycle state, for example Draft, Pending approval, Need revision, Approved, Rejected, Initiated, Archived or Deleted. Distinct from construction phase and from access stage.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "construction-phase",
+    "term": "Construction phase",
+    "definition": "Where the build itself is (for example Pre-bid or In-construction), as recorded on the project. It doesn't decide what the project allows.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "project-access-stage",
+    "term": "Project access stage",
+    "definition": "What a project currently allows (Pre-Setup, Setup, In-construction, Archived, Deleted), worked out from its status and dates rather than stored.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "order-form",
+    "term": "Order form",
+    "definition": "The signed commercial agreement for a deal. Sales can upload it to prefill a project, and the enterprise approval path generates one for signing.",
+    "status": "draft"
+  },
+  {
+    "id": "configuration-option",
+    "term": "Configuration option",
+    "definition": "A per-project choice in a list such as note type, status, priority or tag, capture tag, or sheet or BIM type, with a name and colour.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "site-hierarchy",
+    "term": "Site hierarchy",
+    "definition": "Flexible arrangement of project locations, without mandatory fixed site/building/floor levels.",
+    "status": "draft"
+  },
+  {
+    "id": "structure",
+    "term": "Structure",
+    "definition": "One location in the site hierarchy, such as a building, floor, room or area. Structures nest to any depth. Designs, snapshots, captures and progress are all scoped to a structure.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "zone",
+    "term": "Zone",
+    "definition": "A defined spatial area used to split progress within a structure. Zones must not overlap; the exact boundary and comparison scope is still open.",
+    "status": "draft"
+  },
+  {
+    "id": "design",
+    "term": "Design",
+    "definition": "The plan for a structure, either a BIM model or a 2D sheet, against which captures are aligned and progress is marked.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "sheet",
+    "term": "Sheet",
+    "definition": "A 2D plan drawing. It is one kind of design (the other is a BIM model). Progress assets are drawn on sheets.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "design-revision",
+    "term": "Design revision",
+    "definition": "A revised design for a structure. Today, quantities and progress carry forward to it; the future policy is open (DEC-003).",
+    "status": "draft"
+  },
+  {
+    "id": "capture",
+    "term": "Capture",
+    "definition": "An observation of a site at a project location and time, with its media.",
+    "status": "draft"
+  },
+  {
+    "id": "snapshot",
+    "term": "Snapshot",
+    "definition": "The point in time a structure was, or is planned to be, captured. Captures and realities belong to a snapshot, and progress measurements are dated by the snapshot. A snapshot can be inactive (visible only to support) or active.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "reality",
+    "term": "Reality",
+    "definition": "A processed, viewable result of a capture, such as a 360° panorama, point cloud or orthophoto. One capture can produce several realities.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "ground-control-point",
+    "term": "Ground control point (GCP)",
+    "definition": "A surveyed point with known x, y, z coordinates, marked on drone images so processing can georeference the results.",
+    "status": "draft"
+  },
+  {
+    "id": "upload-complete",
+    "term": "Upload complete",
+    "definition": "The milestone when file transfer finishes. Distinct from processing and from customer publication.",
+    "status": "draft"
+  },
+  {
+    "id": "live",
+    "term": "LIVE",
+    "definition": "Processed information available to customers. The exact visibility contract for each mode and output is still open.",
+    "status": "draft"
+  },
+  {
+    "id": "progress",
+    "term": "Progress",
+    "definition": "Measured completion of tracked work over time, compared with planned quantities where takeoff exists. It can go down (PROG-REQ-019).",
+    "status": "draft"
+  },
+  {
+    "id": "takeoff",
+    "term": "Takeoff",
+    "definition": "A planned quantity that measured construction work can be compared with. It is the denominator of a completion percentage.",
+    "status": "draft"
+  },
+  {
+    "id": "non-takeoff-project",
+    "term": "Non-takeoff project",
+    "definition": "A progress project tracked in absolute measured quantities, with no planned quantities and so no completion percentages.",
+    "status": "draft"
+  },
+  {
+    "id": "progress-asset",
+    "term": "Progress asset",
+    "definition": "A measured item or piece of work and its location. Distinct from a planned quantity.",
+    "status": "draft"
+  },
+  {
+    "id": "category",
+    "term": "Category",
+    "definition": "A type of tracked construction work, such as drywall or concrete.",
+    "status": "draft"
+  },
+  {
+    "id": "stage",
+    "term": "Stage",
+    "definition": "A tracked step within a category, such as framing or finish. Detailed formula and ordering rules are not yet approved.",
+    "status": "draft"
+  },
+  {
+    "id": "progress-correction",
+    "term": "Progress correction",
+    "definition": "A change that fixes incorrectly recorded work. It may reduce progress.",
+    "status": "draft"
+  },
+  {
+    "id": "physical-work-loss",
+    "term": "Physical work loss",
+    "definition": "An actual reduction of completed work, such as demolition. Distinct from correcting a past measurement.",
+    "status": "draft"
+  },
+  {
+    "id": "takeoff-correction",
+    "term": "Takeoff correction",
+    "definition": "A fix to an erroneous planned quantity. Historical completion percentages must be recalculated.",
+    "status": "draft"
+  },
+  {
+    "id": "genuine-scope-change",
+    "term": "Genuine scope change",
+    "definition": "A change to what is planned to be built. The policy for historical percentages is on hold (DEC-001).",
+    "status": "draft"
+  },
+  {
+    "id": "overview",
+    "term": "Overview",
+    "definition": "Progress as it stood on one selected date. It does not define a universal project percentage on its own.",
+    "status": "draft"
+  },
+  {
+    "id": "trends",
+    "term": "Trends",
+    "definition": "How progress changed across time.",
+    "status": "draft"
+  },
+  {
+    "id": "forecast",
+    "term": "Forecast",
+    "definition": "An estimated future outcome under stated assumptions, not a guaranteed completion date.",
+    "status": "draft"
+  },
+  {
+    "id": "potential-delay",
+    "term": "Potential delay",
+    "definition": "A forecast that a stage will finish more than 14 calendar days after its planned end at the current working-day rate.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "schedule-variance",
+    "term": "Schedule variance",
+    "definition": "Actual percentage minus scheduled percentage at the latest capture. 15 points or more either way is ahead or behind.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "alert",
+    "term": "Alert",
+    "definition": "A condition calling for attention. Clearing, snoozing and resolving the underlying work each need their own definition.",
+    "status": "draft"
+  },
+  {
+    "id": "alert-snooze",
+    "term": "Alert snooze",
+    "definition": "One user hides an alert until a date. Nothing changes for other users or for the condition itself.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "alert-clear",
+    "term": "Alert clear",
+    "definition": "Marks an alert condition as handled for everyone. Today, a manual clear also suppresses the same condition in later captures (disputed, PROG-REQ-042).",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "note",
+    "term": "Note",
+    "definition": "A location-pinned record on the site, such as an issue, task, observation or discrepancy, with type, status, priority, tags and assignees.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "daily-note",
+    "term": "Daily note",
+    "definition": "One structure's site diary for a day, with photos, audio and positions, summarised in a scheduled daily-note report.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "notification-preference",
+    "term": "Notification preference",
+    "definition": "A user's per-project choice of which kinds of email they receive. With no preference set, they receive everything.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "construction-schedule",
+    "term": "Construction schedule",
+    "definition": "Planned timing of site work and its comparison with observations.",
+    "status": "draft"
+  },
+  {
+    "id": "issued-report",
+    "term": "Issued report",
+    "definition": "A generated artifact already made available. Distinct from a live view recalculated after corrections.",
+    "status": "draft"
+  },
+  {
+    "id": "report-delivery-schedule",
+    "term": "Report delivery schedule",
+    "definition": "Timing and recipients of recurring reports. Distinct from the construction schedule.",
+    "status": "draft"
+  },
+  {
+    "id": "view-mode",
+    "term": "View mode",
+    "definition": "What one side of the viewer shows: a sheet, the drone map, a BIM model or a reality. Two view modes joined (for example sheet-sheet or bim-reality) make a compare.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "compare-sync",
+    "term": "Sync (lock)",
+    "definition": "In compare, the state where moving one side moves the other to the matching place. Unsynced (unlocked) sides move independently.",
+    "status": "draft"
+  },
+  {
+    "id": "gaussian-splat",
+    "term": "Gaussian splat",
+    "definition": "A photorealistic 3D model of a capture that users can move through, shown in the viewer's 3D mode. Found as a splat file beside the capture's images.",
+    "status": "draft"
+  },
+  {
+    "id": "point-cloud",
+    "term": "Point cloud",
+    "definition": "A 3D set of measured points produced from a 360 video, drone or laser capture, viewable in 3D.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "drone-map",
+    "term": "Drone map",
+    "definition": "The map view of a drone capture's orthophoto, on which designs can be overlaid.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "zone-heat-map",
+    "term": "Zone heat map",
+    "definition": "A sheet-view layer that colours each zone from red (least progress) to green (most), relative to the zones shown. Distinct from the category status heatmap on the progress overview.",
+    "status": "draft"
+  },
+  {
+    "id": "transformation-matrix",
+    "term": "Transformation matrix",
+    "definition": "A 4x4 matrix (16 numbers) that places a reality's coordinates onto its design so the two line up.",
+    "status": "draft"
+  },
+  {
+    "id": "reality-split",
+    "term": "Reality split",
+    "definition": "Turning one multi-image reality into one reality per image; the original becomes inactive.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "offline-viewer-package",
+    "term": "Offline viewer package",
+    "definition": "A downloadable archive of a project's 360° imagery and progress for browsing without a connection.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "pinpoint",
+    "term": "Pinpoint",
+    "definition": "A capture's photo position pinned on a sheet; clicking it opens the photo taken there.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "bim-model",
+    "term": "BIM model",
+    "definition": "A 3D building model (for example Revit or Navisworks) uploaded as a design. It is the other kind of design besides a sheet.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "sheet-type",
+    "term": "Sheet type",
+    "definition": "The discipline of a sheet, such as Architectural, Electrical or Plumbing. Sheet types are per-project configuration options; Architectural Sheet is built in and can't be renamed, recoloured or deleted.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "capture-sheet",
+    "term": "Capture sheet",
+    "definition": "The one sheet per location that captures are placed on, called the default design in code. It must be an active PDF sheet that isn't a zone sheet.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "design-status",
+    "term": "Design status",
+    "definition": "Where a design is in processing and review: created, uploaded, processing, readyForCapture, inReview, active, inActive or error. Only active designs are live for customers.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "internal-design",
+    "term": "Internal design",
+    "definition": "A design marked internal by the Track3D team. Support users see it; customers don't.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "design-error-reason",
+    "term": "Design error reason",
+    "definition": "A reason recorded when a design is rejected, such as missing scale, missing legend or north arrow, low quality, vector sheet required, wrong level, schedule sheet, duplicate, or several drawings on one sheet.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "share-link",
+    "term": "Share link",
+    "definition": "A link to one saved project view (structure, date and viewer state) that opens without a Track3D account. It can be disabled, re-enabled or deleted.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "anonymous-share-viewer",
+    "term": "Anonymous share viewer",
+    "definition": "Someone who opened a share link without signing in. Track3D acts for them through one shared anonymous account; they are not an invited project user.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "integration",
+    "term": "Integration",
+    "definition": "A connection between Track3D and another construction or business tool, such as Procore, Autodesk Construction Cloud or Fieldwire. Being signed in to the tool, having the project linked and having data in sync are separate states.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "project-link",
+    "term": "Project link (integration)",
+    "definition": "The mapping of one Track3D project to one project in another tool. A project has at most one link per tool.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "external-capture-api",
+    "term": "External capture API",
+    "definition": "The API through which an external or autonomous capture system registers captures and uploads their files so they appear as normal captures.",
+    "status": "draft"
+  },
+  {
+    "id": "api-key",
+    "term": "API key",
+    "definition": "A secret a partner system sends instead of a user sign-in to reach a limited set of external routes. Today keys are environment settings, not issued in the product.",
+    "status": "draft"
+  },
+  {
+    "id": "job",
+    "term": "Job",
+    "definition": "The platform record that carries a capture through upload and processing. It has a pipeline status, a processing outcome and error tags, and belongs to a snapshot.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "processing-outcome",
+    "term": "Processing outcome",
+    "definition": "A job's processing result, separate from its pipeline status: processing, partiallyProcessedOngoing, partialProcessed, active (succeeded) or error.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "error-tag",
+    "term": "Error tag",
+    "definition": "A reason recorded on a failed or partly processed job, such as \"Improper lighting\", \"Short capture time\" or \"Firmware issues\". Kept only while the outcome is error or partialProcessed.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "capture-run",
+    "term": "Capture run",
+    "definition": "One processing attempt for a job in Antman (stitching, processing, image or a review split). A job can have several runs; each has its own lifecycle status.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "pipeline-route",
+    "term": "Pipeline route",
+    "definition": "Project or structure configuration in Antman that says whether a job type runs on a virtual machine or an Airflow DAG, and with which DAG and settings.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "pipeline-version",
+    "term": "Pipeline version",
+    "definition": "The version of the processing pipeline that produced a reality, for example v9. Recorded on the reality by a callback.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "point-cloud-verification",
+    "term": "Point-cloud verification",
+    "definition": "The first Track3D operations review after non-image processing: a reviewer claims the run and approves or rejects the point cloud before registration and sign-off.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "sign-off",
+    "term": "Sign-off",
+    "definition": "The last Track3D operations review of a processing run. Approval asks the platform to make the reality active; rejection makes it inactive.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "project-intent",
+    "term": "Project intent",
+    "definition": "Whether a project is for Progress Monitoring or for Visual Documentation only. It decides which features the project gets and, under the credit model, whether the project earns credit or uses it.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "progress-project",
+    "term": "Progress project",
+    "definition": "A project with the Progress Monitoring intent. Under the credit model it adds credit to its company's pool.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "visual-project",
+    "term": "Visual project",
+    "definition": "A project with the Visual Documentation intent. Under the credit model it uses credit for its size when it is created or approved.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "credit-pool",
+    "term": "Credit pool",
+    "definition": "A company's credit for visual projects, measured in square feet. It is made of one lot per progress project, each usable between that project's start and end dates.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "credit-lot",
+    "term": "Credit lot",
+    "definition": "The credit one progress project adds to its company's pool, with its granted, used and expired square feet and its validity window.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "credit-ledger",
+    "term": "Credit ledger",
+    "definition": "The append-only history of every credit change for a company, used by Sales and as the audit record of where a visual project's credit came from.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "credit-draw",
+    "term": "Credit draw",
+    "definition": "Taking a visual project's full size from the pool, soonest-ending lot first. It can be handed back only if the project was never saved.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "credit-override",
+    "term": "Credit override",
+    "definition": "Sales allowing a visual project beyond the company's available credit, with a reason. The excess is logged separately.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "size-correction",
+    "term": "Size correction",
+    "definition": "An enterprise admin's change to a progress project's site area. It waits for Sales to approve or reject it before credit changes.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "grandfathered-project",
+    "term": "Grandfathered visual project",
+    "definition": "A visual project that existed before its company moved into the credit model. It uses no credit.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "visual-only-project",
+    "term": "Paid visual-only project",
+    "definition": "A visual project Sales sold on its own order form. It neither uses nor earns credit. Switched off for now.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "project-intent-control",
+    "term": "Project intent control",
+    "definition": "A hidden company setting that decides which project intents its users may create: both, visual only, or none. Described in code as an interim setup.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "sales-user",
+    "term": "Track3D sales user",
+    "definition": "A Track3D staff user with the Sales system role. Sales create deal projects from order forms and manage the credit model.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "ginee-assistant",
+    "term": "Ginee assistant",
+    "definition": "Track3D's chat assistant. It answers questions about a user's projects from live Track3D data and can take a few actions for them. Ginee is also the name of the internal agent runtime it is built on.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "ai-gateway",
+    "term": "AI gateway",
+    "definition": "The Track3D service that hosts the assistant and staff agents, checks who is calling, runs their tools, calls the model provider, and serves the MCP connector.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "mcp-connector",
+    "term": "MCP connector",
+    "definition": "The way an outside AI client (such as Claude or ChatGPT) connects to Track3D, signs in as a user and calls Track3D tools. The client's own model writes the answer.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "assistant-tool",
+    "term": "Assistant tool",
+    "definition": "One named operation the assistant can call, such as reading a progress overview or creating a report schedule. Read tools fetch data; write tools change it.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "project-access-check",
+    "term": "Project access check",
+    "definition": "The assistant's check, before a project tool runs, that the user may view that project. It asks the Projects API with the user's own token.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "write-confirmation",
+    "term": "Write confirmation",
+    "definition": "The two-step pattern for assistant changes: the first call shows a preview and saves nothing, and the change happens only after the user confirms in a later turn.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "app-action",
+    "term": "App action",
+    "definition": "An on-screen action the assistant runs in the mobile app, such as filtering a list or opening a structure. It never changes Track3D data.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "usage-ledger",
+    "term": "Usage ledger",
+    "definition": "The permanent record of every assistant model call, with user, company, tokens and cost.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "enterprise-company",
+    "term": "Enterprise company",
+    "definition": "A customer company on the enterprise tier, which gets the company-level workspace. Today Track3D support turns the tier on or off.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "enterprise-workspace",
+    "term": "Enterprise workspace",
+    "definition": "The company-level part of Track3D (overview, projects, regions, user management, captures, notes, activities) used by enterprise admins across the company's projects.",
+    "status": "draft"
+  },
+  {
+    "id": "activity-log",
+    "term": "Activity log",
+    "definition": "The company-wide, time-ordered record of project, user-role, design, capture and sign-in events shown in the enterprise workspace.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "upload-group",
+    "term": "Upload group",
+    "definition": "Captures one user uploads together from one mobile device. The group decides when the consolidated upload email is sent.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "techops-dashboard",
+    "term": "TechOps dashboard",
+    "definition": "Track3D's internal dashboard for following captures through processing.",
+    "status": "draft"
+  },
+  {
+    "id": "cs-dashboard",
+    "term": "CS dashboard",
+    "definition": "Internal customer-success views of capture and project counts across companies, built from a per-capture copy kept for the dashboard.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "real-user-monitoring",
+    "term": "Real-user monitoring",
+    "definition": "Page performance measured in real users' browsers and checked against alert thresholds.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "one-hour-goal",
+    "term": "One-hour goal",
+    "definition": "The proposed objective that at least 80% of eligible captures reach a registered, quality-checked, correctly scaled point cloud within 60 minutes of cloud upload validation.",
+    "status": "draft"
+  },
+  {
+    "id": "out-of-scope-asset",
+    "term": "Out-of-scope asset",
+    "definition": "A progress asset kept on the drawing but no longer tracked: it counts toward no progress and can't be edited until it is brought back into scope. Customers don't see these by default; support users do.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "saved-view",
+    "term": "Saved view",
+    "definition": "A named set of filters a user keeps for the overview, trends, alerts or schedule page of one project. Each page also has a built-in default view.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "alert-assignee",
+    "term": "Alert assignee",
+    "definition": "A person made responsible for acting on an alert group; they are notified when assigned or unassigned.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "ml-method-project",
+    "term": "ML-method project",
+    "definition": "A project whose progress is marked through the machine-learning method rather than by support marking each asset by hand. Each progress asset is at one stage, and predictions are available only in these projects.",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "prediction-rates",
+    "term": "Prediction rates",
+    "definition": "The four work rates the prediction chart compares for a stage: planned, recent (last 28 days), required (to finish by the scheduled end) and average (since the scheduled start).",
+    "status": "inferred-from-code"
+  },
+  {
+    "id": "facade-zone",
+    "term": "Facade zone",
+    "definition": "A zone tagged as a building facade, with elevation drawings assigned, whose progress comes from drone captures.",
+    "status": "draft"
+  },
+  {
+    "id": "elevation-drawing",
+    "term": "Elevation drawing",
+    "definition": "A drawing of a building face, flagged as a facade drawing; facade progress is shown only on it.",
+    "status": "draft"
+  }
+]

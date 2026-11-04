@@ -1,0 +1,17 @@
+{
+  "id": "DEC-006",
+  "title": "Recording decreases, including to zero, with effective dates and reasons",
+  "status": "open",
+  "question": "How does a user record a decrease (to any value, including zero), and on which effective date? Must they say whether it is a correction or physical loss? Is deleting an asset ever the same as recording lost work?",
+  "context": "Decreases are allowed (PROG-REQ-019). Today zero-only edits can be rejected, a missing snapshot can move the effective date to now, and deleting an asset removes its history (PROG-REQ-022, PROG-REQ-023).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROG"
+  ],
+  "requirements": [
+    "PROG-REQ-019",
+    "PROG-REQ-022",
+    "PROG-REQ-023"
+  ]
+}

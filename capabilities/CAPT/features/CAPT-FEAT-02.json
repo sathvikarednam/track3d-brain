@@ -1,0 +1,221 @@
+{
+  "id": "CAPT-FEAT-02",
+  "name": "Processing and publication",
+  "summary": "What happens after upload: automatic processing into realities (frames, panoramas, point clouds), processing deadlines, Track3D's review, and when results become LIVE for customers.",
+  "components": [
+    "svc.capture-api",
+    "svc.constructn-api",
+    "worker.antman",
+    "job.airflow-dags"
+  ],
+  "decisions": [
+    "DEC-025",
+    "DEC-007"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Processing is automatic. Frame review is done by Track3D staff (CAPT-REQ-007). Who may activate or hide a reality is DEC-025.",
+    "actions": [
+      {
+        "action": "Review and filter processed frames",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Download a reality",
+        "permission": "download-reality",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "CAPT-NFR-002",
+      "kind": "freshness",
+      "statement": "Each capture records a processing deadline: upload time plus a configured number of hours per mode, separately for visual documentation and 2D progress. Missed deadlines are flagged. The hour values live in environment settings, not in code.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "What turnaround does Track3D promise customers for each mode, and are the production settings (VD_SLA_FOR_*, TWOD_SLA_FOR_360V) the same?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "CAPT-REQ-005",
+      "type": "business-rule",
+      "title": "Uploaded data is processed automatically and made LIVE",
+      "statement": "The processing pipeline automatically processes uploaded data, generates outputs and makes them LIVE for customers. Exception paths are still to be reviewed. Which outputs must be ready for LIVE is open (DEC-025).",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-025"
+      ],
+      "implemented_by": [
+        "svc.capture-api",
+        "worker.antman",
+        "job.airflow-dags"
+      ],
+      "legacy_ids": [
+        "T3D-BR-010"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-010",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Define per mode which realities, snapshot state and progress visibility make a capture available to customers"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-005-AC1",
+          "given": "An authorised user has captured site data, and upload and processing both succeed",
+          "when": "Processing finishes",
+          "then": "The processed outputs become available to the customer",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-006",
+      "type": "requirement",
+      "title": "Processing extracts located frames for the web viewer",
+      "statement": "Processing extracts frames from the uploaded media, assigns each a location on the design, and shows the processed frames in the web viewer.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-025"
+      ],
+      "implemented_by": [
+        "worker.antman",
+        "job.airflow-dags",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-CAPTURE-UPLOAD-FR-003",
+        "T3D-CAND-CAPTURE-UPLOAD-FR-004"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-016",
+          "title": "Prior PRD - Capture upload (including drone and GCP) (t3d-prd-agent)",
+          "at": "FR-003, FR-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-006-AC1",
+          "given": "A 360 video captured along a route on floor 2",
+          "when": "Processing completes",
+          "then": "Frames appear at their positions on floor 2's sheet in the web viewer",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-007",
+      "type": "requirement",
+      "title": "Track3D reviews and filters frames",
+      "statement": "Track3D's operations team can filter processed frames, for example to remove unusable ones, as part of review.",
+      "rationale": "Whether this review gates LIVE, and for which modes, is DEC-025.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-025"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-CAPTURE-UPLOAD-FR-005"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-016",
+          "title": "Prior PRD - Capture upload (including drone and GCP) (t3d-prd-agent)",
+          "at": "FR-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-007-AC1",
+          "given": "A processed capture with blurred frames",
+          "when": "A Track3D operations user filters them out",
+          "then": "The removed frames don't appear in the customer's viewer",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-008",
+      "type": "business-rule",
+      "title": "Each capture carries a processing deadline per mode",
+      "statement": "When media upload finishes, the capture records a deadline for visual documentation (and for 2D progress on 360 video): the upload time plus a configured number of hours for that mode. Captures that pass it are flagged as missed.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "360 video deadlines",
+          "code": "constructn-api:src/controllers/capture.controller.ts#L519@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "other-mode deadlines",
+          "code": "constructn-api:src/controllers/capture.controller.ts#L545@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "capture.md (SLA tracking)",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The phone-image deadline calls setHours(getMinutes() + N) (line 550), which looks like a bug; also confirm this legacy v1 controller still runs for new captures"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-008-AC1",
+          "given": "VD_SLA_FOR_360I is 24, and a 360 image capture finishes uploading at 09:00 on 1 March",
+          "when": "The deadline is recorded",
+          "then": "The visual-documentation deadline is 09:00 on 2 March",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "id": "PROJ-FEAT-06",
+  "name": "Project configuration options",
+  "summary": "Per-project option lists (note types, statuses, priorities and tags, capture tags, sheet and BIM types), with names and colours.",
+  "components": [
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Each option type has its own add, update and delete strings (for example add-note-type and update-capture-tags). Generic project-config strings are shown here.",
+    "actions": [
+      {
+        "action": "Create a configuration option",
+        "permission": "create-project-config",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Rename or recolour an option",
+        "permission": "update-project-config",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "Also requires the option itself to allow it"
+      },
+      {
+        "action": "Delete an option",
+        "permission": "delete-project-config",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROJ-NFR-006",
+      "kind": "volume",
+      "statement": "Maximum options per type per project.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Is there a practical limit (for example tags per project) that pickers and reports must handle?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROJ-REQ-026",
+      "type": "business-rule",
+      "title": "Option names are unique per project, entity and type",
+      "statement": "An option name is trimmed and can't be empty. Within one project it must be unique for the same entity and option type, so a note tag and a capture tag may share a name.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-028"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-028",
+          "code": "project-api:src/application/services/projectConfigurationV1.service.ts#L230@6bc5d334eaae"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-026-AC1",
+          "given": "A project with a note tag named Safety",
+          "when": "A user adds a capture tag named Safety, then another note tag named \" Safety\"",
+          "then": "The capture tag is saved, and the second note tag is rejected",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-027",
+      "type": "business-rule",
+      "title": "Some options can't be renamed or recoloured",
+      "statement": "Each option says whether it can be renamed, recoloured or deleted. An edit is refused if the option doesn't allow it, or if the new name clashes with another option of the same entity and type.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-029"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-029",
+          "code": "project-api:src/application/services/projectConfigurationV1.service.ts#L330@6bc5d334eaae"
+        }
+      ],
+      "open_checks": [
+        "The duplicate-name query doesn't visibly exclude the option being edited"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-027-AC1",
+          "given": "A built-in note status that can't be renamed",
+          "when": "A user tries to rename it",
+          "then": "The change is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-028",
+      "type": "business-rule",
+      "title": "Options in use can't be deleted",
+      "statement": "Deleting an option that notes or designs still use is refused, and the response lists the items using it. The HTTP request still succeeds. For tags, an option can remove the tag from notes first and then delete it.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.project-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-030"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-030",
+          "code": "project-api:src/application/services/projectConfigurationV1.service.ts#L496@6bc5d334eaae"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-028-AC1",
+          "given": "A note type used by three notes",
+          "when": "A user deletes it",
+          "then": "It is not deleted, and the response lists the three note IDs",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-029",
+      "type": "requirement",
+      "title": "Coloured options, created in place",
+      "statement": "Users can give configuration options colours and create new options without leaving their current screen. Issue and task reports show options in their colours.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-009",
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-010",
+        "T3D-CAND-PROJECT-MANAGEMENT-FR-011"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-013",
+          "title": "Prior PRD - Project management (t3d-prd-agent prd-organised)",
+          "at": "FR-009..FR-011",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-029-AC1",
+          "given": "A user on the configuration options page",
+          "when": "They give an option a colour",
+          "then": "The colour is applied, and existing notes using the option are unaffected otherwise",
+          "status": "draft"
+        },
+        {
+          "id": "PROJ-REQ-029-AC2",
+          "given": "A user editing a note",
+          "when": "They create a new tag from the tag picker",
+          "then": "The tag is created and applied without leaving the note",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

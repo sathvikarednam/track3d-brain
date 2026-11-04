@@ -1,0 +1,258 @@
+{
+  "id": "ENT-FEAT-02",
+  "name": "Organisation settings",
+  "summary": "Company-level settings for enterprise admins: the organisation profile, organisation integrations, project creation and approval rules, and data export controls. Mostly PRD-only today; profile edits are support-only.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-071"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The PRD wants organisation and regional admins to manage these settings and leaves per-section roles open. Today only the profile update exists, and only support users can call it.",
+    "actions": [
+      {
+        "action": "Edit the organisation profile",
+        "permission": "update-company",
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "deny",
+          "regional-admin": "deny",
+          "admin": "deny"
+        },
+        "note": "Current behaviour; PRD wants org admins to edit it (ENT-REQ-008)"
+      },
+      {
+        "action": "View the organisation profile",
+        "permission": "view-company",
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "unknown",
+          "regional-admin": "unknown",
+          "admin": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Manage organisation integrations",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "unknown",
+          "regional-admin": "unknown",
+          "admin": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Set project creation and approval rules",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "unknown",
+          "regional-admin": "unknown",
+          "admin": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Turn data export on or off and issue a Power BI key",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "unknown",
+          "regional-admin": "unknown",
+          "admin": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "ENT-NFR-003",
+      "kind": "freshness",
+      "statement": "How quickly a changed export or project-creation setting takes effect across all of the company's projects.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Must a disabled export option stop downloads immediately, including for sessions already open?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "ENT-REQ-008",
+      "type": "requirement",
+      "title": "Organisation admins manage the organisation profile",
+      "statement": "Organisation admins see and edit the organisation profile (name, logo, website, phone, address, time zone). The contact email is shown but can't be edited.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The PRD gives profile editing to organisation and regional admins. The code refuses company updates from anyone who is not a Track3D support user, and accepts any field in the body, including the contact email. Product to decide in DEC-071."
+      },
+      "decisions": [
+        "DEC-071"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "org-settings.md FR-001, AC-001, EC-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "updateCompany",
+          "code": "constructn-api:src/controllersv2/company.controller.ts#L174@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-008-AC1",
+          "given": "An organisation admin on the Settings, Organisation section",
+          "when": "They try to change the contact email",
+          "then": "The field can't be edited and a message says why",
+          "status": "disputed"
+        },
+        {
+          "id": "ENT-REQ-008-AC2",
+          "given": "A company super-admin who is not a support user",
+          "when": "They save a new company phone number",
+          "then": "(Current behaviour) The update is refused with \"Access denied\"",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-009",
+      "type": "requirement",
+      "title": "Organisation integrations are managed in one place",
+      "statement": "Organisation admins see every available integration, its status and the projects connected to it, and can disconnect a project from an integration.",
+      "rationale": "PRD-only. No organisation-level integration settings were found; integrations are managed per project today (INTG).",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-071"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "org-settings.md FR-002, AC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-009-AC1",
+          "given": "An integration connected to three of the company's projects",
+          "when": "The admin opens Settings, Integrations",
+          "then": "They see the integration's status and the three projects, each with a disconnect option",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-010",
+      "type": "requirement",
+      "title": "Organisations can restrict project creation and set approval criteria",
+      "statement": "Organisation admins can limit project creation to organisation and regional admins, and set the approval criteria for new projects. Today's approval rules are in PROJ (PROJ-REQ-004) and USER-REQ-039.",
+      "rationale": "PRD-only. No settings screen or stored setting for this was found.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-071",
+        "DEC-024"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "org-settings.md FR-003, AC-003, EC-002",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "enterprise-management.md EC-001",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-010-AC1",
+          "given": "An organisation that limits project creation to organisation and regional admins",
+          "when": "A project admin who is neither tries to create a project",
+          "then": "Creation is refused",
+          "status": "draft"
+        },
+        {
+          "id": "ENT-REQ-010-AC2",
+          "given": "A regional admin",
+          "when": "They try to create a project outside their regions",
+          "then": "Creation is refused",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-011",
+      "type": "requirement",
+      "title": "Organisations control data export",
+      "statement": "Organisation admins can turn data export by download on or off, turn Power BI export on or off, and generate an API key for Power BI export.",
+      "rationale": "PRD-only. No organisation-level export switch or Power BI key was found on the branches read.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-071"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "org-settings.md FR-004, AC-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-011-AC1",
+          "given": "An organisation with download export turned off",
+          "when": "A project user tries to download project data",
+          "then": "The download is not offered",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

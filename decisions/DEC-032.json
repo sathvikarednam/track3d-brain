@@ -1,0 +1,18 @@
+{
+  "id": "DEC-032",
+  "title": "Report delivery, recipients and failure recovery",
+  "status": "open",
+  "question": "Who may receive a report, including external addresses? Is eligibility checked again at send time after membership changes? What does the requester see when generation or email fails? How are duplicate emails avoided?",
+  "context": "Today the report owner acknowledges the callback and claims \"notified\" before email delivery finishes, so a delivery failure can be lost (RPT-REQ-004). Scheduled reports always add the requester as a recipient (RPT-REQ-007).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "RPT",
+    "NOTIF"
+  ],
+  "requirements": [
+    "RPT-REQ-004",
+    "RPT-REQ-007",
+    "RPT-REQ-008"
+  ]
+}

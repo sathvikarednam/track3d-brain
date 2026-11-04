@@ -1,0 +1,158 @@
+{
+  "id": "NOTIF-FEAT-01",
+  "name": "Email delivery and preferences",
+  "summary": "Who receives platform emails, how notification preferences filter them, retries, and the delivery audit trail.",
+  "components": [
+    "svc.messaging-service"
+  ],
+  "decisions": [
+    "DEC-032"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Each user manages their own notification preferences per project. Sending is done by services, not by users.",
+    "actions": [
+      {
+        "action": "Change own notification preferences",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "NOTIF-NFR-001",
+      "kind": "retention",
+      "statement": "How long email audit records are kept, and who may read them.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What retention and access applies?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "NOTIF-REQ-001",
+      "type": "business-rule",
+      "title": "Recipients are resolved to users, and test environments don't email customers",
+      "statement": "An email needs a template and recipients. Addresses that belong to known users are resolved to those users; other addresses are kept as raw emails. Outside production and beta, known users from outside Track3D's own domains are skipped. Some company-and-template pairs can also be blocked.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.messaging-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-097"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-097",
+          "code": "messaging-service:src/application/service/email.serviceV2.ts#L24@41fa757919eb"
+        }
+      ],
+      "open_checks": [
+        "Raw unmatched addresses skip the environment filter that applies to known users"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "NOTIF-REQ-001-AC1",
+          "given": "The dev environment, and an email to a customer user at acme.com",
+          "when": "It is sent",
+          "then": "The customer is skipped",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "NOTIF-REQ-002",
+      "type": "business-rule",
+      "title": "Notification preferences filter recipients",
+      "statement": "If a user has no preference set for the project, they receive the email. If they do, the email's notification category (or the type's default) must be enabled. Recipients are de-duplicated before sending.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.messaging-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-098"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-098",
+          "code": "messaging-service:src/application/service/email.serviceV2.ts#L101@41fa757919eb"
+        }
+      ],
+      "open_checks": [
+        "An unknown notification type can suppress delivery for users who have preferences"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "NOTIF-REQ-002-AC1",
+          "given": "A user who turned off alert emails for project P",
+          "when": "An alert email for P is sent to them and two others",
+          "then": "Only the other two receive it, once each",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "NOTIF-REQ-003",
+      "type": "business-rule",
+      "title": "Sending retries up to three times and is audited",
+      "statement": "Each email is tried up to 3 times. Its start, success or error is saved in an email audit record.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.messaging-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-099"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-099",
+          "code": "messaging-service:src/application/service/email.serviceV2.ts#L45@41fa757919eb"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "NOTIF-REQ-003-AC1",
+          "given": "The email provider fails twice and then succeeds",
+          "when": "An email is sent",
+          "then": "It is delivered, and its audit record shows success",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "NOTIF-REQ-004",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

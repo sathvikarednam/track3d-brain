@@ -1,0 +1,243 @@
+{
+  "id": "VIEW-FEAT-04",
+  "name": "Reality alignment and splitting",
+  "summary": "Correcting how realities sit on the design: entering a transformation matrix, marking realities as correctly aligned, aligning the rest automatically, viewing several realities as one walkthrough, and splitting a multi-image reality into one reality per image.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-037"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Every reality route, including the ones that change data, checks only view-project. The web screens for these tools sit under internal routes (tm-viewer, kp-alignment).",
+    "actions": [
+      {
+        "action": "Split a reality",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      },
+      {
+        "action": "Change a reality's transformation matrix",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      },
+      {
+        "action": "Change a reality's status",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Access details for this item are handled with engineering separately."
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "VIEW-NFR-005",
+      "kind": "volume",
+      "statement": "Largest number of realities a user can select at once for a combined walkthrough or alignment run.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What is the maximum number of realities a user can select at once?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "VIEW-REQ-020",
+      "type": "business-rule",
+      "title": "Splitting a reality makes one reality per image",
+      "statement": "Splitting a reality with two or more images creates, for each image, a new capture, job and reality on the same snapshot with the same status, placed on the structure's default design. The original reality becomes inactive. Inactive realities and single-image realities can't be split. Pinpoints, the snapshot and the structure's capture count are refreshed afterwards.",
+      "rationale": "(Current behaviour) The mode check meant to limit splitting to 360 Image and Phone Image always passes, so any active or in-review reality with several images is accepted.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-037"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "splitRealityV2 inactive check",
+          "code": "constructn-api:src/services/reality-services.ts#L946@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "mode check always true",
+          "code": "constructn-api:src/services/reality-services.ts#L948@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "single-image check",
+          "code": "constructn-api:src/services/reality-services.ts#L271@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "original set inactive",
+          "code": "constructn-api:src/services/reality-services.ts#L387@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-020-AC1",
+          "given": "An active 360 Image reality with 12 images",
+          "when": "It is split",
+          "then": "12 new active realities exist with one image each, and the original is inactive",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-020-AC2",
+          "given": "A reality with one image",
+          "when": "A split is requested",
+          "then": "It is refused with \"No further spliting can be done for this reality.\"",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "VIEW-REQ-020-AC3",
+          "given": "An inactive reality",
+          "when": "A split is requested",
+          "then": "It is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-021",
+      "type": "requirement",
+      "title": "Enter a transformation matrix for a reality",
+      "statement": "Users can enter a 4x4 transformation matrix (16 numbers) for a reality to correct its alignment. Anything other than 16 numbers is rejected. Saving it makes it the reality's active matrix for that target and deactivates the others.",
+      "rationale": "Current code matches the PRD's 16-number rule and rejection.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-037"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-021",
+          "title": "Prior PRD - Split, merge and KP registration platform flow (t3d-prd-agent prd-organised)",
+          "at": "FR-003, AC-003, EC-003, US-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "changeTmJson 16-element check",
+          "code": "constructn-api:src/controllers/reality.controller.ts#L1661@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-021-AC1",
+          "given": "A reality is selected",
+          "when": "The user enters 16 numbers as its matrix and saves",
+          "then": "The matrix is applied and becomes the reality's active matrix",
+          "status": "draft"
+        },
+        {
+          "id": "VIEW-REQ-021-AC2",
+          "given": "A reality is selected",
+          "when": "The user enters 15 numbers",
+          "then": "The input is rejected and the user is asked for a valid 4x4 matrix",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-022",
+      "type": "requirement",
+      "title": "Walk through several realities, and align the rest from the good ones",
+      "statement": "Users can pick several realities from the type dropdown and see their walkthroughs together. They can mark the realities that are correctly aligned, then start an alignment that aligns the remaining ones from those.",
+      "rationale": "PRD-only. An internal transformation-matrix registration screen exists (tm-viewer), but multi-select walkthroughs, marking realities as aligned and automatic alignment were not confirmed in the code read.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-037"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-021",
+          "title": "Prior PRD - Split, merge and KP registration platform flow (t3d-prd-agent prd-organised)",
+          "at": "FR-001, FR-002, FR-004, FR-005, AC-001, AC-002, AC-004, AC-005, EC-001, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "VIEW-REQ-022-AC1",
+          "given": "Three realities on a floor, two marked as correctly aligned",
+          "when": "The user starts the alignment",
+          "then": "The third reality is aligned using the two marked ones",
+          "status": "draft"
+        },
+        {
+          "id": "VIEW-REQ-022-AC2",
+          "given": "No realities are selected in the dropdown",
+          "when": "The user confirms",
+          "then": "No walkthrough is shown and the user is asked to select realities",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "VIEW-REQ-023",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "VIEW-REQ-024",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

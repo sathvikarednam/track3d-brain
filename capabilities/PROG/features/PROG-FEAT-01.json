@@ -1,0 +1,260 @@
+{
+  "id": "PROG-FEAT-01",
+  "name": "Categories and stages",
+  "summary": "Defines what work is tracked (categories, such as drywall) and the measured steps within it (stages, such as framing or finish), including measurement formulas, order, colour and planned timelines.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-002",
+    "DEC-010"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The matrix reflects seed data and role naming, not verified deployed assignments (DEC-010).",
+    "actions": [
+      {
+        "action": "View categories and stages",
+        "permission": "view-category",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Add a category",
+        "permission": "add-category",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Update a category",
+        "permission": "update-category",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a category",
+        "permission": "delete-category",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Add a stage",
+        "permission": "add-category-stage",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Update a stage",
+        "permission": "update-category-stage",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a stage",
+        "permission": "delete-category-stage",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Manage category templates",
+        "permission": "update-category-template",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-001",
+      "kind": "volume",
+      "statement": "Maximum categories per project and stages per category that configuration screens and recalculation must support.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What are the largest current projects, and what do we commit to? Needs product input plus production data."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-001",
+      "type": "business-rule",
+      "title": "Stages are tracked independently, without weighting",
+      "statement": "Each stage within a category has its own progress. The system does not combine stages into one weighted category percentage (for example, framing 80% and paint 30% are not reported as walls 55%).",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-002"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/progress-calculation.md §2",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-001-AC1",
+          "given": "A category with stages Framing at 80% and Paint at 30% for one location",
+          "when": "A user views progress for that category",
+          "then": "Framing and Paint are shown as separate values, and no combined category percentage is calculated",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-002",
+      "type": "business-rule",
+      "title": "Stage names, order and colours are unique within a category",
+      "statement": "Within one category, no two stages may share a name, sequence position or colour. Stages are ordered by sequence.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-053"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-053",
+          "code": "api-2d-progress:src/application/service/asset-category.service.ts#L1508@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "Case and whitespace normalisation"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-002-AC1",
+          "given": "A category with a stage named Framing at sequence 1",
+          "when": "A user renames another stage to Framing, or moves it to sequence 1",
+          "then": "The change is rejected and the existing stages are unchanged",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-003",
+      "type": "business-rule",
+      "title": "A category is active while any of its stages is active",
+      "statement": "When every stage in a category is inactive, the category becomes inactive. Reactivating any stage reactivates the category. Inactive categories are left out of progress views.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-054"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-054",
+          "code": "api-2d-progress:src/application/service/asset-category.service.ts#L1544@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-003-AC1",
+          "given": "An active category with two active stages",
+          "when": "Both stages are set inactive",
+          "then": "The category becomes inactive and disappears from customer progress views",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-003-AC2",
+          "given": "An inactive category whose stages are all inactive",
+          "when": "One stage is set active",
+          "then": "The category becomes active again",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-004",
+      "type": "requirement",
+      "title": "Only category name and colour changes are audited",
+      "statement": "Today, changes to a category's name and colour are written to the audit history. Changes to other configuration, such as formulas, units or stage order, are not shown to be audited.",
+      "rationale": "Recorded so product can decide what configuration history is required (DEC-002).",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-002"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-054",
+          "code": "api-2d-progress:src/application/service/asset-category.service.ts#L1544@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-004-AC1",
+          "given": "A category",
+          "when": "Its name or colour is changed",
+          "then": "The audit history records the previous and new value",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "DEC-067",
+  "title": "How outside AI clients sign in to Track3D",
+  "status": "open",
+  "question": "Which outside AI clients may connect to Track3D, how do users sign in from them (including users who sign in with SSO and have no password), and may a gateway page collect Track3D passwords on Track3D's behalf?",
+  "context": "The MCP connector uses open client registration and a gateway-hosted email and password form, then keeps the user's Track3D refresh token encrypted (AI-REQ-015). Sign-in methods and session policy are open in DEC-011.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "AI",
+    "USER"
+  ],
+  "requirements": [
+    "AI-REQ-015"
+  ]
+}

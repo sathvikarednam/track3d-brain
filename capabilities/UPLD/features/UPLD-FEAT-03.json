@@ -1,0 +1,238 @@
+{
+  "id": "UPLD-FEAT-03",
+  "name": "Drone images and ground control points",
+  "summary": "Uploading drone image batches and marking ground control points (GCPs) so processing can georeference them.",
+  "components": [
+    "web.track3d-web",
+    "svc.upload-api",
+    "svc.capture-api"
+  ],
+  "decisions": [
+    "DEC-027",
+    "DEC-028"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Upload drone images and GCPs",
+        "permission": "upload",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "UPLD-NFR-004",
+      "kind": "volume",
+      "statement": "Largest drone batch (images and total size) and number of GCPs per upload.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How many images and GCPs do typical and largest drone flights produce?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "UPLD-REQ-010",
+      "type": "requirement",
+      "title": "Batch upload of geotagged drone images",
+      "statement": "Users can upload drone images as a batch, including geotagged images, and see them listed.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.upload-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-CAPTURE-UPLOAD-FR-010",
+        "T3D-CAND-CAPTURE-UPLOAD-FR-015"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-016",
+          "title": "Prior PRD - Capture upload (including drone and GCP) (t3d-prd-agent)",
+          "at": "FR-010, FR-015",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-010-AC1",
+          "given": "A user on the drone upload page",
+          "when": "They upload a batch of drone images",
+          "then": "The images upload and are listed",
+          "status": "draft"
+        },
+        {
+          "id": "UPLD-REQ-010-AC2",
+          "given": "A user with geotagged images",
+          "when": "They upload them",
+          "then": "The images are stored with their geotags",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-011",
+      "type": "requirement",
+      "title": "Ground control points from a CSV or typed in",
+      "statement": "Users can add ground control points by uploading a CSV or by entering each point's x, y and z coordinates.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-CAPTURE-UPLOAD-FR-011",
+        "T3D-CAND-CAPTURE-UPLOAD-FR-016"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-016",
+          "title": "Prior PRD - Capture upload (including drone and GCP) (t3d-prd-agent)",
+          "at": "FR-011, FR-016",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "track3d-web src/constants/uploads.ts (GCP input method, values from your CSV)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-011-AC1",
+          "given": "Drone images are uploaded",
+          "when": "The user uploads a GCP CSV, or types in x, y and z for each point",
+          "then": "The points are accepted and listed",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-012",
+      "type": "requirement",
+      "title": "The best images for each point are picked automatically",
+      "statement": "For each ground control point, the system picks the 4 or 5 nearest and best images for marking.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.capture-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-CAPTURE-UPLOAD-FR-012",
+        "T3D-CAND-CAPTURE-UPLOAD-FR-017"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-016",
+          "title": "Prior PRD - Capture upload (including drone and GCP) (t3d-prd-agent)",
+          "at": "FR-012, FR-017",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-012-AC1",
+          "given": "GCPs have been entered",
+          "when": "The system processes them",
+          "then": "4 or 5 nearest images are shown for each point",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-013",
+      "type": "requirement",
+      "title": "Mark each point on at least three images, and save",
+      "statement": "Users mark each ground control point's location on at least three of its images, and can save their marks.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-CAPTURE-UPLOAD-FR-013",
+        "T3D-CAND-CAPTURE-UPLOAD-FR-018",
+        "T3D-CAND-CAPTURE-UPLOAD-FR-019"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-016",
+          "title": "Prior PRD - Capture upload (including drone and GCP) (t3d-prd-agent)",
+          "at": "FR-013, FR-018, FR-019",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-013-AC1",
+          "given": "The nearest images for a point are shown",
+          "when": "The user marks the point on three of them and saves",
+          "then": "The marks are recorded and confirmed",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "UPLD-REQ-014",
+      "type": "requirement",
+      "title": "All points must be marked before the upload continues",
+      "statement": "The drone upload can't continue until every ground control point is marked.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-CAPTURE-UPLOAD-FR-014"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-016",
+          "title": "Prior PRD - Capture upload (including drone and GCP) (t3d-prd-agent)",
+          "at": "FR-014",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "UPLD-REQ-014-AC1",
+          "given": "Five GCPs, four of them marked",
+          "when": "The user tries to continue",
+          "then": "They are stopped until the fifth is marked, and then they can continue",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

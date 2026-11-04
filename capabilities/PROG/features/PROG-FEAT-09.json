@@ -1,0 +1,238 @@
+{
+  "id": "PROG-FEAT-09",
+  "name": "Trade-specific progress scopes",
+  "summary": "Progress tracking for scopes the standard floor-plan flow does not fit: electrical work tracked against takeoff assets, building facades tracked on elevation drawings from drone captures, and underground utilities drawn on drone maps and kept in step with design drawings.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-076"
+  ],
+  "roles": {
+    "status": "draft",
+    "note": "The electrical PRD has support (TechOps) marking progress for clients; the facade PRD has field engineers creating facade zones. No dedicated permission strings exist. Zone strings from the seed catalog are listed where the PRD action is a zone action.",
+    "actions": [
+      {
+        "action": "Mark electrical progress against takeoff assets",
+        "permission": "update-asset",
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny",
+          "support-user": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Create a facade zone",
+        "permission": "create-zones",
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Draw assets on a drone map",
+        "permission": "create-asset",
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-013",
+      "kind": "freshness",
+      "statement": "Time for an asset drawn on a drone map to appear on the matching design drawing, and the reverse.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Must the two views agree as soon as the asset is saved, or may synchronisation run as a background step?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-052",
+      "type": "requirement",
+      "title": "Electrical scopes are tracked at takeoff-asset level",
+      "statement": "Takeoff assets for electrical scopes are ingested with their identifiers, codes, categories and stages. Support marks progress per capture against each takeoff asset, including partial counts, quantities or ratios, and can select and duplicate a takeoff asset together with its stages and measurements. The progress details panel shows each category's stages with progress aggregated from the takeoff assets, and identifiers are searchable.",
+      "rationale": "PRD only as a whole. No duplicate-with-stages action or identifier search was traced. Client dashboards and automated detection are out of scope in the PRD.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-062",
+          "title": "Prior PRDs - Takeoff management, electrical progress tracking and out-of-scope assets (t3d-prd-agent prd-organised)",
+          "at": "electrical-progress-tracking.md FR-001..FR-005, AC-001..AC-004, EC-001..EC-003, NFR-001",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-052-AC1",
+          "given": "A set of electrical takeoff assets is ingested",
+          "when": "Support opens the progress module",
+          "then": "The assets are available with their identifiers, categories and stages",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-052-AC2",
+          "given": "Support marks 12 of 40 receptacles complete on a capture",
+          "when": "The progress details panel is opened",
+          "then": "The receptacle stage shows the aggregated progress from those takeoff assets",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-052-AC3",
+          "given": "The same takeoff asset is ingested twice",
+          "when": "Ingestion runs",
+          "then": "No duplicate asset or corrupted data results",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-053",
+      "type": "requirement",
+      "title": "Facade progress is tracked on elevation drawings in facade zones",
+      "statement": "Users create named polygonal zones tagged as facade zones on a structure and assign elevation drawings to them. Elevation drawings are flagged as facade drawings. Facade progress is a percentage complete, only drone captures can be assigned to it, and it is shown only on its elevation drawing. Facade and interior categories are kept apart: facade categories are not selectable on normal sheets and the reverse. Facade progress appears on the details, overview and trends pages, with N/A for structures that have none.",
+      "rationale": "PRD only; no facade or elevation-drawing tracking was found in api-2d-progress or track3d-web. Whether facade and interior categories may be combined on trends or details, and zones versus sub-structures, are open (DEC-076).",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-076"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-063",
+          "title": "Prior PRDs - Facade progress, underground utilities and drywall readiness (t3d-prd-agent prd-organised)",
+          "at": "facade-progress-tracking.md FR-001..FR-017, AC-001..AC-006, EC-001..EC-009",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-053-AC1",
+          "given": "A facade zone with an assigned elevation drawing and a drone capture",
+          "when": "Facade progress is recorded",
+          "then": "It is shown as a percentage on that elevation drawing only",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-053-AC2",
+          "given": "A user viewing a normal floor-plan sheet",
+          "when": "They open the category list",
+          "then": "Facade categories cannot be selected",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-053-AC3",
+          "given": "A structure with no facade progress",
+          "when": "The overview shows a facade category",
+          "then": "That structure shows N/A",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-054",
+      "type": "requirement",
+      "title": "Assets drawn on drone maps stay in step with design drawings",
+      "statement": "Users draw polygons, lines and points on a drone map. Each asset is saved in site coordinates and appears on the matching design drawing, and assets drawn on a design appear on the drone map. Progress can be recorded against either. A design with no transformation cannot sync and the user is told; possible map inaccuracies are flagged.",
+      "rationale": "PRD only. The code already converts design-drawn takeoff into site coordinates (PROG-REQ-055), but drawing on a drone map was not found (a drone-measurement out-of-scope switch exists only as commented-out code). AI extraction, auto-detection and terrain comparison are out of scope in the PRD.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-063",
+          "title": "Prior PRDs - Facade progress, underground utilities and drywall readiness (t3d-prd-agent prd-organised)",
+          "at": "underground-utilities-tracking.md FR-001, FR-002, AC-001, AC-002, EC-001, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-054-AC1",
+          "given": "A user viewing a drone map of a site level with a registered design",
+          "when": "They draw a pipe run as a line",
+          "then": "The line is saved and appears on the design drawing in the same place",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-054-AC2",
+          "given": "A design with no transformation",
+          "when": "A user draws on the drone map",
+          "then": "The user is told the asset cannot sync to that design",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-055",
+      "type": "business-rule",
+      "title": "Design-drawn takeoff is also stored in site coordinates",
+      "statement": "Takeoff drawn on a design keeps its design coordinates and is converted to site coordinates through the design's transformation; if there is none, it is converted to BIM coordinates through the shortest available chain. Takeoff given in design coordinates must name a real design, or it is rejected.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "design required",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L227@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "design-to-site transform",
+          "code": "api-2d-progress:src/application/service/take-off.service.ts#L229@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-055-AC1",
+          "given": "A design with a transformation to the site",
+          "when": "Takeoff is drawn on it",
+          "then": "The takeoff is saved with both design and site coordinates",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-055-AC2",
+          "given": "Takeoff in design coordinates with no design named",
+          "when": "It is created",
+          "then": "It is rejected because a valid design is required",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

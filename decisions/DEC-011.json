@@ -1,0 +1,17 @@
+{
+  "id": "DEC-011",
+  "title": "Sign-in methods and session policy",
+  "status": "open",
+  "question": "Which sign-in methods does Track3D support for which customers? What are the password rules, and how long do web and mobile sessions last, both idle and in total?",
+  "context": "Code offers several providers and defaults to 15-minute web and 24-hour mobile access tokens inside a fixed session end (USER-REQ-007, USER-REQ-009, USER-REQ-010). These are source defaults, not an agreed policy.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "USER"
+  ],
+  "requirements": [
+    "USER-REQ-007",
+    "USER-REQ-009",
+    "USER-REQ-010"
+  ]
+}

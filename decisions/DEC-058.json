@@ -1,0 +1,19 @@
+{
+  "id": "DEC-058",
+  "title": "Delivery guarantee between upload and processing",
+  "status": "open",
+  "question": "Must every upload that is ready for processing be guaranteed to start processing exactly once? If so, what reconciles dropped or duplicated notifications, Airflow submissions that failed or timed out, and callbacks that were rejected?",
+  "context": "The trigger notification is dropped after three attempts (PROC-REQ-002), Antman accepts before persisting (PROC-REQ-003), a failed Airflow submission can be marked running (PROC-REQ-006), and the hierarchy callback is missing a required field (PROC-REQ-013). Some recovery exists (PROC-REQ-005, PROC-REQ-015, PROC-REQ-023) but covers other gaps.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROC"
+  ],
+  "requirements": [
+    "PROC-REQ-002",
+    "PROC-REQ-003",
+    "PROC-REQ-005",
+    "PROC-REQ-006",
+    "PROC-REQ-013"
+  ]
+}

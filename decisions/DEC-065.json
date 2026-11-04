@@ -1,0 +1,18 @@
+{
+  "id": "DEC-065",
+  "title": "What Track3D data may go to outside model providers and AI clients",
+  "status": "open",
+  "question": "Which customer data may the assistant send to outside model providers, under which contract terms (for example zero data retention), and may a customer opt out? When a customer connects their own AI client, who is responsible for the data that client receives?",
+  "context": "Web chat sends messages, recent history and up to 50 rows per tool result to OpenAI (AI-REQ-003). Staff agents send logs, traces and billing data the same way (AI-REQ-022). The unreleased mobile branch sends voice to OpenAI for transcription (AI-REQ-021). Over MCP, the customer's own AI client receives the tool results (AI-REQ-017). The Field OS PRD asks only that AI analysis data be stored securely and comply with data protection rules.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "AI"
+  ],
+  "requirements": [
+    "AI-REQ-003",
+    "AI-REQ-017",
+    "AI-REQ-021",
+    "AI-REQ-022"
+  ]
+}

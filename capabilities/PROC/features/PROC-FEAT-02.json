@@ -1,0 +1,425 @@
+{
+  "id": "PROC-FEAT-02",
+  "name": "Processing statuses and outputs",
+  "summary": "The statuses a job moves through, the realities (point clouds, orthophotos, image sets) processing creates, the checks before a reality is made active, and the signals that tell downstream steps a snapshot is ready.",
+  "components": [
+    "svc.constructn-api",
+    "svc.capture-api",
+    "worker.capture-api-snapshot-active",
+    "worker.antman",
+    "svc.api-gateway-service"
+  ],
+  "decisions": [
+    "DEC-025",
+    "DEC-055",
+    "DEC-058"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Outputs are written by the pipeline and activated by Track3D operations. Customers only see the result. Which project permission guards reality activation in the web app wasn't traced here.",
+    "actions": [
+      {
+        "action": "Activate or deactivate a processed reality",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": "Who may activate is DEC-025"
+      },
+      {
+        "action": "Download a processed reality",
+        "permission": "download-reality",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROC-NFR-003",
+      "kind": "freshness",
+      "statement": "Time from processing finishing to the reality being active and visible to the customer.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How soon after processing completes must outputs be LIVE, and does that differ by mode (DEC-025, DEC-056)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROC-REQ-008",
+      "type": "business-rule",
+      "title": "Jobs carry a pipeline status, a processing outcome and error tags",
+      "statement": "A job has a pipeline status (from captured and uploaded through readyForStitching, readyForProcessing, processingFailed, geoSpatialMapping and realityUploaded to active) and a separate processing outcome: processing, partiallyProcessedOngoing, partialProcessed, active or error. A partly processed job can record the percentage processed. Error tags such as \"Improper lighting\" or \"Firmware issues\" are kept only while the outcome is error or partialProcessed, and are cleared otherwise.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-055"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "job status values",
+          "code": "db-models:src/definitions/job.ts#L12@1cabc8a1de8d"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "processing outcome values",
+          "code": "db-models:src/definitions/job.ts#L32@1cabc8a1de8d"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "error tags",
+          "code": "db-models:src/definitions/job.ts#L42@1cabc8a1de8d"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "error tags cleared",
+          "code": "constructn-api:src/controllers/job.controller.ts#L1443@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "No allowed-transition table was found for job status; confirm whether any service enforces the order"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-008-AC1",
+          "given": "A job with outcome error and the tag \"Noisy data\"",
+          "when": "Its outcome is updated to active without tags",
+          "then": "The job's error tags are empty",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-008-AC2",
+          "given": "A job",
+          "when": "Its outcome is updated to partialProcessed with the tag \"Short capture time\"",
+          "then": "The tag is kept on the job",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-009",
+      "type": "business-rule",
+      "title": "Reaching geoSpatialMapping creates the job's reality",
+      "statement": "When the pipeline sets a job to geoSpatialMapping, the platform creates a reality for the job's capture with status created and prepares its storage folder. 360 video, phone image, 360 image, laser and phone video captures get a point cloud; drone captures get a point cloud and an orthophoto. The job then moves to realityUploaded. (Current behaviour) On the staging site it moves to readyForProcessing instead.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "geoSpatialMapping handler",
+          "code": "constructn-api:src/controllers/job.controller.ts#L1451@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "staging-only status",
+          "code": "constructn-api:src/controllers/job.controller.ts#L1455@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "point cloud per mode",
+          "code": "constructn-api:src/services/reality-services.ts#L425@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/reality-ingestion.md (Method 1 - Pipeline Callback)",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Antman also creates draft realities through /ant-man/create-draft-reality; confirm which path v9 runs use"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-009-AC1",
+          "given": "A drone image job on production",
+          "when": "The pipeline sets its status to geoSpatialMapping",
+          "then": "A reality with status created and types point cloud and orthophoto exists for the capture, and the job is realityUploaded",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-010",
+      "type": "requirement",
+      "title": "Processing generates a point cloud from visual data",
+      "statement": "The system integrates captured visual data to generate a point cloud for the capture.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-025"
+      ],
+      "implemented_by": [
+        "job.airflow-dags",
+        "worker.antman"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-007"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-007",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/reality-ingestion.md (Mode-specific required files)",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Point-cloud algorithms run in container images (ml-jarvis, t3d-jarvis-stitching) whose source wasn't traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-010-AC1",
+          "given": "Visual data is available",
+          "when": "The system processes the data",
+          "then": "A point cloud is generated",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-011",
+      "type": "business-rule",
+      "title": "A reality is made active only when its required output files exist",
+      "statement": "Activating a reality through the platform first checks that the files required for its mode exist in storage, for example the image list (and the images folder, except for phone images), plus point-cloud files for 360 video and drone. If any is missing it refuses, and the reality keeps its status. A 360 video reality also needs its job's processing outcome set. Laser and phone video list only an empty entry, which the code-first docs read as no check. Activation then refreshes the snapshot, zone coverage, capture counts and turnaround tracking.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-025",
+        "DEC-057"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "required files per mode",
+          "code": "constructn-api:src/config/constructn-config.ts#L14@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "file check",
+          "code": "constructn-api:src/controllers/reality.controller.ts#L264@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "refusal",
+          "code": "constructn-api:src/controllers/reality.controller.ts#L377@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "360 video outcome check",
+          "code": "constructn-api:src/controllers/reality.controller.ts#L242@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/reality-ingestion.md (Actions triggered on activation)",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Confirm what the empty laser and phone video entries check in storage"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-011-AC1",
+          "given": "A 360 video reality whose storage folder has images but no point-cloud files",
+          "when": "An operator sets it to active",
+          "then": "The request is refused with the missing files listed, and the reality stays in its current status",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-011-AC2",
+          "given": "A phone image reality with images_normalized.json but no images.json",
+          "when": "An operator sets it to active",
+          "then": "The file check passes, because one of the image lists is enough",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-012",
+      "type": "business-rule",
+      "title": "A snapshot is ready for merging once all its jobs have finished and one succeeded",
+      "statement": "A capture-api worker signals once per snapshot when the snapshot is Active, every job in it has a final outcome (active, partialProcessed or error) and at least one is active or partialProcessed. It also raises the project's latest snapshot date. Ready means finished, not that every job succeeded. The once-only claim is taken before delivery and isn't released if delivery fails. (Current behaviour) Antman's db-merger endpoint only logs what it receives.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-054",
+        "DEC-058"
+      ],
+      "implemented_by": [
+        "worker.capture-api-snapshot-active",
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E115",
+          "code": "capture-api:src/workers/snapshotActiveWebhook/activationCheck.ts#L20@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E116",
+          "code": "capture-api:src/workers/snapshotActiveWebhook/changeStreamWatcher.ts#L53@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "db-merger receiver",
+          "code": "ant-man:app/routers/webhooks_router.py#L158@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "SNAPSHOT_ACTIVE_WEBHOOK_URL wasn't read; confirm which service receives the signal and whether merging starts",
+        "Define what happens when a job is reprocessed or added after the snapshot was claimed"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-012-AC1",
+          "given": "An Active snapshot with two jobs, one active and one error",
+          "when": "The second job's outcome is written",
+          "then": "The ready signal is sent once, and the project's latest snapshot date is raised to the snapshot date",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-012-AC2",
+          "given": "An Active snapshot whose only job has outcome error",
+          "when": "The outcome is written",
+          "then": "No ready signal is sent",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-013",
+      "type": "business-rule",
+      "title": "(Current behaviour) The reality hierarchy callback is rejected for a missing pipeline version",
+      "statement": "It requires jobId, the hierarchy and a pipeline version. Antman sends this callback only for v9 processing runs, without the pipeline version, so capture-api rejects it and Antman only logs the failure.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-058"
+      ],
+      "implemented_by": [
+        "svc.capture-api",
+        "worker.antman",
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E118",
+          "code": "capture-api:src/adapters/controllers/pipeline-reality-generation.controller.ts#L77@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-039",
+          "title": "Processing orchestration trace - capture-api job and snapshot workers, reality callback (2026-10-27)",
+          "at": "E117",
+          "code": "capture-api:src/frameworks/routes/pipeline-reality-generation.routes.ts#L20@ac5726e820f2"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "gateway public route",
+          "code": "api-gateway-service:src/bootstrap/env.config.ts#L163@26221f6c7bb3"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-040",
+          "title": "Antman and Airflow orchestration trace - webhook, routing, queue, DAGs, callbacks (2026-10-27)",
+          "at": "E137",
+          "code": "ant-man:app/repositories/mongo_api_client.py#L273@6ac4185b7031"
+        }
+      ],
+      "open_checks": [
+        "Confirm the deployed pair; if it matches, no v9 reality gets its parent or pipeline version recorded"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-013-AC1",
+          "given": "A v9 processing run registers a hierarchy artifact",
+          "when": "Antman calls the hierarchy callback",
+          "then": "(Current behaviour) capture-api answers \"pipelineVersion is required\" and no reality is updated",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-013-AC2",
+          "given": "A callback without the x-api-key header",
+          "when": "It reaches capture-api",
+          "then": "It is refused as unauthorised",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

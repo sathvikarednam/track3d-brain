@@ -1,0 +1,23 @@
+{
+  "id": "DEC-063",
+  "title": "What should consume entitlement",
+  "status": "open",
+  "question": "Should anything besides creating a visual project consume entitlement, for example captures, processing runs or progress usage? Should a visual project's credit be returned if it ends early?",
+  "context": "Today nothing is metered: the only split is the project's intent (BILL-REQ-022). In the credit model, credit is consumed once, by a visual project's size (BILL-REQ-006), and never returned (BILL-REQ-003). No capture, processing or progress code checks credit.",
+  "options": [
+    "Area only (as built)",
+    "Add usage-based limits",
+    "Return credit when a visual project ends early"
+  ],
+  "decision": null,
+  "capabilities": [
+    "BILL",
+    "CAPT",
+    "PROG"
+  ],
+  "requirements": [
+    "BILL-REQ-003",
+    "BILL-REQ-006",
+    "BILL-REQ-022"
+  ]
+}

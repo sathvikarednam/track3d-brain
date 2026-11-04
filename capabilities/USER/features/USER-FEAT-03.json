@@ -1,0 +1,137 @@
+{
+  "id": "USER-FEAT-03",
+  "name": "Profile and account deletion",
+  "summary": "Managing your own profile and password, and deleting your account.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-015"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Every verified user can manage their own profile, including users with no project role (USER-REQ-021).",
+    "actions": [
+      {
+        "action": "Update own profile and password",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete own account",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "USER-NFR-003",
+      "kind": "retention",
+      "statement": "How long a deleted user's retained identity and audit records are kept.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What retention period applies, and does any customer contract or law require full erasure (DEC-015)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "USER-REQ-014",
+      "type": "requirement",
+      "title": "Users manage their own profile",
+      "statement": "In their profile, users can update their personal information, change their password and log out.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-SIGNUP-FLOW-FR-003"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-009",
+          "title": "Prior PRD - Signup flow (t3d-prd-agent prd-organised)",
+          "at": "FR-003",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-125",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-014-AC1",
+          "given": "A signed-in user",
+          "when": "They open their profile",
+          "then": "They can update their details, change their password and log out",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-015",
+      "type": "business-rule",
+      "title": "Deleting an account anonymises it but keeps an audit record",
+      "statement": "When users delete their own account, their name, email and status are replaced, all sessions are revoked and all role assignments are removed. The original identity is kept in a deleted-user record, so this is not full erasure.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-015"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-021"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-021",
+          "code": "constructn-api:src/controllersv2/user.controller.ts#L2739@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-124",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-015-AC1",
+          "given": "A user assigned to two projects",
+          "when": "They delete their account",
+          "then": "They can no longer sign in, they appear on neither project, and their original identity exists only in the deleted-user record",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

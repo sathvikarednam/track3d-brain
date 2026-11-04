@@ -1,0 +1,188 @@
+{
+  "id": "SHARE-FEAT-02",
+  "name": "Anonymous share viewer",
+  "summary": "What happens when someone opens a share link: which links resolve, and the anonymous identity Track3D gives the viewer so the shared view can load without an account.",
+  "components": [
+    "svc.project-api",
+    "svc.constructn-api",
+    "svc.api-gateway-service",
+    "svc.permission-management",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-046",
+    "DEC-047"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The anonymous share viewer is not a product role. The content of that record was not read.",
+    "actions": [
+      {
+        "action": "Open a share link",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Anyone with the link; no sign-in"
+      },
+      {
+        "action": "Act in the project as the anonymous share viewer",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Decided by the anonymous role record (DEC-047)"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "SHARE-NFR-002",
+      "kind": "latency",
+      "statement": "Time from opening a share link to the shared view being shown.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How fast must a shared view open for an outside viewer on a typical connection?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "SHARE-REQ-010",
+      "type": "business-rule",
+      "title": "Only an active link to a live project opens, as an anonymous viewer",
+      "statement": "Opening a share link needs no sign-in. It resolves only if the link is active and not deleted and its project exists and isn't deleted. The viewer gets the link's saved view and a token for the shared anonymous account that carries the share key. This viewer is not an invited project user.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-047"
+      ],
+      "implemented_by": [
+        "svc.project-api",
+        "svc.api-gateway-service",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-094"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-094",
+          "code": "project-api:src/application/services/shareLinksV1.service.ts#L237@0d3ad660d655"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "public route",
+          "code": "project-api:src/frameworks/routes/v1.routes.ts#L29@0d3ad660d655"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "sharelinks.md §Business Rules",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Restricted check, handled with engineering separately."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-010-AC1",
+          "given": "A disabled share link",
+          "when": "Someone opens it through the projects service",
+          "then": "It is not found",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "SHARE-REQ-010-AC2",
+          "given": "An active link whose project was deleted",
+          "when": "Someone opens it",
+          "then": "They are told the project is no longer available",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "SHARE-REQ-010-AC3",
+          "given": "An active link to a live project",
+          "when": "Someone opens it without signing in",
+          "then": "They get the saved view and an anonymous token carrying the share key",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "SHARE-REQ-011",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "SHARE-REQ-012",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "SHARE-REQ-013",
+      "type": "requirement",
+      "title": "Outside stakeholders see a shared view without an account",
+      "statement": "A share link gives an outside stakeholder controlled, view-only access to the project view it was made for, replacing less secure sharing such as email attachments. Links are protected in transit.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-047"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-038",
+          "title": "Prior PRDs - Public sharing, shared content, and permissions and sharing (t3d-prd-agent prd-organised)",
+          "at": "shared-content Goals, US-004, NFR-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "sharelinks.md §Purpose",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Restricted check, handled with engineering separately."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SHARE-REQ-013-AC1",
+          "given": "An outside stakeholder with a share link",
+          "when": "They open it",
+          "then": "They see the shared view and cannot change project data",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

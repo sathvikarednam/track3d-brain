@@ -1,0 +1,236 @@
+{
+  "id": "AI-FEAT-03",
+  "name": "Track3D tools for external AI clients (MCP)",
+  "summary": "The MCP server on the AI gateway that lets a user connect an outside AI client, such as Claude or ChatGPT, to their Track3D data. Covers how the user signs in, which tools the client sees, that it is read-only, and that the answers are produced by the client's own model provider.",
+  "components": [
+    "svc.ai-gateway",
+    "mcp.track3d-mcp"
+  ],
+  "decisions": [
+    "DEC-065",
+    "DEC-067",
+    "DEC-068"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Project data still follows View Project (AI-REQ-007). Write and report tools are not offered.",
+    "actions": [
+      {
+        "action": "Connect an AI client with a Track3D email and password",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "company-super-admin": "allow",
+          "support-user": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Read project progress through the AI client",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow",
+          "company-super-admin": "unknown",
+          "support-user": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Create or change report schedules through the AI client",
+        "permission": null,
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "company-super-admin": "deny",
+          "support-user": "deny"
+        },
+        "note": "Excluded from the MCP surface whatever the write setting"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "AI-NFR-004",
+      "kind": "throughput",
+      "statement": "How many tool calls an AI client may make. Today the MCP endpoint allows 120 requests a minute and the sign-in form 10 a minute, both per IP address rather than per user.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "Should external AI clients have a per-user or per-company call budget?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "AI-REQ-015",
+      "type": "business-rule",
+      "title": "An AI client connects by signing in to Track3D on a gateway login page",
+      "statement": "Connecting an outside AI client uses OAuth. The client registers itself, then the user types their Track3D email and password on a login page hosted by the AI gateway. The gateway signs in to Track3D for them, keeps the Track3D refresh token encrypted, and calls Track3D as that user on every tool call, refreshing the access token when needed. The client's own token lasts 1 hour and can be renewed for 30 days. MCP is not mounted on a public address unless a strong signing secret is set.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-067",
+        "DEC-011"
+      ],
+      "implemented_by": [
+        "svc.ai-gateway",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "POST /mcp/login",
+          "code": "ginee-stack:apps/ai-gateway/src/mcp/router.ts#L89@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "createLoginSession",
+          "code": "ginee-stack:apps/ai-gateway/src/mcp/session.ts#L14@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "ACCESS_TTL_SEC and REFRESH_TTL_SEC",
+          "code": "ginee-stack:apps/ai-gateway/src/mcp/tokens.ts#L13@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "weak secret refuses to mount",
+          "code": "ginee-stack:apps/ai-gateway/src/server.ts#L262@237dcd2e8828"
+        }
+      ],
+      "open_checks": [
+        "Users who sign in with Okta, Microsoft, Apple, Procore or Autodesk have no Track3D password, so they cannot connect this way.",
+        "Any client may register itself and name its own redirect address; which clients are allowed is not restricted in code."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-015-AC1",
+          "given": "A user connecting Claude to Track3D",
+          "when": "They enter a wrong password on the gateway login page",
+          "then": "They see \"Invalid email or password.\" and no code is issued to the client",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "AI-REQ-015-AC2",
+          "given": "The same IP address",
+          "when": "It submits the login form an 11th time within a minute",
+          "then": "The attempt is refused as rate limited",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-016",
+      "type": "business-rule",
+      "title": "External AI clients get read-only tools by default",
+      "statement": "Tools that change Track3D data (creating, updating, deleting or restoring report schedules, and recording an incident) are hidden from external AI clients and cannot be called unless writes are switched on in configuration. Report generation and all report schedule tools are excluded from MCP even when writes are on. The internal access-check tool is never offered. A client sees the progress assistant's tools when the user is signed in, and internal tools only when the email is internal.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-068"
+      ],
+      "implemented_by": [
+        "svc.ai-gateway"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "WRITE_TOOLS",
+          "code": "ginee-stack:apps/ai-gateway/src/mcp/identity.ts#L46@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "MCP_EXCLUDED_TOOLS",
+          "code": "ginee-stack:apps/ai-gateway/src/mcp/identity.ts#L75@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "makeIncludeTool",
+          "code": "ginee-stack:apps/ai-gateway/src/mcp/identity.ts#L83@237dcd2e8828"
+        }
+      ],
+      "open_checks": [
+        "A new write tool is only kept off MCP if someone adds it to the write list; nothing detects a missing entry."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-016-AC1",
+          "given": "A customer user connected through an AI client, with writes not switched on",
+          "when": "The client lists tools",
+          "then": "It sees progress read tools such as the progress overview, and no report schedule, report generation or incident tools",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "AI-REQ-016-AC2",
+          "given": "The same customer user",
+          "when": "The client calls an observability tool by name",
+          "then": "The tool is not available to them",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "AI-REQ-017",
+      "type": "business-rule",
+      "title": "Answers in external AI clients are produced by the client's own model provider",
+      "statement": "Over MCP, Track3D only runs the tools. The outside client's model (for example Anthropic's or OpenAI's, under the customer's own account) receives the tool results and writes the answer. Track3D sends it standing instructions to use only the returned data and not to reach outside the user's access, but cannot enforce how that client stores or uses the data.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-065"
+      ],
+      "implemented_by": [
+        "svc.ai-gateway"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "DEFAULT_MCP_INSTRUCTIONS",
+          "code": "ginee-stack:apps/ai-gateway/src/server.ts#L272@237dcd2e8828"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "buildRunOptions",
+          "code": "ginee-stack:apps/ai-gateway/src/mcp/identity.ts#L23@237dcd2e8828"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "AI-REQ-017-AC1",
+          "given": "A user asks Claude for their project's stage alerts through the Track3D connector",
+          "when": "Claude calls the stage alerts tool",
+          "then": "Track3D returns the rows to Claude and does not call its own model for that answer",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

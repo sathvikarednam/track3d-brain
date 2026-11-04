@@ -1,0 +1,20 @@
+{
+  "id": "USER",
+  "name": "User management",
+  "summary": "Identity, home company, company administration and project roles and permissions.",
+  "related": [
+    "PROJ"
+  ],
+  "owner": null,
+  "feature_order": [
+    "USER-FEAT-01",
+    "USER-FEAT-02",
+    "USER-FEAT-03",
+    "USER-FEAT-04",
+    "USER-FEAT-05",
+    "USER-FEAT-06",
+    "USER-FEAT-07",
+    "USER-FEAT-08",
+    "USER-FEAT-09"
+  ]
+}

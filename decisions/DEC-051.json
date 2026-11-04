@@ -1,0 +1,22 @@
+{
+  "id": "DEC-051",
+  "title": "How partners and external systems authenticate to the Track3D API",
+  "status": "open",
+  "question": "Do partners get OAuth clients or API keys? Is a key issued per customer, per project or per partner; what can it reach; who creates, rotates and revokes it; and what rate limits apply?",
+  "context": "The external capture PRD asks for OAuth (INTG-REQ-020) and the API PRDs for managed, rotated keys (INTG-REQ-022).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "INTG",
+    "USER"
+  ],
+  "requirements": [
+    "INTG-REQ-019",
+    "INTG-REQ-020",
+    "INTG-REQ-021",
+    "INTG-REQ-022",
+    "INTG-REQ-025",
+    "INTG-REQ-030",
+    "USER-REQ-013"
+  ]
+}

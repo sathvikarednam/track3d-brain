@@ -1,0 +1,370 @@
+{
+  "id": "PROC-FEAT-05",
+  "name": "Turnaround and quality monitoring",
+  "summary": "Measuring processing turnaround against per-mode targets, reporting SLA performance to Track3D teams, and showing how much of a capture was processed and which frames were dropped for quality.",
+  "components": [
+    "svc.constructn-api",
+    "worker.antman",
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-056",
+    "DEC-025"
+  ],
+  "roles": {
+    "status": "draft",
+    "note": "SLA monitoring is for Track3D operations (TechOps, MLOps) and project managers; coverage and frame quality are also shown to customers in the PRDs. No permission strings exist for these views.",
+    "actions": [
+      {
+        "action": "View SLA performance and metrics",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "View capture and processing coverage",
+        "permission": "view-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Assumes coverage sits on the project's progress pages; not confirmed"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROC-NFR-007",
+      "kind": "latency",
+      "statement": "Historical PRD turnaround targets: 360 video and laser processed within 24 hours, 360 images and phone images within 1 hour, with 90% of media processed within those times.",
+      "target": {
+        "hours_360_video": 24,
+        "hours_laser": 24,
+        "hours_360_image": 1,
+        "hours_phone_image": 1,
+        "share_within_target": 0.9
+      },
+      "status": "draft",
+      "open_question": "Are these still the commitments, and do production deadline settings (VD_SLA_FOR_*, TWOD_SLA_FOR_360V) match them (DEC-056)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROC-REQ-026",
+      "type": "requirement",
+      "title": "Each capture mode has a processing turnaround target",
+      "statement": "360 video walks and laser data are processed within 24 hours of upload, and 360 images and phone images within 1 hour. Large files must not break these targets. The deadline recorded on each capture is CAPT-REQ-008.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-056"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "worker.antman",
+        "job.airflow-dags"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-042",
+          "title": "Prior PRDs - SLA information, SLA monitoring and TechOps metrics (t3d-prd-agent prd-organised)",
+          "at": "sla-management.md FR-001..FR-004, AC-001..AC-004, EC-001",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The code reads deadline hours from environment settings (CAPT-REQ-008); their production values weren't read"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-026-AC1",
+          "given": "360 video walks are uploaded",
+          "when": "The system processes them",
+          "then": "They are completed within 24 hours",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-026-AC2",
+          "given": "360 images are uploaded",
+          "when": "The system processes them",
+          "then": "They are completed within 1 hour",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-026-AC3",
+          "given": "Phone images are uploaded",
+          "when": "The system processes them",
+          "then": "They are completed within 1 hour",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-026-AC4",
+          "given": "Laser data is uploaded",
+          "when": "The system processes it",
+          "then": "It is completed within 24 hours",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-027",
+      "type": "business-rule",
+      "title": "When the turnaround clock stops",
+      "statement": "The PRD measures visual turnaround from upload to the visual snapshot becoming active, and progress turnaround from upload to the progress snapshot becoming active. The code stops the visual clock at different events: for 360 and phone images when a reality is first made active (or at a time the caller supplies), and for 360 video, drone and laser when the job's outcome becomes active, partialProcessed or error. A failed job therefore stops the clock and can count as met.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The PRD stops the clock at snapshot activation; the code stops it at reality activation for image modes and at any final job outcome, including error, for 360 video, drone and laser. It also accepts a caller-supplied completion time."
+      },
+      "decisions": [
+        "DEC-056"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-042",
+          "title": "Prior PRDs - SLA information, SLA monitoring and TechOps metrics (t3d-prd-agent prd-organised)",
+          "at": "sla-monitoring.md FR-004, FR-005, AC-004, AC-005",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "image-mode clock stop",
+          "code": "constructn-api:src/controllers/reality.controller.ts#L471@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "caller-supplied completion time",
+          "code": "constructn-api:src/controllers/reality.controller.ts#L472@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "video/drone/laser clock stop",
+          "code": "constructn-api:src/controllers/job.controller.ts#L1305@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-027-AC1",
+          "given": "A 360 video capture uploaded at 09:00 with a deadline of 09:00 the next day",
+          "when": "Its job outcome is set to error at 15:00 the same day",
+          "then": "(Current behaviour) The capture records visual completion at 15:00 and the deadline as met",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROC-REQ-027-AC2",
+          "given": "A project with a visual snapshot active time and a capture uploaded time",
+          "when": "The system calculates the visual SLA",
+          "then": "The result is the difference between the two times",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-028",
+      "type": "requirement",
+      "title": "TechOps can monitor SLA performance across captures",
+      "statement": "Track3D teams can list captures uploaded in a date range, see each capture's SLA as passed, missed or pending, and filter by project, company, capture type, date, camera type and pipeline type. SLA metrics show the average, minimum and maximum. A status change after the first calculation triggers recalculation.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-056"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-042",
+          "title": "Prior PRDs - SLA information, SLA monitoring and TechOps metrics (t3d-prd-agent prd-organised)",
+          "at": "sla-monitoring.md FR-001..FR-003, FR-006, EC-001, EC-002",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-042",
+          "title": "Prior PRDs - SLA information, SLA monitoring and TechOps metrics (t3d-prd-agent prd-organised)",
+          "at": "techops-enhancements.md FR-003, AC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "SLA capture lookups for Antman",
+          "code": "constructn-api:src/routes/v1/ant-man.routes.ts#L22@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Antman reads SLA captures from the platform; which screen shows SLA metrics today wasn't traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-028-AC1",
+          "given": "A date range",
+          "when": "Captures are retrieved",
+          "then": "All captures uploaded within that range are listed",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-028-AC2",
+          "given": "Calculated SLA values",
+          "when": "Jobs are categorised",
+          "then": "Each job is shown as SLA passed, missed or pending",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-028-AC3",
+          "given": "SLA metrics are requested for a filter",
+          "when": "The system calculates them",
+          "then": "It shows the average, minimum and maximum values",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-028-AC4",
+          "given": "A capture with no realities",
+          "when": "Its SLA is calculated",
+          "then": "It is handled without errors",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-032",
+      "type": "requirement",
+      "title": "Show capture coverage against processed coverage",
+      "statement": "For a floor plan, users see how much area was captured and how much was successfully processed, side by side. Captured but unprocessed areas are highlighted, uncaptured areas are left uncoloured, and areas with low capture or processing coverage raise an alert.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-044",
+          "title": "Prior PRDs - Capture coverage and image quality enhancements (t3d-prd-agent prd-organised)",
+          "at": "capture-coverage.md FR-005, FR-006, FR-010, FR-012, AC-004..AC-006, AC-010, EC-004",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "zone coverage recalculated on activation",
+          "code": "constructn-api:src/controllers/reality.controller.ts#L452@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "The PRD's boundary-setting and transformation rows (FR-003, FR-004, FR-007..FR-009) are internal tooling and weren't migrated; zone coverage code is not the same as this percentage view"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-032-AC1",
+          "given": "A floor plan with captured areas that weren't processed",
+          "when": "Coverage is shown",
+          "then": "Those areas are highlighted in red, and uncaptured areas have no colour",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-032-AC2",
+          "given": "A signed-in user",
+          "when": "They open the coverage analytics",
+          "then": "They see capture coverage and processed coverage percentages side by side",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-032-AC3",
+          "given": "Every image was rejected during processing",
+          "when": "Coverage is calculated",
+          "then": "Processed coverage is zero",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROC-REQ-033",
+      "type": "requirement",
+      "title": "Show every extracted frame, marking low-quality ones",
+      "statement": "The walkthrough for a 360 video shows all frames extracted from the video, including ones left out of processing for quality. Low-quality frames carry a distinct marker, missing positions are interpolated from neighbouring frames, and users can switch between all frames and processed frames only.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-025"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "job.airflow-dags"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-044",
+          "title": "Prior PRDs - Capture coverage and image quality enhancements (t3d-prd-agent prd-organised)",
+          "at": "image-quality-enhancements.md FR-006..FR-010, AC-004..AC-007",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Reconcile with CAPT-REQ-007, where frames removed by Track3D review don't appear to customers",
+        "Whether processing stores rejected frames and a quality flag for each wasn't traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROC-REQ-033-AC1",
+          "given": "A 360 video capture",
+          "when": "The walkthrough opens",
+          "then": "All extracted images, including low-quality ones, are displayed",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-033-AC2",
+          "given": "An image of low quality",
+          "when": "It is displayed in the walkthrough",
+          "then": "It carries a distinct icon or overlay",
+          "status": "draft"
+        },
+        {
+          "id": "PROC-REQ-033-AC3",
+          "given": "A user wants only processed images",
+          "when": "They use the filter toggle",
+          "then": "Only processed images are displayed",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+{
+  "id": "INTG-FEAT-05",
+  "name": "Takeoff, reporting and device integrations",
+  "summary": "The remaining integrations: Togal takeoff results, the Slack activity feed, a Power BI connector, wearable capture (smart glasses) and the Keystone back-office integration.",
+  "components": [
+    "svc.api-2d-progress",
+    "svc.api-gateway-service"
+  ],
+  "decisions": [
+    "DEC-049",
+    "DEC-052"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "No permission string covers these integrations. The Togal webhook is public; the Slack feed runs on every saved progress audit entry; Power BI, wearable and Keystone have no code in the repositories read here.",
+    "actions": [
+      {
+        "action": "Send takeoff results from Togal",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": "Public route; no caller check"
+      },
+      {
+        "action": "Download the Power BI connector",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "company-super-admin": "unknown"
+        },
+        "note": "PRD says users with administrative rights"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "INTG-NFR-006",
+      "kind": "freshness",
+      "statement": "Delay between a category or stage change and the matching Slack update.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Hourly digest as the PRD says, or immediate as the code does (INTG-REQ-027)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "INTG-REQ-026",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "INTG-REQ-027",
+      "type": "business-rule",
+      "title": "Slack updates on category and stage changes",
+      "statement": "The PRD asks for hourly Slack updates on category additions and changes and stage changes, from an Onboarding bot for projects without assets and a Backtracking bot for projects with assets. Today each tracked progress audit entry made by a customer (non-support) user is posted straight away to one configured Slack channel.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "SRC-037 slack-bot US-001 and FR-002..003 describe an hourly digest split by whether the project has assets. The code posts every tracked audit event as it is saved to a single channel, skipping support users. Product to say which feed is wanted and who reads it."
+      },
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-037",
+          "title": "Prior PRDs - Slack bot, Power BI connector, wearable integration and Keystone backend integration (t3d-prd-agent)",
+          "at": "slack-bot US-001, FR-001..FR-003, AC-001..AC-003, EC-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "sendAuditLogToSlack",
+          "code": "api-2d-progress:src/utils/audit-log-slack.ts#L44@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "post-save hook",
+          "code": "api-2d-progress:src/adapters/repositories/mongodb/models/progress-audit-log.model.ts#L235@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-027-AC1",
+          "given": "A customer user renames a stage",
+          "when": "The audit entry is saved",
+          "then": "(Current behaviour) A message is posted to the configured Slack channel straight away",
+          "status": "disputed"
+        },
+        {
+          "id": "INTG-REQ-027-AC2",
+          "given": "A support user makes the same change",
+          "when": "The audit entry is saved",
+          "then": "(Current behaviour) No Slack message is posted",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-028",
+      "type": "requirement",
+      "title": "A Power BI connector for Track3D data",
+      "statement": "Users with administrative rights can download a Track3D connector file for Power BI, sign in with their Track3D credentials, and pick the data tables to import. Access is limited to signed-in platform users; guest access and filtered sharing are out of scope.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-049"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-037",
+          "title": "Prior PRDs - Slack bot, Power BI connector, wearable integration and Keystone backend integration (t3d-prd-agent)",
+          "at": "power-bi-connector FR-001..FR-003, AC-001..AC-003, EC-001..EC-003, NFR-001, Out of Scope",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "No Power BI connector code was found in the repositories read for this migration"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-028-AC1",
+          "given": "A user without Track3D credentials",
+          "when": "They try to import data through the connector",
+          "then": "Access is denied and they are asked to sign in",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-029",
+      "type": "requirement",
+      "title": "Capture with smart glasses (proof of concept)",
+      "statement": "A proof of concept lets a user pair Ray-Ban Meta glasses with the mobile app over Bluetooth, choose a structure and camera, capture, sync to the phone, upload to Track3D, and see the processed result on the platform. Failed connections or uploads are retried and the user is told.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-049"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-037",
+          "title": "Prior PRDs - Slack bot, Power BI connector, wearable integration and Keystone backend integration (t3d-prd-agent)",
+          "at": "wearable-integration FR-001..FR-006, AC-001..AC-005, EC-001..EC-003",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "No wearable integration code was found in the repositories read for this migration"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-029-AC1",
+          "given": "Glasses paired with the mobile app",
+          "when": "The user stops a capture",
+          "then": "The captured data syncs to the app and can be uploaded",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-030",
+      "type": "requirement",
+      "title": "Keystone creates projects and exchanges photos with Track3D",
+      "statement": "Keystone can create a Track3D project through an API call. Track3D fetches Keystone's budget list, uploads photos to Keystone (with a manual retry when uploads fail), and emails site contacts what they need for capture. All calls are authenticated, retried on failure and logged.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-049",
+        "DEC-051"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-037",
+          "title": "Prior PRDs - Slack bot, Power BI connector, wearable integration and Keystone backend integration (t3d-prd-agent)",
+          "at": "backend-integration FR-001..FR-004, AC-001..AC-004, EC-001, NFR-001..NFR-003",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "No Keystone integration code was searched for in this migration; it may live outside the repositories read"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-030-AC1",
+          "given": "Keystone starts a new project",
+          "when": "It calls Track3D",
+          "then": "A Track3D project is created with the metadata sent",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

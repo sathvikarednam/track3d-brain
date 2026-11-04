@@ -1,0 +1,17 @@
+{
+  "id": "DEC-066",
+  "title": "How long assistant conversations and usage records are kept",
+  "status": "open",
+  "question": "How long should assistant chats, their archived transcripts and the per-call usage records be kept, can a user or company delete them, and should a chat hidden from the list after 7 days still be stored?",
+  "context": "Working memory lasts 15 minutes, the chat archive is never deleted but is listed for 7 days (AI-REQ-004), and the usage ledger is permanent (AI-REQ-024). Account deletion rules (DEC-015) do not mention assistant data.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "AI",
+    "USER"
+  ],
+  "requirements": [
+    "AI-REQ-004",
+    "AI-REQ-024"
+  ]
+}

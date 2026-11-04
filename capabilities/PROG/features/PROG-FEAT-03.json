@@ -1,0 +1,337 @@
+{
+  "id": "PROG-FEAT-03",
+  "name": "Measured progress",
+  "summary": "Recording measured work as progress assets on a design: geometry, the stage's measurement formula, dated quantities and who can see them. The pipeline-derived progress feeds dashboards and reports.",
+  "components": [
+    "svc.api-2d-progress",
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-002",
+    "DEC-007",
+    "DEC-010"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Support users see and create inactive measurements that customers do not see (PROG-REQ-016).",
+    "actions": [
+      {
+        "action": "View progress assets",
+        "permission": "view-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Create a progress asset",
+        "permission": "create-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Update a progress asset",
+        "permission": "update-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a progress asset",
+        "permission": "delete-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Create a measurement",
+        "permission": "create-measurements",
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-004",
+      "kind": "scalability",
+      "statement": "Today, recalculation runs synchronously, once per structure, category and stage, after every asset change. There is no queue or rate limit, so bulk stage changes can start many aggregations at once.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "What bulk-edit size must stay responsive, and is asynchronous recalculation acceptable?"
+    },
+    {
+      "id": "PROG-NFR-005",
+      "kind": "volume",
+      "statement": "Maximum progress assets per project and per sheet that measurement, rollup and viewing must support.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What are today's largest projects (assets, structures, snapshots), and what is the growth target?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-012",
+      "type": "business-rule",
+      "title": "Progress projects derive progress that dashboards and reports use",
+      "statement": "For progress projects, the processing pipeline also derives progress, and dashboards and reports are generated from that progress.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "svc.reports-service"
+      ],
+      "legacy_ids": [
+        "T3D-BR-011"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-011",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-006",
+          "title": "Implementation baseline 2026-10-28-platform-01",
+          "at": "T3D-IMPL-140, T3D-IMPL-147, T3D-IMPL-149, T3D-IMPL-150, T3D-IMPL-168",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Report acknowledgment and notification are claimed before delivery succeeds; recovery after owner-side failure is unproven"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-012-AC1",
+          "given": "A progress project with a processed capture",
+          "when": "Processing completes",
+          "then": "Progress is derived for the captured locations, and the dashboards and reports for that date use it",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-013",
+      "type": "business-rule",
+      "title": "How a measured quantity is calculated",
+      "statement": "A progress asset's quantity is its manually entered actual measurement if there is one, otherwise the stage's formula applied to its geometry and height, in either case multiplied by a factor. The factor defaults to the stage multiplier, then 1. The height defaults to the stage height, then the category height, then 1.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-002"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-046"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-046",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L1699@406190aa76b6"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/progress-calculation.md §1",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "An explicit zero factor or height falls back to the default"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-013-AC1",
+          "given": "A wall polyline 10 m long, on a stage whose formula is length × height, with stage height 3 and stage multiplier 2",
+          "when": "The asset is saved with no metrics, height or actual measurement in the request",
+          "then": "Its quantity is 10 × 3 × 2 = 60",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROG-REQ-013-AC2",
+          "given": "The same asset with an actual measurement of 45 entered",
+          "when": "The asset is saved",
+          "then": "Its quantity is 45 × 2 = 90, and the geometry is not used",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-014",
+      "type": "business-rule",
+      "title": "A progress asset needs a valid category, stage and design",
+      "statement": "A progress asset can only be created with an existing category and a stage that belongs to it. Geometry drawn on a design requires that design to be valid.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-045"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-045",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L1560@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-014-AC1",
+          "given": "A category without a stage S",
+          "when": "A user creates an asset with that category and stage S",
+          "then": "Creation is rejected with an invalid-stage message",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-015",
+      "type": "business-rule",
+      "title": "Inactive and \"do not track\" assets are excluded from progress",
+      "statement": "Assets that are inactive or marked \"do not track\" count toward no progress totals, zone figures or trends. Marking an asset \"do not track\" removes out-of-scope work without deleting it.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/progress-calculation.md §9",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-015-AC1",
+          "given": "Two active assets of 10 units each, one marked \"do not track\"",
+          "when": "Location progress is calculated",
+          "then": "The total is 10",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-016",
+      "type": "business-rule",
+      "title": "Support-entered progress starts hidden from customers",
+      "statement": "Progress recorded by a support user on a date with no snapshot creates an inactive snapshot, which customers don't see. Progress recorded by a customer creates an active one, and a customer can activate an existing inactive snapshot. Missing project time zones default to America/New_York.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-007"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-047"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-047",
+          "code": "api-2d-progress:src/application/service/assetv3.service.ts#L1588@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-016-AC1",
+          "given": "No snapshot exists for 2026-03-02 on a structure",
+          "when": "A support user records progress for that date",
+          "then": "An inactive snapshot is created, and customers do not see that progress until it is activated",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-017",
+      "type": "requirement",
+      "title": "Stages are changed manually",
+      "statement": "Users can manually move progress assets to a new stage on a given date. The system never promotes a stage automatically. Stored stage predecessors are not enforced today.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-PROGRESS-TRACKING-FR-011"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-002",
+          "title": "Prior PRD - Progress tracking (t3d-prd-agent prd-organised)",
+          "at": "FR-011",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/progress-calculation.md §2 (Stage transitions are manual; predecessors not enforced)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-017-AC1",
+          "given": "An asset in stage Framing",
+          "when": "A user with update rights moves it to Drywall on a chosen date",
+          "then": "The asset is in Drywall from that date, and both stages' progress is recalculated",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

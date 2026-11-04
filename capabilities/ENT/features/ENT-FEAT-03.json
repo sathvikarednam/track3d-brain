@@ -1,0 +1,282 @@
+{
+  "id": "ENT-FEAT-03",
+  "name": "Company activity log",
+  "summary": "A company-wide feed of project, user, design, capture and sign-in events across the company's projects, with filters, event details and downloads.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-070",
+    "DEC-072"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The PRD names internal users with View Progress, and excludes external users. Intended roles are open in DEC-070.",
+    "actions": [
+      {
+        "action": "View the company activity feed",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "allow",
+          "admin": "conditional",
+          "collaborator": "conditional",
+          "viewer": "conditional"
+        },
+        "note": "Project roles pass only with some Company or Region grant in the company"
+      },
+      {
+        "action": "Download activities as Excel or PDF",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "allow",
+          "admin": "conditional",
+          "collaborator": "conditional",
+          "viewer": "conditional"
+        },
+        "note": null
+      },
+      {
+        "action": "See support users' real names in the feed",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "deny",
+          "admin": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "ENT-NFR-004",
+      "kind": "retention",
+      "statement": "How long company activity is kept and how far back users can view and download it.",
+      "target": null,
+      "status": "draft",
+      "open_question": "The PRD mentions logs older than one month and asks how they are handled. No expiry is set on the activity collection today. What retention applies?"
+    },
+    {
+      "id": "ENT-NFR-005",
+      "kind": "latency",
+      "statement": "Time to load a page of activities and to produce a download for a large company.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What load time is acceptable for the feed, and for a download of up to 5,000 rows?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "ENT-REQ-012",
+      "type": "requirement",
+      "title": "Admins see one activity feed across the company's projects",
+      "statement": "The Activities section lists activity across the company's projects, newest first. Users can filter by date, project and type, open more details for an entry, and download the data. More entries load as they scroll.",
+      "rationale": "The merged PRD also describes an asset event feed inside a structure that highlights assets on the floorplan. That part belongs with progress assets and is not covered here.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-070"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "activity-log.md FR-001, FR-003, FR-004, AC-003, AC-004, AC-006, AC-007, EC-003",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getEnterpriseActivities",
+          "code": "constructn-api:src/controllersv2/enterprise-activity.controller.ts#L400@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-012-AC1",
+          "given": "An admin on the Activities section with a region selected",
+          "when": "They filter by a date range, one project and the Capture type",
+          "then": "Only capture events in that project and range are listed, newest first",
+          "status": "draft"
+        },
+        {
+          "id": "ENT-REQ-012-AC2",
+          "given": "Filters that match no activity",
+          "when": "The feed loads",
+          "then": "The user is told no activity matches",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-013",
+      "type": "business-rule",
+      "title": "Which events the activity log records",
+      "statement": "Today the log records, per company, project events (created, approved), user role events (made or removed as project admin, region admin or super admin), design events (uploaded, updated, active, error, deleted), capture events (added, ready to view, error, deleted) and sign-in events (logged in, logged out). Events typed \"system\" are never shown.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "template per event type",
+          "code": "constructn-api:src/controllersv2/enterprise-activity.controller.ts#L30@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "system events excluded",
+          "code": "constructn-api:src/controllersv2/enterprise-activity.controller.ts#L352@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "per-company time series",
+          "code": "db-models:src/definitions/enterprise-activities.ts#L30@9a44863c02b7"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-013-AC1",
+          "given": "A user is made a region admin",
+          "when": "An admin opens Activities",
+          "then": "A User event for that change is listed with the region name",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-014",
+      "type": "business-rule",
+      "title": "The default feed covers the caller's projects plus company-wide events",
+      "statement": "Without a project filter, the feed shows events from projects assigned to the caller, plus events not tied to any project (such as sign-ins and role changes). A region filter, which can include \"no region\", narrows the projects. Pages hold 20 entries. Users can also filter by the affected users.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-070"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "assigned projects fallback",
+          "code": "constructn-api:src/controllersv2/enterprise-activity.controller.ts#L296@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "non-project events included",
+          "code": "constructn-api:src/controllersv2/enterprise-activity.controller.ts#L306@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Company-wide events include every user's sign-ins in the company. Product to confirm which roles may see them."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-014-AC1",
+          "given": "A regional admin assigned to five of the company's projects",
+          "when": "They open Activities with no filters",
+          "then": "(Current behaviour) They see events from those five projects and every company-wide event, including other users' sign-ins",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-015",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "ENT-REQ-016",
+      "type": "requirement",
+      "title": "Activity downloads",
+      "statement": "Users can download the filtered activity log. The PRD asks for PDF or Excel, a format prompt, and CSV for logs older than one month. Today the download is Excel unless PDF is asked for, contains at most the 5,000 newest matching entries, and has no CSV option.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "The PRD wants CSV for older logs and a required format choice. The code defaults to Excel, offers PDF, has no CSV, and silently stops at 5,000 rows. Product to decide formats, limits and history in DEC-072."
+      },
+      "decisions": [
+        "DEC-072"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-055",
+          "title": "Prior PRDs - Enterprise workspace (admin dashboard, org settings, activity log, enterprise account, gamification, multiple emails)",
+          "at": "activity-log.md FR-005, FR-006, AC-005, EC-004",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "downloadEnterpriseActivities",
+          "code": "constructn-api:src/controllersv2/enterprise-activity.controller.ts#L574@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "ENT-REQ-016-AC1",
+          "given": "8,000 activities match the filters",
+          "when": "The user downloads without choosing a format",
+          "then": "(Current behaviour) An Excel file with the 5,000 newest entries is returned",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "ENT-REQ-017",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    }
+  ]
+}

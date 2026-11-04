@@ -1,0 +1,17 @@
+{
+  "id": "DEC-028",
+  "title": "Capture modes, duplicates and corrections",
+  "status": "open",
+  "question": "Which capture modes does each project type support, and what metadata is required? When is a capture a duplicate or a replacement, and is history kept? Who may correct a capture's date or location, or delete it?",
+  "context": "Today a capture is reused when device, time and structure match (CAPT-REQ-002), and moving a photo rewrites its position (CAPT-REQ-011). Neither is an approved policy.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "CAPT"
+  ],
+  "requirements": [
+    "CAPT-REQ-001",
+    "CAPT-REQ-002",
+    "CAPT-REQ-011"
+  ]
+}

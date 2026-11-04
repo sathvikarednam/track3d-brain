@@ -1,0 +1,22 @@
+{
+  "id": "DEC-004",
+  "title": "Already-issued report files after corrections",
+  "status": "open",
+  "question": "After a progress or takeoff correction, do already-issued report files stay as issued, get marked superseded, or get regenerated? What lineage, retention and access applies?",
+  "context": "Live views recalculate (PROG-REQ-005, PROG-REQ-019). Issued artifacts are a separate policy.",
+  "options": [
+    "Keep original",
+    "Mark superseded and issue new",
+    "Regenerate in place"
+  ],
+  "decision": null,
+  "capabilities": [
+    "PROG",
+    "RPT"
+  ],
+  "requirements": [
+    "PROG-REQ-005",
+    "PROG-REQ-019",
+    "RPT-REQ-006"
+  ]
+}

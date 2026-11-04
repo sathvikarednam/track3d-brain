@@ -1,0 +1,247 @@
+{
+  "id": "OPS-FEAT-03",
+  "name": "Performance, presence and capacity monitoring",
+  "summary": "How Track3D watches its own platform: web page performance (real-user monitoring with Slack alerts), online presence, and the Project 10K capacity dashboard for executives, engineering and TechOps.",
+  "components": [
+    "svc.track3d-rum-service",
+    "svc.presence-service",
+    "web.project-10k-dashboard",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-074",
+    "DEC-075"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "None of these services checks who is calling. The intended audiences are Track3D staff (DEC-074).",
+    "actions": [
+      {
+        "action": "View capacity and one-hour goal dashboards",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "unknown",
+          "admin": "unknown"
+        },
+        "note": "No sign-in today; PRD defers production auth"
+      },
+      {
+        "action": "List users who are online now",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "unknown",
+          "admin": "unknown"
+        },
+        "note": "No sign-in today"
+      },
+      {
+        "action": "Receive performance alerts",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny"
+        },
+        "note": "Delivered to a Slack channel"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "OPS-NFR-003",
+      "kind": "latency",
+      "statement": "Web page performance targets that raise an alert when breached (75th percentile over ten minutes).",
+      "target": {
+        "lcp_p75_ms": 4000,
+        "inp_p75_ms": 500,
+        "ttfb_p75_ms": 1800,
+        "cls_p75": 0.25,
+        "heavy_page_lcp_p75_ms": 6000
+      },
+      "status": "inferred-from-code",
+      "open_question": "These are alert thresholds in code, not agreed product targets. Product to confirm them (DEC-075)."
+    },
+    {
+      "id": "OPS-NFR-004",
+      "kind": "latency",
+      "statement": "Share of eligible captures that reach a registered, quality-checked, correctly scaled point cloud within 60 minutes of cloud upload validation.",
+      "target": {
+        "share_within_60_min": 0.8
+      },
+      "status": "draft",
+      "open_question": "Is this an agreed commitment, and how does it relate to per-mode turnaround targets in PROC-REQ-026 (DEC-056)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "OPS-REQ-012",
+      "type": "requirement",
+      "title": "Key pages are monitored for performance, with thresholds and alerts",
+      "statement": "Track3D measures load performance (first contentful paint, largest contentful paint, time to interactive) on chosen pages, shows it in dashboards, and alerts when a page regresses past a threshold. The PRD proposes Google PageSpeed Insights.",
+      "rationale": "The code measures real users instead (OPS-REQ-013). The choice of method and targets is open in DEC-075.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-075"
+      ],
+      "implemented_by": [
+        "svc.track3d-rum-service"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-056",
+          "title": "Prior PRDs - Track3D internal tools (control panel, performance monitoring, client discovery, internal notifications, release updates, data migration)",
+          "at": "performance-monitoring.md FR-001..FR-005, AC-001, AC-002, EC-001, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-012-AC1",
+          "given": "A list of pages chosen for monitoring",
+          "when": "Monitoring runs",
+          "then": "Each page's paint and interactivity metrics are recorded and shown over time",
+          "status": "draft"
+        },
+        {
+          "id": "OPS-REQ-012-AC2",
+          "given": "A monitored page whose largest contentful paint passes its threshold",
+          "when": "The next check runs",
+          "then": "An alert is raised",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-013",
+      "type": "business-rule",
+      "title": "Real-user monitoring alerts on slow pages",
+      "statement": "Today web apps on track3d.ai domains send page vitals and API timings to a monitoring service, which keeps hashed IP and browser details rather than raw values. Every two minutes it compares each page's 75th percentile over the last ten minutes with thresholds, and posts to Slack when a page with enough sessions (200, or 100 for viewer pages) is over.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-075"
+      ],
+      "implemented_by": [
+        "svc.track3d-rum-service"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "ingest and hashing",
+          "code": "track3d-rum-service:src/server.ts#L76@7491b71b270d"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "thresholds",
+          "code": "track3d-rum-service:src/rules.ts#L1@7491b71b270d"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "two-minute schedule",
+          "code": "track3d-rum-service:src/scheduler.ts#L4@7491b71b270d"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "breach rule",
+          "code": "track3d-rum-service:src/agent.ts#L34@7491b71b270d"
+        }
+      ],
+      "open_checks": [
+        "The debug-insert route writes a row without any check. Confirm it is blocked in production."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-013-AC1",
+          "given": "250 sessions on a project page in ten minutes with a 75th-percentile LCP of 4.5 seconds",
+          "when": "The two-minute check runs",
+          "then": "A Slack alert names the page and its p75",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "OPS-REQ-013-AC2",
+          "given": "A viewer page with a 75th-percentile LCP of 5 seconds",
+          "when": "The check runs",
+          "then": "No alert is raised, because viewer pages use a 6-second threshold",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-014",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "OPS-REQ-015",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "OPS-REQ-016",
+      "type": "requirement",
+      "title": "The capacity dashboard reports the one-hour goal",
+      "statement": "The capacity dashboard shows how many eligible captures reached a registered, quality-checked, correctly scaled point cloud within 60 minutes of cloud upload validation, against an 80% goal, with P50, P70, P80 and P90 durations. Captures at 45 to 60 minutes are shown as at risk, and later ones as breached. Failures and retries stay in the count; exclusions need a recorded reason.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-056"
+      ],
+      "implemented_by": [
+        "web.project-10k-dashboard"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-057",
+          "title": "Project 10K capacity dashboard PRD (project-10k-dashboard docs/PRD.md)",
+          "at": "PRD.md section 4, section 6 item 2, section 8",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-016-AC1",
+          "given": "100 eligible captures validated in the selected period, 78 of which reached the verified point cloud within 60 minutes",
+          "when": "The one-hour goal page loads",
+          "then": "It shows 78% attainment against the 80% goal, and the P50, P70, P80 and P90 durations",
+          "status": "draft"
+        },
+        {
+          "id": "OPS-REQ-016-AC2",
+          "given": "A capture 50 minutes after validation with no verified point cloud",
+          "when": "The page loads",
+          "then": "The capture is listed as at risk",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

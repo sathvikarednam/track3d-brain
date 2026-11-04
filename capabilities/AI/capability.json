@@ -1,0 +1,20 @@
+{
+  "id": "AI",
+  "name": "AI assistant and agents",
+  "summary": "The Ginee assistant (web chat, mobile and field use, and external AI clients through MCP): what it answers, the tools it calls, which actions it can take, how user permissions and project scope apply to it, what data goes to model providers, and the internal ops and support agents built on the same AI gateway.",
+  "related": [
+    "USER",
+    "PROG",
+    "RPT",
+    "COLB",
+    "PROJ"
+  ],
+  "owner": null,
+  "feature_order": [
+    "AI-FEAT-01",
+    "AI-FEAT-02",
+    "AI-FEAT-03",
+    "AI-FEAT-04",
+    "AI-FEAT-05"
+  ]
+}

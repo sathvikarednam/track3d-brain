@@ -1,0 +1,247 @@
+{
+  "id": "DSGN-FEAT-04",
+  "name": "Design revisions and deletion",
+  "summary": "Replacing a design with a newer version, by hand or from a linked Autodesk folder, and the rules for deleting designs.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-003"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Replace a sheet with a revision",
+        "permission": "update-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "The replacement is uploaded as a new design with create-project-design"
+      },
+      {
+        "action": "Delete a sheet",
+        "permission": "delete-project-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a BIM model",
+        "permission": "delete-project-bim",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Link a design to Autodesk or Procore for automatic revisions",
+        "permission": "import-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "DSGN-NFR-006",
+      "kind": "retention",
+      "statement": "How long replaced and deleted designs, and their files, are kept.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Designs are soft-deleted and replaced designs are kept; is there a retention or purge period for them and their files?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "DSGN-REQ-030",
+      "type": "business-rule",
+      "title": "Replacing a design with a revision",
+      "statement": "A user replaces a design by uploading a new file that names the design it replaces. Once the upload completes the old design is marked replaced. When the new design becomes active, the old one becomes inactive and the new one takes over as capture sheet if the old one was. A design that is still processing can't be replaced.",
+      "rationale": "Whether takeoff and progress should keep carrying forward to the revision is open (PROG-REQ-006, DEC-003). This requirement covers only the design records.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-003"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L855@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L412@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L1491@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "design.md (Business Rules",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "In updateDesign's replace path, when the location has captured realities the new design still ends up active while the old one is not deactivated; the comment says it should stay inactive. Needs a test"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-030-AC1",
+          "given": "A floor whose capture sheet is sheet A",
+          "when": "An admin uploads sheet B as a replacement for A and B becomes active",
+          "then": "A is inactive and replaced, and B is the floor's capture sheet",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-030-AC2",
+          "given": "A sheet that is still processing",
+          "when": "An admin asks to replace it",
+          "then": "The replacement is refused",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-031",
+      "type": "business-rule",
+      "title": "Revisions from a linked Autodesk folder are imported automatically",
+      "statement": "When a new version of a linked Autodesk file is published, each linked design that isn't inactive gets a new revision: same location, type and uploader, version number one higher, in the same revision line. The old design is marked replaced, the new one starts processing, and the uploader is emailed.",
+      "rationale": "Integration set-up (linking folders, Procore) belongs to INTG; this covers the revision effect on designs.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-003"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/services/design-services.ts#L404@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L704@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-031-AC1",
+          "given": "A floor sheet at version 2 linked to an Autodesk file",
+          "when": "Version 3 of the file is published in Autodesk",
+          "then": "A version 3 sheet is created on the floor in processing, and the version 2 sheet is marked replaced",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "DSGN-REQ-032",
+      "type": "business-rule",
+      "title": "Which designs can be deleted",
+      "statement": "Deleting a design hides it rather than erasing it. The capture sheet and any architectural sheet can't be deleted, nor can a design whose sheet type an asset category uses on that location. The Track3D team is emailed about each deletion.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L1427@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L1434@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": null,
+          "code": "constructn-api:src/controllers/design.controller.ts#L1517@06132d2a6f1f"
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-028",
+          "title": "Prior PRD - Hierarchy management (sheets and BIMs per level) (t3d-prd-agent prd-organised)",
+          "at": "EC-001 (delete option disabled for the capture sheet)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "DSGN-REQ-032-AC1",
+          "given": "A floor's capture sheet",
+          "when": "An admin tries to delete it",
+          "then": "The deletion is refused",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-032-AC2",
+          "given": "An electrical sheet on a floor where an asset category draws on electrical sheets",
+          "when": "An admin deletes it",
+          "then": "The deletion is refused",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "DSGN-REQ-032-AC3",
+          "given": "A non-architectural sheet that isn't the capture sheet, in a project that is not a progress-monitoring project, used by an asset category",
+          "when": "The web asks whether it can be deleted",
+          "then": "(Current behaviour) The check says yes, but the deletion itself is refused, because the pre-check only considers asset categories in progress-monitoring projects",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "OPS",
+  "name": "Track3D operations tools",
+  "summary": "Internal tools for Track3D staff: the TechOps pipeline dashboard, support control panel and CS dashboards, performance and presence monitoring, the capacity dashboard, and data migration and archival. Processing review and turnaround rules live in PROC-FEAT-03 and PROC-FEAT-05; support-user identity lives in USER-FEAT-09.",
+  "related": [
+    "PROC",
+    "USER",
+    "CAPT",
+    "ENT"
+  ],
+  "owner": null,
+  "feature_order": [
+    "OPS-FEAT-01",
+    "OPS-FEAT-02",
+    "OPS-FEAT-03",
+    "OPS-FEAT-04"
+  ]
+}

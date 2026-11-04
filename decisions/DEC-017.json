@@ -1,0 +1,16 @@
+{
+  "id": "DEC-017",
+  "title": "Invitation lifetime, reminders and delivery",
+  "status": "open",
+  "question": "How long do project and enterprise invitations last? Are reminders sent, and how is failed delivery surfaced?",
+  "context": "Enterprise invitations default to 2 days and can be renewed, and the \"sent\" count doesn't confirm delivery (USER-REQ-045). No lifetime is recorded for project invitations.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "USER"
+  ],
+  "requirements": [
+    "USER-REQ-032",
+    "USER-REQ-045"
+  ]
+}

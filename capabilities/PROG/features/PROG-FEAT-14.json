@@ -1,0 +1,118 @@
+{
+  "id": "PROG-FEAT-14",
+  "name": "Product usage metrics",
+  "summary": "Internal measurement of how the product is used: engagement, onboarding, project creation and top features, sourced from product analytics events the web app sends.",
+  "components": [
+    "web.track3d-web"
+  ],
+  "decisions": [],
+  "roles": {
+    "status": "draft",
+    "note": "The audience is internal (product, data, marketing, customer success, TechOps). It isn't a customer feature, so no project role applies; it may belong in an internal-operations capability.",
+    "actions": [
+      {
+        "action": "View the product usage dashboard",
+        "permission": null,
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "unknown"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-020",
+      "kind": "freshness",
+      "statement": "How current the usage dashboard figures are.",
+      "target": null,
+      "status": "draft",
+      "open_question": "The PRD asks for real-time KPIs but leaves the refresh frequency open."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-080",
+      "type": "requirement",
+      "title": "Usage dashboard for engagement, onboarding and features",
+      "statement": "A dashboard shows active users and the DAU/MAU ratio, successful signup and onboarding completion rates, project creation success with drop-off points, and the top features used, with filters. It copes with no data and with high volumes, and accounts for bot traffic.",
+      "rationale": "PRD only for the dashboard; grouped from the metrics and product metrics PRDs. The data would come from the existing analytics events (PROG-REQ-081). Third-party marketing integration and historical migration are out of scope.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-066",
+          "title": "Prior PRDs - Safety monitoring, segmentation and product metrics (t3d-prd-agent prd-organised)",
+          "at": "analytics-and-metrics.md FR-001..FR-004, AC-001..AC-004, EC-002; metrics.md FR-001..FR-003, EC-001, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-080-AC1",
+          "given": "The dashboard is opened",
+          "when": "The user views the engagement section",
+          "then": "Active users and the DAU/MAU ratio are shown",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-080-AC2",
+          "given": "A filter on a date range with no events",
+          "when": "It is applied",
+          "then": "The dashboard says there is no data instead of failing",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-081",
+      "type": "business-rule",
+      "title": "Analytics profiles carry the user's email, name and job title",
+      "statement": "When analytics is switched on for the web app, each signed-in user is identified to the analytics service by their user ID with their email, full name and job title, and product events are tracked against that profile.",
+      "rationale": "Current behaviour. Personal data goes to a third-party analytics service; whether that is covered by the privacy notice and customer agreements was not checked.",
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "Analytics.identify",
+          "code": "track3d-web:src/components/shared/analytics-init.tsx#L26@0e9dabc75e2f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "analytics flag",
+          "code": "track3d-web:src/constants/app.ts#L20@0e9dabc75e2f"
+        }
+      ],
+      "open_checks": [
+        "Confirm which environments set the analytics flag and whether profile data sharing is disclosed"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-081-AC1",
+          "given": "Analytics is enabled and a user signs in",
+          "when": "Their profile loads",
+          "then": "The analytics profile is set with their ID, email, name and job title",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

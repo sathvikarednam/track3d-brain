@@ -1,0 +1,22 @@
+{
+  "id": "DEC-060",
+  "title": "Launching the progress-linked credit model",
+  "status": "open",
+  "question": "Will the progress-linked credit model launch, when, and for which companies? Are existing companies moved in by Sales one at a time, and is the move really one-way? Should credit checks switch off silently if the credit service is not deployed?",
+  "context": "After launch, only Sales create progress projects (BILL-REQ-013). Existing companies join only when Sales move them, with their visual projects grandfathered (BILL-REQ-016).",
+  "options": [
+    "Launch for new companies only",
+    "Launch and move every company in",
+    "Do not launch"
+  ],
+  "decision": null,
+  "capabilities": [
+    "BILL",
+    "PROJ"
+  ],
+  "requirements": [
+    "BILL-REQ-001",
+    "BILL-REQ-013",
+    "BILL-REQ-016"
+  ]
+}

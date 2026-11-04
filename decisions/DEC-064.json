@@ -1,0 +1,17 @@
+{
+  "id": "DEC-064",
+  "title": "Company plan controls alongside the credit model",
+  "status": "open",
+  "question": "How do project intent control, the 5X flag and the prepaid / pay-as-you-go contract type relate to the credit model? What does each contract type allow? Should project intent control be on or off when its setting is missing?",
+  "context": "Project intent control is on track-3d-dev as an \"interim\" setup (BILL-REQ-023), and its default is disputed (BILL-REQ-024). The contract type and 5X fields exist but nothing reads them (BILL-REQ-025). The credit model is on separate feature branches and does not use any of these.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "BILL"
+  ],
+  "requirements": [
+    "BILL-REQ-023",
+    "BILL-REQ-024",
+    "BILL-REQ-025"
+  ]
+}

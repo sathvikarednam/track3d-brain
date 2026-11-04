@@ -1,0 +1,19 @@
+{
+  "id": "DEC-057",
+  "title": "Which review gates apply per capture mode before publication",
+  "status": "open",
+  "question": "For each capture mode, which Track3D review steps (point-cloud verification, registration, sign-off) are required before output goes LIVE? Must sign-off publish through the same checked activation as the web app, and who may sign off (can a reviewer approve their own work)?",
+  "context": "In Antman, non-image runs go through verification, registration (unless automatic) and sign-off, while image runs stop at processing complete (PROC-REQ-014). Sign-off writes the reality status directly, skipping the required-file check and activation updates (PROC-REQ-017). LIVE is DEC-025.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROC",
+    "CAPT"
+  ],
+  "requirements": [
+    "PROC-REQ-014",
+    "PROC-REQ-015",
+    "PROC-REQ-017",
+    "PROC-REQ-011"
+  ]
+}

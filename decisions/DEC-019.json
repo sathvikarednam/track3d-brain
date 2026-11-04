@@ -1,0 +1,18 @@
+{
+  "id": "DEC-019",
+  "title": "Archiving, deletion and restoration",
+  "status": "open",
+  "question": "What do archiving and deleting a project mean for its identity, history and data? Can either be undone? Should projects archive and delete themselves automatically after their planned end?",
+  "context": "Today approved projects archive automatically at their planned end and are marked deleted 365 days later (PROJ-REQ-016). The manual archive and delete endpoints instead replace the project with a renamed Deleted copy (PROJ-REQ-017, PROJ-REQ-018). Neither behaviour has been approved.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROJ",
+    "RPT"
+  ],
+  "requirements": [
+    "PROJ-REQ-016",
+    "PROJ-REQ-017",
+    "PROJ-REQ-018"
+  ]
+}

@@ -1,0 +1,265 @@
+{
+  "id": "USER-FEAT-08",
+  "name": "Groups",
+  "summary": "Company-scoped groups of users that grant project roles to all their members at once.",
+  "components": [
+    "svc.constructn-api",
+    "svc.permission-management",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-014"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "No group-specific permission strings exist in the seed catalog. Visibility and deletion depend on super-admin status or being the group's creator or member.",
+    "actions": [
+      {
+        "action": "See all company groups",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "Others see only groups they belong to"
+      },
+      {
+        "action": "Create a group",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a group",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "admin": "conditional",
+          "collaborator": "conditional",
+          "viewer": "conditional"
+        },
+        "note": "Allowed for the group's creator"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "USER-NFR-009",
+      "kind": "volume",
+      "statement": "Largest group (members × projects) that create, update and delete must handle.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Grants are written in chunks of 100 (T3D-RULE-104). What group sizes must stay responsive?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "USER-REQ-046",
+      "type": "business-rule",
+      "title": "Group names are unique per company, and the creator is a member",
+      "statement": "Every group belongs to a company and needs a name that, after trimming, no other active group in that company uses. The creator is always added as a member.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-103"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-103",
+          "code": "constructn-api:src/controllersv2/group.controller.ts#L160@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "User counts refresh outside the create transaction and may read uncommitted data"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-046-AC1",
+          "given": "Company C has an active group named Field team",
+          "when": "A user creates a group named \"Field team \" in C",
+          "then": "It is rejected as a duplicate",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "USER-REQ-046-AC2",
+          "given": "A user creates a group without listing themselves",
+          "when": "The group is saved",
+          "then": "The creator is a member",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-047",
+      "type": "business-rule",
+      "title": "Group grants are separate from direct roles",
+      "statement": "Grants given through a group are stored separately from a user's direct project role. Removing a user from a group, or a project from a group, removes only that group's contribution. Access through a direct role or another group stays.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-014"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.permission-management"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-104",
+        "T3D-RULE-107"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-104",
+          "code": "constructn-api:src/controllersv2/group.controller.ts#L93@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-107",
+          "code": "constructn-api:src/controllersv2/group.controller.ts#L366@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-047-AC1",
+          "given": "A user with a direct viewer role on P who is also in group G granting collaborator on P",
+          "when": "They are removed from G",
+          "then": "They are still a viewer on P",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-048",
+      "type": "business-rule",
+      "title": "Updating a group replaces its member and project lists",
+      "statement": "A group update sends the complete lists of members and projects. Anything left out is removed, so an update that omits the project list removes every project from the group.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-014"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-106"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-106",
+          "code": "constructn-api:src/controllersv2/group.controller.ts#L457@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "No single transaction covers the update",
+        "Bulk assignment keeps the last role when the same group and project appear twice"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-048-AC1",
+          "given": "Group G has members A and B and projects P and Q",
+          "when": "G is updated with members [A] and projects [P]",
+          "then": "B loses G's access to both projects, and A loses G's access to Q",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-049",
+      "type": "business-rule",
+      "title": "Super-admins see every group; others see their own",
+      "statement": "A company super-admin sees all active groups in the company. Everyone else sees only groups they are a member of. Support users are left out of group member lists unless support mode is on.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-108"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-108",
+          "code": "constructn-api:src/controllersv2/group.controller.ts#L800@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-049-AC1",
+          "given": "Company C has groups G1 and G2, and user U is a member of G1 only",
+          "when": "U and a company super-admin each list groups",
+          "then": "U sees G1, and the super-admin sees G1 and G2",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-050",
+      "type": "business-rule",
+      "title": "Bulk group deletion can partly succeed",
+      "statement": "Each group in a bulk delete can be deleted by a company super-admin or by its creator. Allowed groups are deleted and their grants removed. The response lists deleted, unauthorised and not-found groups separately; it fails only if none could be deleted.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-110"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-110",
+          "code": "constructn-api:src/controllersv2/group.controller.ts#L1093@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-050-AC1",
+          "given": "A non-admin user who created G1 but not G2",
+          "when": "They bulk-delete G1 and G2",
+          "then": "G1 is deleted, G2 is reported as unauthorised, and the request succeeds",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

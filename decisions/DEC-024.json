@@ -1,0 +1,20 @@
+{
+  "id": "DEC-024",
+  "title": "Who approves which projects",
+  "status": "open",
+  "question": "Which projects does Track3D review (implementation or customer success), and which do enterprise super-admins or regional admins approve through the order-form and signing flow? Which projects are auto-approved?",
+  "context": "The confirmed rule is Track3D review for normal projects (PROJ-REQ-007). The historical PRD describes enterprise admin approval with DocuSign signing (PROJ-REQ-011, PROJ-REQ-012), the user confirmed that those enterprise features exist (USER-REQ-041), and code auto-approves some cases (PROJ-REQ-004).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "PROJ",
+    "USER"
+  ],
+  "requirements": [
+    "PROJ-REQ-004",
+    "PROJ-REQ-007",
+    "PROJ-REQ-011",
+    "PROJ-REQ-012",
+    "USER-REQ-041"
+  ]
+}

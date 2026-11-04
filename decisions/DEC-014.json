@@ -1,0 +1,19 @@
+{
+  "id": "DEC-014",
+  "title": "What access remains after a removal",
+  "status": "open",
+  "question": "Removing a user from a project, a group or a company: which of their access sources should go? Should removal from one company also revoke their access in other companies' projects?",
+  "context": "Today removing a user from a project deletes direct and group grants there but leaves group membership, so a later group update can grant access again (USER-REQ-043). Removing a user from a company revokes all their assignments, including in other companies (USER-REQ-044). Removing super-admin status must keep project-admin access (USER-REQ-040).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "USER"
+  ],
+  "requirements": [
+    "USER-REQ-040",
+    "USER-REQ-043",
+    "USER-REQ-044",
+    "USER-REQ-047",
+    "USER-REQ-048"
+  ]
+}

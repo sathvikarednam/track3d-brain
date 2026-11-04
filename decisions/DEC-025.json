@@ -1,0 +1,17 @@
+{
+  "id": "DEC-025",
+  "title": "What \"LIVE\" means for each capture mode",
+  "status": "open",
+  "question": "For each capture mode, which processed outputs must be ready before customers see the capture as LIVE? Can a capture be partly LIVE, and who may activate, deactivate or hide one?",
+  "context": "The confirmed journey ends with processed data LIVE for customers (CAPT-REQ-005), but which outputs and snapshot states count is undefined. Progress visibility is the related decision DEC-007.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "CAPT",
+    "PROG"
+  ],
+  "requirements": [
+    "CAPT-REQ-005",
+    "CAPT-REQ-006"
+  ]
+}

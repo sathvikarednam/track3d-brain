@@ -1,0 +1,226 @@
+{
+  "id": "USER-FEAT-09",
+  "name": "Track3D support users",
+  "summary": "How Track3D staff act inside customer projects, and what customers see of them.",
+  "components": [
+    "svc.api-gateway-service",
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-016"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Support mode depends on a stored user flag, not on a role. Its scope per route is unconfirmed (see evidence/2026-10-28/capability-matrix.md).",
+    "actions": [
+      {
+        "action": "Act in support mode",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "See support users in customer lists",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "USER-NFR-010",
+      "kind": "retention",
+      "statement": "How long support actions in customer projects are kept in an audit trail, and who can see it.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Do customers need to see (or request) an audit of what Track3D staff did in their project?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "USER-REQ-051",
+      "type": "business-rule",
+      "title": "Support mode needs a support-flagged account",
+      "statement": "A request can act in support mode only if the signed-in user is flagged as a Track3D support user. A support header sent by anyone else is ignored.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-016"
+      ],
+      "implemented_by": [
+        "svc.api-gateway-service"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-024",
+          "code": "api-gateway-service:src/modules/proxy/proxy.authz.ts#L28@26221f6c7bb3"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-051-AC1",
+          "given": "A customer user without the support flag",
+          "when": "They send the support header on a request",
+          "then": "The request is handled as an ordinary customer request",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-052",
+      "type": "requirement",
+      "title": "Support users are hidden from customers",
+      "statement": "Support users don't appear in customers' user lists or user counts. Today the code leaves them out of group member lists and keeps a separate non-support user count.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-016"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-USER-MANAGEMENT-FR-004"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-010",
+          "title": "Prior PRD - User management / user profile (t3d-prd-agent prd-organised)",
+          "at": "FR-004",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-108",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-120",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "A demo session in support context showed only labels and controls. Hidden-from-customer behaviour wasn't tested with a customer principal"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-052-AC1",
+          "given": "A support user is a member of a project",
+          "when": "A customer views that project's user list",
+          "then": "The support user isn't listed",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-053",
+      "type": "requirement",
+      "title": "Support actions are attributed to Track3D",
+      "statement": "A support user's actions on another support user send no notifications. Notifications about a support user's actions on customers name the company, not the staff member.",
+      "rationale": "The PRD uses the old company name \"ConstructN\". Product should confirm the name shown today.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-016"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-USER-MANAGEMENT-FR-005",
+        "T3D-CAND-USER-MANAGEMENT-FR-006"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-010",
+          "title": "Prior PRD - User management / user profile (t3d-prd-agent prd-organised)",
+          "at": "FR-005, FR-006",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-053-AC1",
+          "given": "A support user changes another support user's role",
+          "when": "Notifications would normally be sent",
+          "then": "None are sent",
+          "status": "draft"
+        },
+        {
+          "id": "USER-REQ-053-AC2",
+          "given": "A support user updates a customer's task",
+          "when": "The customer is notified",
+          "then": "The notification names Track3D (historically \"ConstructN\") rather than the staff member",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-054",
+      "type": "requirement",
+      "title": "Support users see real user identities and have extra capabilities",
+      "statement": "Support users see the real user IDs on tasks, and Track3D staff have additional capabilities beyond customer roles. Which capabilities is not defined.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-016"
+      ],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-USER-MANAGEMENT-FR-007",
+        "T3D-CAND-USER-MANAGEMENT-FR-008"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-010",
+          "title": "Prior PRD - User management / user profile (t3d-prd-agent prd-organised)",
+          "at": "FR-007, FR-008",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-054-AC1",
+          "given": "A support user viewing a task",
+          "when": "The task details are shown",
+          "then": "The actual user IDs are visible",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

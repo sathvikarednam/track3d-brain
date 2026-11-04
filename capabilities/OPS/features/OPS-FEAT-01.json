@@ -1,0 +1,242 @@
+{
+  "id": "OPS-FEAT-01",
+  "name": "TechOps pipeline dashboard",
+  "summary": "The internal dashboard TechOps uses to follow captures through processing: filters, capture timelines, processing times and metrics by company, project and project type. Setting a capture's processing outcome is PROC-REQ-016 and SLA monitoring is PROC-FEAT-05.",
+  "components": [
+    "web.pipeline-dashboard",
+    "svc.constructn-api",
+    "worker.antman"
+  ],
+  "decisions": [
+    "DEC-074"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The dashboard signs in with ordinary Track3D credentials and has no staff check of its own.",
+    "actions": [
+      {
+        "action": "Open the TechOps dashboard",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "company-super-admin": "unknown",
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Set processing time and status for a capture",
+        "permission": null,
+        "grants": {
+          "support-user": "allow",
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": "Intended for TechOps only; enforcement unverified"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "OPS-NFR-001",
+      "kind": "latency",
+      "statement": "Time to load the dashboard's default seven-day view.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How many captures does a typical seven-day view hold, and what load time does TechOps need?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "OPS-REQ-001",
+      "type": "requirement",
+      "title": "The TechOps dashboard opens on the last seven days and shows its filters",
+      "statement": "The TechOps dashboard shows the last seven days by default, and the filters in use are shown on screen. When nothing matches, it says so.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.pipeline-dashboard"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-043",
+          "title": "Prior PRDs - TechOps dashboard, 360 image automation and issue emails (t3d-prd-agent prd-organised)",
+          "at": "techops-dashboard.md FR-001, FR-002, AC-001, AC-002, EC-001, EC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "default from and to dates",
+          "code": "pipeline-dashboard:src/features/dashboard/components/filters/hooks/useFilters.tsx#L13@a5ed50c313db"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-001-AC1",
+          "given": "A TechOps user opens the dashboard",
+          "when": "It loads",
+          "then": "Captures from the last seven days up to today are shown, and the date filter is visible",
+          "status": "draft"
+        },
+        {
+          "id": "OPS-REQ-001-AC2",
+          "given": "No captures in the last seven days",
+          "when": "The dashboard loads",
+          "then": "A message says no data is available",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-002",
+      "type": "requirement",
+      "title": "TechOps can set processing times and see a capture's path",
+      "statement": "TechOps can set a different processing time for each capture, and see the path a capture took through the pipeline. A capture with no processing time prompts for one.",
+      "rationale": "The dashboard has a per-job capture timeline view. Where processing times are stored, and the service behind it, were not found.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-056"
+      ],
+      "implemented_by": [
+        "web.pipeline-dashboard",
+        "worker.antman"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-043",
+          "title": "Prior PRDs - TechOps dashboard, 360 image automation and issue emails (t3d-prd-agent prd-organised)",
+          "at": "techops-dashboard.md FR-004, FR-006, AC-004, AC-006, EC-004",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "grouped capture timeline",
+          "code": "pipeline-dashboard:src/features/dashboard/components/captures/services/captures.service.ts#L20@a5ed50c313db"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-002-AC1",
+          "given": "A selected capture",
+          "when": "TechOps sets its processing time",
+          "then": "The time is saved for that capture",
+          "status": "draft"
+        },
+        {
+          "id": "OPS-REQ-002-AC2",
+          "given": "A selected capture",
+          "when": "TechOps views its details",
+          "then": "The steps it went through in the pipeline are shown in order",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-003",
+      "type": "requirement",
+      "title": "Delivery metrics by date, company, project and project type",
+      "statement": "Track3D staff can filter onboarding, capture and progress-monitoring metrics by date, company, project and type of project. Several selected projects are aggregated. SLA metrics are PROC-REQ-028.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.pipeline-dashboard",
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-042",
+          "title": "Prior PRDs - SLA information, SLA monitoring and TechOps metrics (t3d-prd-agent prd-organised)",
+          "at": "techops-enhancements.md FR-001, FR-002, AC-001, EC-001, EC-002",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "companies and projects for filters",
+          "code": "constructn-api:src/routes/v4/views.routes.ts#L48@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-003-AC1",
+          "given": "Two projects of one company selected for last month",
+          "when": "The filters are applied",
+          "then": "Onboarding, capture and progress-monitoring metrics are shown combined for both projects",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "OPS-REQ-004",
+      "restricted": true,
+      "title": "Restricted item",
+      "statement": "Handled with engineering separately.",
+      "status": "inferred-from-code",
+      "acceptance_criteria": [],
+      "open_checks": [],
+      "sources": []
+    },
+    {
+      "id": "OPS-REQ-005",
+      "type": "requirement",
+      "title": "Internal users see project notifications in one place",
+      "statement": "In the internal project tool, each project has a notifications tab and its project card shows an unread count. Projects can be sorted by their latest notification. Opening the tab marks its notifications read; each event is a separate entry.",
+      "rationale": "PRD-only. The internal app it describes was not found in the checkouts read.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-056",
+          "title": "Prior PRDs - Track3D internal tools (control panel, performance monitoring, client discovery, internal notifications, release updates, data migration)",
+          "at": "notifications.md FR-001..FR-003, AC-001, AC-002, EC-001, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "OPS-REQ-005-AC1",
+          "given": "A project with three unread notifications",
+          "when": "An internal user opens its notifications tab",
+          "then": "All three are marked read and the card's unread badge clears",
+          "status": "draft"
+        },
+        {
+          "id": "OPS-REQ-005-AC2",
+          "given": "The user has no connection",
+          "when": "They open the notifications tab",
+          "then": "Notifications stay unread until the tab is opened again online",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "id": "COLB-FEAT-02",
+  "name": "Comments and replies",
+  "summary": "Discussion threads on notes and other items, and who may edit or remove comments and replies.",
+  "components": [
+    "svc.collab-service",
+    "web.track3d-web"
+  ],
+  "decisions": [],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Editing and deleting depend on authorship or being a system admin on the project, not on permission strings.",
+    "actions": [
+      {
+        "action": "Edit own reply",
+        "permission": null,
+        "grants": {
+          "admin": "conditional",
+          "collaborator": "conditional",
+          "viewer": "conditional"
+        },
+        "note": "Author only"
+      },
+      {
+        "action": "Delete a comment",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "conditional",
+          "viewer": "conditional"
+        },
+        "note": "Author or system admin"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "COLB-NFR-002",
+      "kind": "latency",
+      "statement": "Time for a new comment to appear for other people viewing the same item.",
+      "target": null,
+      "status": "draft",
+      "open_question": "Must comments appear live, or is on-refresh acceptable?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "COLB-REQ-006",
+      "type": "business-rule",
+      "title": "Only the author edits a reply; author, comment author or admin removes it",
+      "statement": "A blank reply is rejected. Only a reply's author can edit it; anyone else's edit silently does nothing. A reply can be removed by its author, the comment's author, or a system admin on the project.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-085"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-085",
+          "code": "collab-service:src/application/service/commentv2.services.ts#L167@971b0c462986"
+        }
+      ],
+      "open_checks": [
+        "An unauthorised edit returns null rather than an error; clients must not show it as saved"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-006-AC1",
+          "given": "User A's reply on user B's comment",
+          "when": "B removes the reply",
+          "then": "It is removed, because B wrote the comment",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "COLB-REQ-007",
+      "type": "business-rule",
+      "title": "Comments are deleted by their author or a system admin",
+      "statement": "A comment can be deleted only by its author or a system admin on the project.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.collab-service"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-086"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-086",
+          "code": "collab-service:src/application/service/commentv2.services.ts#L310@971b0c462986"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "COLB-REQ-007-AC1",
+          "given": "A collaborator who didn't write a comment",
+          "when": "They try to delete it",
+          "then": "It is not deleted",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

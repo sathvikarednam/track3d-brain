@@ -1,0 +1,18 @@
+{
+  "id": "DEC-069",
+  "title": "How the assistant enforces project and company access",
+  "status": "open",
+  "question": "Must every assistant tool enforce the user's project permissions itself, or may it rely on the Track3D services behind it? Should the access check fail closed when the Projects API cannot answer, how soon must a removed role take effect, and how may a user be signed in to the assistant from a link?",
+  "context": "Some downstream services do not check View Project.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "AI",
+    "USER"
+  ],
+  "requirements": [
+    "AI-REQ-006",
+    "AI-REQ-007",
+    "AI-REQ-010"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "PROJ",
+  "name": "Project management",
+  "summary": "Project onboarding, approval, lifecycle, site hierarchy, zones and designs.",
+  "related": [
+    "USER",
+    "CAPT",
+    "PROG"
+  ],
+  "owner": null,
+  "feature_order": [
+    "PROJ-FEAT-01",
+    "PROJ-FEAT-02",
+    "PROJ-FEAT-03",
+    "PROJ-FEAT-04",
+    "PROJ-FEAT-05",
+    "PROJ-FEAT-06",
+    "PROJ-FEAT-07"
+  ]
+}

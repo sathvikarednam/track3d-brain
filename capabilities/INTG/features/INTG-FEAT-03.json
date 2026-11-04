@@ -1,0 +1,329 @@
+{
+  "id": "INTG-FEAT-03",
+  "name": "Fieldwire integration",
+  "summary": "Linking a project to Fieldwire with an API key, importing Fieldwire floor plans as designs, and bringing Fieldwire tasks (punch lists) into Track3D as notes.",
+  "components": [
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-049",
+    "DEC-050",
+    "DEC-052",
+    "DEC-053"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The project-scoped Fieldwire pass-through checks project access but no permission string.",
+    "actions": [
+      {
+        "action": "Link the project to Fieldwire or replace its API key",
+        "permission": "link-project",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Import a design from Fieldwire",
+        "permission": "import-design",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "deny",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Browse Fieldwire data for the project",
+        "permission": null,
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Project access only"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "INTG-NFR-003",
+      "kind": "freshness",
+      "statement": "Delay between a task changing in Fieldwire and the matching note changing in Track3D.",
+      "target": null,
+      "status": "draft",
+      "open_question": "The PRD says both 15 minutes and daily (INTG-REQ-017); which applies, and to which data?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "INTG-REQ-013",
+      "type": "requirement",
+      "title": "Link a project to Fieldwire with an API key",
+      "statement": "In Project settings, Integrations, a user links the project to Fieldwire by entering a Fieldwire API key. If the key is invalid or has expired, the user is told and asked to enter it again.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-053"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-034",
+          "title": "Prior PRD - Fieldwire integration (t3d-prd-agent prd-organised)",
+          "at": "FR-010, AC-006, EC-006",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "How users learn that a saved key has expired is an open PRD question"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-013-AC1",
+          "given": "An admin in Project settings, Integrations",
+          "when": "They choose to link Fieldwire",
+          "then": "They are asked for an API key and the project connects with it",
+          "status": "draft"
+        },
+        {
+          "id": "INTG-REQ-013-AC2",
+          "given": "A project whose saved Fieldwire key has become invalid",
+          "when": "Track3D next uses it",
+          "then": "The user is told and asked to enter a new key",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-014",
+      "type": "requirement",
+      "title": "Import Fieldwire floor plans as designs, with their tasks",
+      "statement": "From Project settings, Hierarchy & Designs, a user can list the Fieldwire floor plans for the linked project, pick one and import it as a design, optionally with its tasks placed at their positions. If the floor plan later changes in Fieldwire, project admins are notified by email but the Track3D design is not updated.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-050"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-034",
+          "title": "Prior PRD - Fieldwire integration (t3d-prd-agent prd-organised)",
+          "at": "FR-003, FR-011, FR-012, AC-003, AC-004, AC-007, AC-008, EC-008, Out of Scope (automatic design updates)",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Procore and Autodesk designs do update automatically (INTG-REQ-011); product to say whether the platforms should behave the same (DEC-050)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-014-AC1",
+          "given": "A project linked to Fieldwire",
+          "when": "An admin chooses Add designs, Import from Fieldwire",
+          "then": "They see the project's Fieldwire floor plans and can import one as a design",
+          "status": "draft"
+        },
+        {
+          "id": "INTG-REQ-014-AC2",
+          "given": "A design imported from Fieldwire",
+          "when": "Its floor plan gets a new version in Fieldwire",
+          "then": "Project admins get an email and the Track3D design stays as it was",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-015",
+      "type": "requirement",
+      "title": "Fieldwire punch lists appear as notes on the design",
+      "statement": "Imported Fieldwire punch lists show as notes on the design, can be filtered as Fieldwire notes, and show the last sync time in the Notes panel. A manual sync option refreshes one design's punch lists. If the user later loses access to the Fieldwire project, imported notes are kept and the user is asked to relink.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-034",
+          "title": "Prior PRD - Fieldwire integration (t3d-prd-agent prd-organised)",
+          "at": "FR-006, FR-007, FR-008, FR-009, AC-005, EC-007",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-015-AC1",
+          "given": "A user viewing a design imported from Fieldwire",
+          "when": "They choose manual sync in the Notes panel",
+          "then": "That design's punch-list notes refresh and the last sync time updates",
+          "status": "draft"
+        },
+        {
+          "id": "INTG-REQ-015-AC2",
+          "given": "A project whose linking user lost access to the Fieldwire project",
+          "when": "Track3D next syncs",
+          "then": "Existing imported notes stay and the user is asked to relink",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-016",
+      "type": "business-rule",
+      "title": "A new Fieldwire task becomes a note on each matching imported design",
+      "statement": "When Fieldwire reports a new task with a floor plan and a position, Track3D adds an Issue note to every active design imported from that floor plan that has task import turned on and whose saved filters match the task. The task's position is converted onto the design's sheet. Updated tasks update their notes.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-050",
+        "DEC-052"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "fieldWireWebhook",
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L819@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "createFieldwireTask",
+          "code": "constructn-api:src/controllers/fieldwire.controller.ts#L584@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Restricted check, handled with engineering separately."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-016-AC1",
+          "given": "Two active designs imported from the same Fieldwire floor plan, one with task import on",
+          "when": "Fieldwire reports a new task on that floor plan with a position",
+          "then": "Only the design with task import on gets an Issue note at the converted position",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "INTG-REQ-016-AC2",
+          "given": "A design whose saved Fieldwire filters exclude the task's status",
+          "when": "The task is reported",
+          "then": "No note is added to that design",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-017",
+      "type": "business-rule",
+      "title": "How often Fieldwire tasks reach Track3D",
+      "statement": "The PRD asks for task sync every 15 minutes, a daily automatic punch-list import and a manual sync. The code pushes each task as Fieldwire reports it, through the webhook.",
+      "rationale": null,
+      "status": "disputed",
+      "dispute": {
+        "raised_by": "brain-migration",
+        "date": "2026-10-29",
+        "summary": "SRC-034 FR-001 and NFR-001 say every 15 minutes, FR-005 says daily, and FR-006 adds manual sync. The code reacts to Fieldwire webhook events as they arrive. Product to pick the promise (DEC-050)."
+      },
+      "decisions": [
+        "DEC-050"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-034",
+          "title": "Prior PRD - Fieldwire integration (t3d-prd-agent prd-organised)",
+          "at": "FR-001, FR-005, FR-006, NFR-001, AC-001",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "fieldWireWebhook",
+          "code": "constructn-api:src/controllers/webhook.controller.ts#L832@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-017-AC1",
+          "given": "A task created in Fieldwire on an imported floor plan",
+          "when": "Fieldwire sends its notification",
+          "then": "(Current behaviour) The note is created straight away rather than on a schedule",
+          "status": "disputed"
+        }
+      ]
+    },
+    {
+      "id": "INTG-REQ-018",
+      "type": "business-rule",
+      "title": "A Fieldwire key is checked with Fieldwire before it is saved",
+      "statement": "Saving a Fieldwire API key first exchanges it with Fieldwire for an access token. A key Fieldwire rejects is refused and not saved. An accepted key is stored encrypted.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-053"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "updateFieldwireApiKey",
+          "code": "constructn-api:src/controllersv2/project.controller.ts#L7167@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Restricted check, handled with engineering separately."
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "INTG-REQ-018-AC1",
+          "given": "An admin entering a key Fieldwire rejects",
+          "when": "They save it",
+          "then": "The save is refused as an invalid Fieldwire API key and nothing is stored",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

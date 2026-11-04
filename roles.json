@@ -1,0 +1,37 @@
+[
+  {
+    "id": "admin",
+    "name": "Project admin",
+    "scope": "project"
+  },
+  {
+    "id": "collaborator",
+    "name": "Project collaborator",
+    "scope": "project"
+  },
+  {
+    "id": "viewer",
+    "name": "Project viewer",
+    "scope": "project"
+  },
+  {
+    "id": "company-super-admin",
+    "name": "Company-wide super-admin (enterprise admin)",
+    "scope": "company"
+  },
+  {
+    "id": "regional-admin",
+    "name": "Regional admin",
+    "scope": "region"
+  },
+  {
+    "id": "support-user",
+    "name": "Track3D support user",
+    "scope": "platform"
+  },
+  {
+    "id": "custom-project-role",
+    "name": "Custom project role",
+    "scope": "project"
+  }
+]

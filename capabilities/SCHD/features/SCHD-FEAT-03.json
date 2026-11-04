@@ -1,0 +1,237 @@
+{
+  "id": "SCHD-FEAT-03",
+  "name": "Schedule status and timeline",
+  "summary": "The schedule timeline view, and the status each planned item gets from planned dates against measured progress.",
+  "components": [
+    "svc.api-2d-progress",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-029",
+    "DEC-030"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The seed catalog has no schedule-specific permission strings. Who may upload or edit schedules is unknown (DEC-010 covers related edit rights).",
+    "actions": [
+      {
+        "action": "View the schedule timeline",
+        "permission": "view-progress-overview",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": "Assumed to follow progress viewing; not confirmed"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "SCHD-NFR-003",
+      "kind": "latency",
+      "statement": "Time to render the schedule timeline for a whole project.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What p95 is acceptable for the timeline on the largest projects?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "SCHD-REQ-007",
+      "type": "business-rule",
+      "title": "Which schedule status wins",
+      "statement": "An item is checked in this order: - Complete, if measured progress has reached takeoff - with no planned dates: \"No schedule dates\" if there is progress, else \"Not started\" - with no progress: \"Not started\" before the planned start, \"No progress data\" after it - Overdue, only after all of these, when the planned finish has passed",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-029"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-068"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-068",
+          "code": "api-2d-progress:src/application/service/schedule.service.ts#L705@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-007-AC1",
+          "given": "An item whose planned finish passed a week ago, with no progress recorded",
+          "when": "Its status is worked out",
+          "then": "(Current behaviour) It is \"No progress data\", not Overdue",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-008",
+      "type": "business-rule",
+      "title": "On track within 5 points of where the plan says today",
+      "statement": "Inside its planned window with some progress, an item's expected percentage is the share of the window that has passed. If actual minus expected is above 0 it is Ahead; from 0 down to -5 it is On track; below -5 it is Behind. Without takeoff the backend says On track. This tolerance differs from the 15-point alert rule (PROG-REQ-040).",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-029"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-069"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-069",
+          "code": "api-2d-progress:src/application/service/schedule.service.ts#L744@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-008-AC1",
+          "given": "An item halfway through its window, at 45% complete",
+          "when": "Its status is worked out",
+          "then": "It is On track, because exactly -5 counts as On track",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "SCHD-REQ-008-AC2",
+          "given": "The same item at 44% complete",
+          "when": "Its status is worked out",
+          "then": "It is Behind",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-009",
+      "type": "business-rule",
+      "title": "Schedule working days skip weekends only",
+      "statement": "The schedule counts working days by skipping Saturdays and Sundays in UTC. It ignores holidays and the project's time zone, unlike the forecast's working-day count (PROG-REQ-032).",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-030"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-070"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-070",
+          "code": "api-2d-progress:src/application/service/schedule.service.ts#L764@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-009-AC1",
+          "given": "A range from Monday to the following Monday, with a public holiday on Wednesday",
+          "when": "Working days are counted",
+          "then": "The count is 6 (the holiday is counted)",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-010",
+      "type": "business-rule",
+      "title": "The web app relabels schedule statuses",
+      "statement": "The web timeline doesn't show the backend's label as-is: - Overdue becomes Late - Not started and No progress data become Late after the finish date, otherwise NA - items without takeoff become Late or In progress - \"No schedule dates\" becomes Complete only with takeoff and 100% or more \"Today\" is the browser's day, not the project's.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-029"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-071"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-071",
+          "code": "track3d-web:src/features/schedule-timeline/services/scheduleTimeline.service.ts#L61@9d48a8362053"
+        }
+      ],
+      "open_checks": [
+        "Check no work, missing dates, zero denominators and the planned-finish boundary in every view and export"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-010-AC1",
+          "given": "The backend returns Overdue for an item",
+          "when": "The web timeline shows it",
+          "then": "It is labelled Late",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-012",
+      "type": "requirement",
+      "title": "Schedule timeline view",
+      "statement": "A timeline view shows the project schedule visually, with each item's status.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-029"
+      ],
+      "implemented_by": [
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-002"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-018",
+          "title": "Prior PRD - Schedule management (t3d-prd-agent prd-organised)",
+          "at": "FR-002",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "The demo session had no access to Schedule"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-012-AC1",
+          "given": "A project with an imported schedule",
+          "when": "A user opens the timeline view",
+          "then": "They see each planned item as a bar over time",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

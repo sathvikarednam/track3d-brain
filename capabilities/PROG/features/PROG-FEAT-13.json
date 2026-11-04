@@ -1,0 +1,224 @@
+{
+  "id": "PROG-FEAT-13",
+  "name": "Site intelligence from captures",
+  "summary": "Proposed analysis of site captures beyond quantity progress: safety compliance alerts, asset segments marked in video-walk snapshots, and drywall readiness assessment. All PRD only; no implementation was found.",
+  "components": [],
+  "decisions": [
+    "DEC-077"
+  ],
+  "roles": {
+    "status": "draft",
+    "note": "The PRDs name site roles (safety inspector, site manager, supervisor, construction manager) that are not product roles here, and support users marking segments. No permission strings exist for any of these actions.",
+    "actions": [
+      {
+        "action": "Receive safety alerts",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      },
+      {
+        "action": "Mark asset segments in snapshots",
+        "permission": null,
+        "grants": {
+          "admin": "deny",
+          "collaborator": "deny",
+          "viewer": "deny",
+          "support-user": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "View an asset's segment in the reality view",
+        "permission": "view-asset",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Run a drywall readiness assessment",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROG-NFR-018",
+      "kind": "availability",
+      "statement": "Uptime of critical safety alerting.",
+      "target": {
+        "percent": 99.9
+      },
+      "status": "draft",
+      "open_question": null
+    },
+    {
+      "id": "PROG-NFR-019",
+      "kind": "latency",
+      "statement": "Delay from a hazard appearing in a video feed to the safety alert.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What delay counts as real time, given Track3D works from uploaded captures rather than live feeds today?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROG-REQ-076",
+      "type": "requirement",
+      "title": "Alert on missing protective equipment and machinery proximity",
+      "statement": "The system detects workers missing required protective equipment (helmet, vest, gloves, and a harness at height) and workers too close to moving machinery, and alerts the worker, the site manager, the supervisor or the machine operator. Detection tries to recognise unusual equipment, lets people override false positives, and handles several workers near one machine. Historical compliance data is kept for trend analysis.",
+      "rationale": "PRD only; no safety detection was found in api-2d-progress or track3d-web. Worker training, equipment upkeep, emergency response and new sensors are out of scope. Equipment types, alert priority and the acceptable false positive rate are open (DEC-077). The PRD targets 95% alert accuracy and 30% fewer incidents in a year.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-077"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-066",
+          "title": "Prior PRDs - Safety monitoring, segmentation and product metrics (t3d-prd-agent prd-organised)",
+          "at": "safety-monitoring.md FR-001, FR-002, AC-001..AC-005, EC-001, EC-002, EC-004, EC-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-076-AC1",
+          "given": "A worker on an elevated surface without a harness",
+          "when": "The capture is analysed",
+          "then": "The supervisor receives an alert",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-076-AC2",
+          "given": "A flagged worker who is in fact wearing a vest the model missed",
+          "when": "A safety officer overrides the alert",
+          "then": "The alert is marked a false positive",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-077",
+      "type": "requirement",
+      "title": "Detect wider site hazards",
+      "statement": "The system monitors trenching, checks scaffolding and ladder use, identifies fire and electrical hazards from thermal and visual imagery, detects cluttered workspaces and dangerous dust, flags signs of fatigue and poor ergonomics, and monitors confined-space entries and exits at every entry point.",
+      "rationale": "PRD only. Confined-space monitoring relies on facial recognition, whose privacy implications are an open question in the PRD (DEC-077).",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-077"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-066",
+          "title": "Prior PRDs - Safety monitoring, segmentation and product metrics (t3d-prd-agent prd-organised)",
+          "at": "safety-monitoring.md FR-003..FR-009, EC-003, EC-006",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-077-AC1",
+          "given": "A confined space with two entry points",
+          "when": "Workers enter by one and leave by the other",
+          "then": "Both the entry and the exit are recorded",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-078",
+      "type": "requirement",
+      "title": "Asset segments marked in video-walk snapshots",
+      "statement": "Image embeddings from a video walk are generated and stored. Support users mark an asset's segment in a snapshot, compare snapshots to find differences and link new segments to assets, with discrepancies highlighted. When a client selects an asset with a marked segment, the reality view focuses on that segment.",
+      "rationale": "PRD only; no segment marking was found in api-2d-progress or track3d-web. How the segment colour is hidden for clients and how linked and unlinked assets are filtered are open in the PRD.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-077"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-066",
+          "title": "Prior PRDs - Safety monitoring, segmentation and product metrics (t3d-prd-agent prd-organised)",
+          "at": "segmentation.md FR-001..FR-004, AC-001..AC-004, EC-001..EC-003",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-078-AC1",
+          "given": "An asset with a segment marked in the latest snapshot",
+          "when": "A client selects the asset",
+          "then": "The reality view focuses on the segment",
+          "status": "draft"
+        },
+        {
+          "id": "PROG-REQ-078-AC2",
+          "given": "Embeddings fail to generate for a video walk",
+          "when": "The job runs",
+          "then": "The ML team is notified and the error is logged",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "PROG-REQ-079",
+      "type": "requirement",
+      "title": "Drywall readiness assessment",
+      "statement": "Users enter project details and the system assesses whether areas are ready for drywall and produces a readiness status report. Incomplete input is flagged for completion, and an assessment requested during downtime is queued and run later.",
+      "rationale": "PRD only and thin: it does not say what makes an area ready (DEC-077). Drywall appears in code only as a default category name.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-077"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-063",
+          "title": "Prior PRDs - Facade progress, underground utilities and drywall readiness (t3d-prd-agent prd-organised)",
+          "at": "drywall-readiness.md FR-001..FR-003, AC-001..AC-003, EC-001, EC-002",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROG-REQ-079-AC1",
+          "given": "Complete project details",
+          "when": "The assessment runs",
+          "then": "A readiness status report is produced",
+          "status": "draft"
+        }
+      ]
+    }
+  ]
+}

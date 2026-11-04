@@ -1,0 +1,432 @@
+{
+  "id": "USER-FEAT-07",
+  "name": "Enterprise administration",
+  "summary": "Company-wide super-admins and regional admins: what they may do, regions, removing users from projects or the company, and enterprise invitations.",
+  "components": [
+    "svc.constructn-api",
+    "svc.permission-management",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-014",
+    "DEC-017"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Regional-admin authority is limited to the projects in its region (USER-REQ-043).",
+    "actions": [
+      {
+        "action": "Create a project",
+        "permission": "create-project",
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "unknown",
+          "admin": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Create or update a region",
+        "permission": "create-region",
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "unknown",
+          "admin": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Remove a user from a project",
+        "permission": null,
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "conditional",
+          "admin": "unknown"
+        },
+        "note": "Regional admin only for projects in their region"
+      },
+      {
+        "action": "Remove users from the company",
+        "permission": "deassign-company-user",
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "unknown",
+          "admin": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "Invite users to the company",
+        "permission": "assign-company-user",
+        "grants": {
+          "company-super-admin": "allow",
+          "regional-admin": "unknown",
+          "admin": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "USER-NFR-008",
+      "kind": "freshness",
+      "statement": "How quickly removed users lose access everywhere (sessions, caches, every service).",
+      "target": null,
+      "status": "draft",
+      "open_question": "Today cache sync is fire-and-forget and session revocation runs after commit (T3D-RULE-115). What maximum delay is acceptable?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "USER-REQ-038",
+      "type": "business-rule",
+      "title": "Enterprise admin means company-wide super-admin",
+      "statement": "In first-project onboarding, \"enterprise admin\" means company-wide super-admin. It does not mean regional admin or project admin.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.permission-management"
+      ],
+      "legacy_ids": [
+        "T3D-BR-027"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-027",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-038-AC1",
+          "given": "Track3D onboards a customer and invites their enterprise admin",
+          "when": "The invitation is accepted",
+          "then": "That person holds company-wide super-admin for their company, not a regional or project admin role",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-039",
+      "type": "business-rule",
+      "title": "Company super-admins can create projects",
+      "statement": "Company-wide super-admins can create additional projects. Exceptions, delegated permissions and cross-company scope are not defined.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-029"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-029",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-004",
+          "title": "Track3D \"Single Source of Truth\" docs, generated from code",
+          "at": "features/user-management.md §5 (Company-Level Actions)",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-039-AC1",
+          "given": "A company super-admin",
+          "when": "They create a new project for their company",
+          "then": "The project is created",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-040",
+      "type": "business-rule",
+      "title": "Losing super-admin keeps existing project-admin access",
+      "statement": "Removing someone's company-wide super-admin status keeps the project-admin access they already had on individual projects.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-014"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.permission-management"
+      ],
+      "legacy_ids": [
+        "T3D-BR-023"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-023",
+          "code": null
+        }
+      ],
+      "open_checks": [
+        "Check that other revoked paths disappear promptly while project admin stays"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-040-AC1",
+          "given": "A company super-admin who is also project admin on project P",
+          "when": "Their super-admin status is removed",
+          "then": "They are still project admin on P",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-041",
+      "type": "requirement",
+      "title": "Enterprise approval and signing features",
+      "statement": "Approval and signing features for enterprise super-admins and regional admins exist and are valid. Their exact rules haven't been documented or verified.",
+      "rationale": "Too vague to test until product describes the flows (see evidence/2026-10-28/enterprise-access-and-order-forms.md).",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [
+        "T3D-BR-019"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-019",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": []
+    },
+    {
+      "id": "USER-REQ-042",
+      "type": "business-rule",
+      "title": "Regions group projects and carry authority",
+      "statement": "A region has a name that is unique within its company. Creating one assigns its projects to it and grants regional authority to the chosen users and to the company's super-admins. Changing a region changes who can act on its projects; it is more than a label.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-026"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-026",
+          "code": "constructn-api:src/controllersv2/region.controller.ts#L29@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-042-AC1",
+          "given": "Company C already has a region named West",
+          "when": "Someone creates another region named \" West \" in C",
+          "then": "It is rejected as a duplicate",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-043",
+      "type": "business-rule",
+      "title": "Removing a user from a project removes all their grants there",
+      "statement": "A company super-admin, or the regional admin of the project's region, can remove a user from a project. This deletes the user's direct role and every group-derived grant on that project. Their group membership is unchanged, so a later group update can grant the access again.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-014"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-111",
+        "T3D-RULE-112"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-111",
+          "code": "constructn-api:src/controllersv2/enterprise-users.controller.ts#L1201@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-112",
+          "code": "constructn-api:src/controllersv2/enterprise-users.controller.ts#L1288@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "The project lookup omits the region field the regional-admin check reads"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-043-AC1",
+          "given": "A user with a direct viewer role on P who is also in group G granting collaborator on P",
+          "when": "A company super-admin removes them from P",
+          "then": "They lose all access to P but remain a member of G",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-044",
+      "type": "business-rule",
+      "title": "Removing users from a company deactivates them everywhere",
+      "statement": "Removing users from a company skips the person doing the removal and any company super-admin. Each removed user is deactivated and anonymised and loses every role assignment, including in other companies' projects. Their sessions are revoked after the change is saved.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-014",
+        "DEC-015"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-113",
+        "T3D-RULE-114",
+        "T3D-RULE-115"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-113",
+          "code": "constructn-api:src/controllersv2/enterprise-users.controller.ts#L1339@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-114",
+          "code": "constructn-api:src/controllersv2/enterprise-users.controller.ts#L1404@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-115",
+          "code": "constructn-api:src/controllersv2/enterprise-users.controller.ts#L1469@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "Company, header, linked-company, project and group scope are not traced through parent mounts and controllers; several route permission calls are commented out (T3D-IMPL-129)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-044-AC1",
+          "given": "A super-admin removes themselves, another super-admin and an ordinary user from the company",
+          "when": "The removal runs",
+          "then": "Only the ordinary user is removed, and the two super-admins are reported as skipped",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "USER-REQ-044-AC2",
+          "given": "A removed user who was also a member of a linked company's project",
+          "when": "They are removed from their home company",
+          "then": "(Current behaviour) They lose access to that linked project too",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "USER-REQ-045",
+      "type": "business-rule",
+      "title": "Enterprise invitations validate domains and expire after 2 days",
+      "statement": "Invited emails are trimmed, lower-cased and de-duplicated. An existing user from a linked company can be assigned directly; any other existing user is rejected. A new email must be on the company's or a linked company's domain. Invitations expire after 2 days by default. Resending renews an expired one, and an unexpired pending invitation isn't sent again.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-017"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-116",
+        "T3D-RULE-117",
+        "T3D-RULE-118"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-116",
+          "code": "constructn-api:src/controllersv2/enterprise-users.controller.ts#L1518@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-117",
+          "code": "constructn-api:src/controllersv2/enterprise-users.controller.ts#L1585@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-011",
+          "title": "Rulebook 2026-10-28-rules-02 (groups, enterprise removal, invitations, counts)",
+          "at": "T3D-RULE-118",
+          "code": "constructn-api:src/controllersv2/enterprise-users.controller.ts#L1652@68f048bad57f"
+        }
+      ],
+      "open_checks": [
+        "The reported \"sent\" count is not delivery confirmation; the email call isn't awaited"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "USER-REQ-045-AC1",
+          "given": "Company A, linked to B, invites \" Jo@B.com \" and kim@gmail.com",
+          "when": "The invitations are previewed",
+          "then": "jo@b.com is accepted (normalised) and kim@gmail.com is rejected for its domain",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "USER-REQ-045-AC2",
+          "given": "An enterprise invitation sent three days ago and never accepted",
+          "when": "The invitation list is viewed",
+          "then": "It shows as expired, and resending creates a renewed invitation",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

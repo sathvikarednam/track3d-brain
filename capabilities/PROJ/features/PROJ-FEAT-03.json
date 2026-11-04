@@ -1,0 +1,301 @@
+{
+  "id": "PROJ-FEAT-03",
+  "name": "Lifecycle and access stage",
+  "summary": "What a project allows over time: the access stage derived from status and dates, automatic archiving and deletion, and the manual archive and delete actions.",
+  "components": [
+    "svc.constructn-api",
+    "svc.project-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-019",
+    "DEC-023"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "Manual deletion has its own authority check (canDeleteProject) rather than a permission string. Support users can bypass access-stage gating.",
+    "actions": [
+      {
+        "action": "Archive a project",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "company-super-admin": "unknown",
+          "support-user": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Delete a project",
+        "permission": null,
+        "grants": {
+          "admin": "conditional",
+          "company-super-admin": "unknown",
+          "support-user": "allow"
+        },
+        "note": "Needs a reason and passes canDeleteProject"
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "PROJ-NFR-003",
+      "kind": "retention",
+      "statement": "Today approved projects are archived automatically at their planned end and marked deleted 365 days later. Whether data is physically removed is not shown.",
+      "target": null,
+      "status": "inferred-from-code",
+      "open_question": "What retention do customers expect after a project ends, and is it contractual (DEC-019)?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "PROJ-REQ-014",
+      "type": "business-rule",
+      "title": "Access stage comes from status first, then dates",
+      "statement": "Draft and Pending-approval projects are in Pre-Setup, and Archived or Deleted status wins as stored. For every other status, dates decide: - more than 30 days before the start date: Pre-Setup - within 30 days of the start: Setup - from the start until start plus duration (in months): In-construction - for 365 days after that: Archived - after that: Deleted Construction phase is a separate field and is not used.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-023"
+      ],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-001",
+        "T3D-RULE-002",
+        "T3D-RULE-003"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-001",
+          "code": "constructn-api:src/utils/project-utils.ts#L14@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-002",
+          "code": "constructn-api:src/utils/project-utils.ts#L20@68f048bad57f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getProjectAccessStage unchanged on track-3d",
+          "code": "constructn-api:src/utils/project-utils.ts#L14@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [
+        "Durations truncate to whole months; month addition uses runtime-local Date.setMonth, while the archive jobs use date-fns addMonths; there is no project-local midnight"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-014-AC1",
+          "given": "An approved project starting in 45 days",
+          "when": "Its access stage is derived",
+          "then": "It is Pre-Setup",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROJ-REQ-014-AC2",
+          "given": "An approved project starting in 10 days",
+          "when": "Its access stage is derived",
+          "then": "It is Setup",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROJ-REQ-014-AC3",
+          "given": "An approved 12-month project that started 13 months ago",
+          "when": "Its access stage is derived",
+          "then": "It is Archived",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROJ-REQ-014-AC4",
+          "given": "A Draft project whose start date has passed",
+          "when": "Its access stage is derived",
+          "then": "It is Pre-Setup",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-015",
+      "type": "business-rule",
+      "title": "Actions are gated by access stage as well as permission",
+      "statement": "Each project action allows only certain access stages (setup actions need Setup or In-construction, for example), checked separately from the user's permission. A missing project ID is a bad request, an unknown project is not found, and a disallowed stage is forbidden. Support users can bypass the stage check on routes that allow it.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api",
+        "svc.project-api",
+        "svc.permission-management"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-004"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-004",
+          "code": "constructn-api:src/middlewares/check-project-access.ts#L53@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-015-AC1",
+          "given": "A project admin on a project in Pre-Setup",
+          "when": "They try to change a user's role",
+          "then": "The request is forbidden because of the stage, even though they hold the permission",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-016",
+      "type": "business-rule",
+      "title": "Projects archive and delete themselves automatically",
+      "statement": "Once approved, a project is set to Archived on its planned end date (start plus duration). It is set to Deleted 365 days later, if it is still Approved or Archived. Project admins are emailed 30 and 7 days before each step, and each step is logged. The jobs are rescheduled when dates change.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-019",
+        "DEC-023"
+      ],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "getProjectTriggerDates",
+          "code": "constructn-api:src/utils/project-utils.ts#L278@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "sendArchivalEmail",
+          "code": "constructn-api:src/utils/project-utils.ts#L160@06132d2a6f1f"
+        },
+        {
+          "type": "code",
+          "ref": "SRC-012",
+          "title": "Direct code reads during USER migration (2026-10-29)",
+          "at": "sendDeletionEmail",
+          "code": "constructn-api:src/utils/project-utils.ts#L203@06132d2a6f1f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-016-AC1",
+          "given": "An approved 6-month project that started 1 March",
+          "when": "The scheduled jobs run",
+          "then": "Admins are emailed on 2 August and 25 August, and the project becomes Archived on 1 September",
+          "status": "inferred-from-code"
+        },
+        {
+          "id": "PROJ-REQ-016-AC2",
+          "given": "That project is still Archived",
+          "when": "365 days after 1 September pass",
+          "then": "Its status becomes Deleted, with reason \"Deleted by System\"",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-017",
+      "type": "business-rule",
+      "title": "The archive endpoint replaces the project with a renamed copy",
+      "statement": "The project-api archive action is not a reversible flag. It creates a copy with a suffixed ID and name and status Deleted, then deletes the original record. The automatic archive (PROJ-REQ-016) only changes the status.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-019"
+      ],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-007"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-007",
+          "code": "project-api:src/application/services/project.service.ts#L67@6bc5d334eaae"
+        }
+      ],
+      "open_checks": [
+        "The business meaning of archive, delete and restore must be approved before this changes; moving child references and restoring are not shown"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-017-AC1",
+          "given": "Project P1 named Tower A",
+          "when": "The archive endpoint is called",
+          "then": "(Current behaviour) P1 no longer exists, and a Deleted project with a suffixed ID and name takes its place",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "PROJ-REQ-018",
+      "type": "business-rule",
+      "title": "Deleting a project needs a reason",
+      "statement": "Deleting a project needs a reason of 1 to 1000 characters and the caller must pass the delete-authority check. The project is replaced by a suffixed Deleted copy, roles and groups are cleaned up, support is assigned and people are notified.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-019"
+      ],
+      "implemented_by": [
+        "svc.project-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-008"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-008",
+          "code": "project-api:src/application/services/project.service.ts#L391@6bc5d334eaae"
+        }
+      ],
+      "open_checks": [
+        "Failed assignment, status or deletion steps across embedded users, role assignments, groups, preferences, counts and child references are not traced"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "PROJ-REQ-018-AC1",
+          "given": "A user allowed to delete project P",
+          "when": "They delete it with an empty reason",
+          "then": "The request is rejected",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

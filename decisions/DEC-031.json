@@ -1,0 +1,16 @@
+{
+  "id": "DEC-031",
+  "title": "What makes an uploaded schedule usable",
+  "status": "open",
+  "question": "How are schedule tasks matched to locations, categories and stages? What happens to tasks that don't match? Does someone review a schedule before it takes effect?",
+  "context": "Upload and processing status are traced. The parser and task mapping are not: uploading a file doesn't prove its tasks became planned dates (SCHD-REQ-002).",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "SCHD"
+  ],
+  "requirements": [
+    "SCHD-REQ-001",
+    "SCHD-REQ-002"
+  ]
+}

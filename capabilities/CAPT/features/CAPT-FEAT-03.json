@@ -1,0 +1,247 @@
+{
+  "id": "CAPT-FEAT-03",
+  "name": "Capture browsing and locations",
+  "summary": "Finding captures by date, status and type, viewing their details, counting them, and correcting where a photo sits on the design.",
+  "components": [
+    "svc.capture-api",
+    "svc.constructn-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-028"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": null,
+    "actions": [
+      {
+        "action": "Browse captures and realities",
+        "permission": "visual-documentation",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Download capture reports",
+        "permission": "download-capture-reports",
+        "grants": {
+          "admin": "allow",
+          "collaborator": "allow",
+          "viewer": "allow"
+        },
+        "note": null
+      },
+      {
+        "action": "Move a photo's location",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "CAPT-NFR-003",
+      "kind": "latency",
+      "statement": "Time to load the capture list and timeline for a selected date on a large project.",
+      "target": null,
+      "status": "draft",
+      "open_question": "What p95 is acceptable for the capture sidebar and timeline, and for how many captures per day?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "CAPT-REQ-009",
+      "type": "requirement",
+      "title": "Captures for a selected date, with status and details",
+      "statement": "Picking a date shows a sidebar listing that date's captures, each with a status indicator (Active, Processing, Error). The list can be filtered by status and type, and selecting a capture shows its details.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.capture-api"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-CAPTURE-MANAGEMENT-FR-005",
+        "T3D-CAND-CAPTURE-MANAGEMENT-FR-006",
+        "T3D-CAND-CAPTURE-MANAGEMENT-FR-007",
+        "T3D-CAND-CAPTURE-MANAGEMENT-FR-008"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-015",
+          "title": "Prior PRD - Capture management (t3d-prd-agent)",
+          "at": "FR-005..FR-008",
+          "code": null
+        },
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-039",
+          "code": "track3d-web:src/adapter/services/captures.service.ts#L14@9d48a8362053"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-009-AC1",
+          "given": "A user selects 4 March on the calendar",
+          "when": "The sidebar loads",
+          "then": "It lists 4 March's captures, each with its status",
+          "status": "draft"
+        },
+        {
+          "id": "CAPT-REQ-009-AC2",
+          "given": "A list with active and errored 360 video and drone captures",
+          "when": "The user filters by Error and drone",
+          "then": "Only errored drone captures are shown",
+          "status": "draft"
+        },
+        {
+          "id": "CAPT-REQ-009-AC3",
+          "given": "The capture list",
+          "when": "The user selects a capture",
+          "then": "Its details are shown",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-010",
+      "type": "requirement",
+      "title": "Capture work list with task and project views",
+      "statement": "A capture work list can switch between task and project views. In task view, inactive captures come first. The list supports search across capture fields, sorting and filtering.",
+      "rationale": "The PRD places this in the \"Legend\" app, which may be an internal operations tool. Product should confirm who uses it.",
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [],
+      "legacy_ids": [
+        "T3D-CAND-CAPTURE-MANAGEMENT-FR-001",
+        "T3D-CAND-CAPTURE-MANAGEMENT-FR-002",
+        "T3D-CAND-CAPTURE-MANAGEMENT-FR-003",
+        "T3D-CAND-CAPTURE-MANAGEMENT-FR-004"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-015",
+          "title": "Prior PRD - Capture management (t3d-prd-agent)",
+          "at": "FR-001..FR-004",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-010-AC1",
+          "given": "A user on the capture work list",
+          "when": "They switch between task and project views",
+          "then": "The view changes, and the toggle is always visible",
+          "status": "draft"
+        },
+        {
+          "id": "CAPT-REQ-010-AC2",
+          "given": "Task view with active and inactive captures",
+          "when": "The list is shown",
+          "then": "Inactive captures come first",
+          "status": "draft"
+        },
+        {
+          "id": "CAPT-REQ-010-AC3",
+          "given": "The capture work list",
+          "when": "The user searches, sorts or filters",
+          "then": "The list shows the matching captures in the chosen order",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-011",
+      "type": "business-rule",
+      "title": "Moving a photo updates every stored position",
+      "statement": "Moving a photo's location stores the raw position on the sheet and a position normalised by the sheet's width and height (1 if unknown). It also stores a global position when a transform exists, and updates the linked realities and stored files to match.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-028"
+      ],
+      "implemented_by": [
+        "svc.capture-api",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-038",
+        "T3D-RULE-039"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-038",
+          "code": "capture-api:src/application/service/progress-photo.servicev3.ts#L415@ac5726e820f2"
+        }
+      ],
+      "open_checks": [
+        "Check raw, normalised and global positions, reality and photo links, storage and the viewer after failure and retry; the web uses the v3 API, which differs from older normalised contracts"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-011-AC1",
+          "given": "A photo on a 1000 × 500 sheet moved to raw position (250, 100)",
+          "when": "The move is saved",
+          "then": "Its normalised position is (0.25, 0.2), and its realities show the new place",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "CAPT-REQ-012",
+      "type": "business-rule",
+      "title": "How capture counts are counted",
+      "statement": "In capture counts, 360 video and drone image captures count once per mode per day, however many records exist. Other modes count each capture record. A count on one screen may therefore differ from the number of capture records or upload sessions.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.constructn-api"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-037"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-037",
+          "code": "constructn-api:src/views/web/viewlistv2.ts#L6243@68f048bad57f"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "CAPT-REQ-012-AC1",
+          "given": "Three 360 video captures and two phone images on 4 March",
+          "when": "The capture count is shown",
+          "then": "It counts 1 for 360 video and 2 for phone image",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

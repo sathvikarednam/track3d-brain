@@ -1,0 +1,267 @@
+{
+  "id": "SCHD-FEAT-01",
+  "name": "Schedule upload and import",
+  "summary": "Uploading a construction schedule file, tracking its processing, keeping a history of uploads, and telling people when processing finishes.",
+  "components": [
+    "svc.api-2d-progress",
+    "svc.upload-api",
+    "web.track3d-web"
+  ],
+  "decisions": [
+    "DEC-030",
+    "DEC-031"
+  ],
+  "roles": {
+    "status": "inferred-from-code",
+    "note": "The seed catalog has no schedule-specific permission strings. Who may upload or edit schedules is unknown (DEC-010 covers related edit rights).",
+    "actions": [
+      {
+        "action": "Upload a schedule",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "deny"
+        },
+        "note": null
+      },
+      {
+        "action": "View uploaded schedules",
+        "permission": null,
+        "grants": {
+          "admin": "unknown",
+          "collaborator": "unknown",
+          "viewer": "unknown"
+        },
+        "note": null
+      }
+    ]
+  },
+  "nfr": [
+    {
+      "id": "SCHD-NFR-001",
+      "kind": "latency",
+      "statement": "Time from finishing a schedule upload to its planned dates showing in the timeline.",
+      "target": null,
+      "status": "draft",
+      "open_question": "How long may processing take for a large schedule, for example several thousand tasks?"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "SCHD-REQ-001",
+      "type": "requirement",
+      "title": "Upload a project schedule",
+      "statement": "Users with the right permissions can upload a project schedule from a dedicated Schedule section, to get better insight into progress. Schedules can be uploaded and downloaded in several formats, up to 750 MB. A schedule is optional.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-031"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress",
+        "web.track3d-web"
+      ],
+      "legacy_ids": [
+        "T3D-BR-012",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-001",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-004",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-005"
+      ],
+      "sources": [
+        {
+          "type": "interview",
+          "ref": "SRC-001",
+          "title": "Product walkthrough and clarifications recorded in the 2026-10-28 ledger",
+          "at": "T3D-BR-012",
+          "code": null
+        },
+        {
+          "type": "prd",
+          "ref": "SRC-018",
+          "title": "Prior PRD - Schedule management (t3d-prd-agent prd-organised)",
+          "at": "FR-001, FR-004, FR-005",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-001-AC1",
+          "given": "A project user with schedule permission",
+          "when": "They upload a supported schedule file",
+          "then": "The upload is accepted for processing",
+          "status": "draft"
+        },
+        {
+          "id": "SCHD-REQ-001-AC2",
+          "given": "A user opens Schedule in a project's side panel",
+          "when": "The section loads",
+          "then": "They can upload a new schedule file and see a log of earlier uploads",
+          "status": "draft"
+        },
+        {
+          "id": "SCHD-REQ-001-AC3",
+          "given": "A schedule file is uploaded",
+          "when": "Processing completes",
+          "then": "The schedule is reflected in the project accurately",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-002",
+      "type": "business-rule",
+      "title": "Uploading a schedule file is not the same as importing its tasks",
+      "statement": "When a schedule file finishes uploading, it is marked as processing and people are notified. Whether processing later succeeds or fails is recorded separately. A finished upload doesn't mean any tasks became planned dates.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [
+        "DEC-031"
+      ],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-073"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-073",
+          "code": "api-2d-progress:src/application/service/progress-schedule.service.ts#L71@406190aa76b6"
+        }
+      ],
+      "open_checks": [
+        "The parser and task-mapping code is still not located (2026-10-29: not in api-2d-progress; p6-reader is only a local experiment)"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-002-AC1",
+          "given": "A schedule file whose upload has finished",
+          "when": "Completion is recorded",
+          "then": "Its status becomes processing and the uploader is notified",
+          "status": "inferred-from-code"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-003",
+      "type": "requirement",
+      "title": "Schedule version history",
+      "statement": "Every schedule update is kept as a version, and users can view earlier versions and compare them with the latest.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [
+        "DEC-030"
+      ],
+      "implemented_by": [],
+      "legacy_ids": [
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-003"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-018",
+          "title": "Prior PRD - Schedule management (t3d-prd-agent prd-organised)",
+          "at": "FR-003",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-003-AC1",
+          "given": "A schedule has been updated twice",
+          "when": "The user opens version history",
+          "then": "They see all three versions and can compare any with the latest",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-005",
+      "type": "requirement",
+      "title": "Upload details, and email when processing finishes",
+      "statement": "Each uploaded schedule shows who uploaded it, when, and its status. When its status changes to success or failed, the uploader and the project admins are emailed.",
+      "rationale": null,
+      "status": "draft",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "web.track3d-web",
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-006",
+        "T3D-CAND-SCHEDULE-MANAGEMENT-FR-007"
+      ],
+      "sources": [
+        {
+          "type": "prd",
+          "ref": "SRC-018",
+          "title": "Prior PRD - Schedule management (t3d-prd-agent prd-organised)",
+          "at": "FR-006, FR-007",
+          "code": null
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-005-AC1",
+          "given": "A user on a project's Schedule page",
+          "when": "They view an uploaded schedule",
+          "then": "They see the uploader's name, the upload date and the status, and optionally the changes from the previous schedule",
+          "status": "draft"
+        },
+        {
+          "id": "SCHD-REQ-005-AC2",
+          "given": "A schedule's status changes to Success or Failed",
+          "when": "The change is saved",
+          "then": "The uploader and the project admins are emailed",
+          "status": "draft"
+        }
+      ]
+    },
+    {
+      "id": "SCHD-REQ-006",
+      "type": "business-rule",
+      "title": "Abandoned schedule uploads are cancelled when the list is read",
+      "statement": "When the upload list is read (newest first), any upload still \"created\" after 15 minutes is shown as cancelled, and the database is updated in the background.",
+      "rationale": null,
+      "status": "inferred-from-code",
+      "dispute": null,
+      "decisions": [],
+      "implemented_by": [
+        "svc.api-2d-progress"
+      ],
+      "legacy_ids": [
+        "T3D-RULE-072"
+      ],
+      "sources": [
+        {
+          "type": "code",
+          "ref": "SRC-003",
+          "title": "Rulebook 2026-10-28-rules-01 (source-verified rules in selected paths)",
+          "at": "T3D-RULE-072",
+          "code": "api-2d-progress:src/application/service/progress-schedule.service.ts#L29@406190aa76b6"
+        }
+      ],
+      "open_checks": [],
+      "acceptance_criteria": [
+        {
+          "id": "SCHD-REQ-006-AC1",
+          "given": "A schedule upload created 20 minutes ago that never uploaded",
+          "when": "The upload list is read",
+          "then": "It is shown as cancelled, and its stored status becomes cancelled",
+          "status": "inferred-from-code"
+        }
+      ]
+    }
+  ]
+}

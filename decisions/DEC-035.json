@@ -1,0 +1,21 @@
+{
+  "id": "DEC-035",
+  "title": "Which 3D and overlay modes customers get",
+  "status": "open",
+  "question": "Are Gaussian splat (3D) mode, point cloud mode and BIM overlay on reality customer features, support-only tools, or beta? If customer features, for which capture types, and which permission governs each (the seeded bim-overlay and bim-compare, or view-bim-type as the web app checks today)?",
+  "context": "PRDs treat splat navigation, the point cloud button and BIM overlay as user features (SRC-019, SRC-020, SRC-023). The code shows 3D mode to customers only on drone captures, point cloud mode only to support users with beta on, and BIM overlay only to support users outside production (VIEW-REQ-008, VIEW-REQ-011, VIEW-REQ-017). A 2024-11 drone PRD (not registered) asked for the Reality/Point Cloud toggle to be removed for drone captures.",
+  "options": [],
+  "decision": null,
+  "capabilities": [
+    "VIEW"
+  ],
+  "requirements": [
+    "VIEW-REQ-007",
+    "VIEW-REQ-008",
+    "VIEW-REQ-009",
+    "VIEW-REQ-010",
+    "VIEW-REQ-011",
+    "VIEW-REQ-012",
+    "VIEW-REQ-017"
+  ]
+}
